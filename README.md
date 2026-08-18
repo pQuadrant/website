@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Folders under `src/` are created as they are first needed, so some may not
+exist yet. Conventions for what belongs where are in [AGENTS.md](AGENTS.md).
 
-## Getting Started
+Imports use the `@/` alias for `src/`:
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```ts
+import { Button } from "@/components/ui/Button";
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Hosting is AWS Amplify, in the `eu-north-1` (Stockholm) region. The app is
+named `pquadrant-website`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Production** — `main` deploys automatically on merge to
+  [pquadrant.com](https://pquadrant.com)
+- **Previews** — every pull request gets its own temporary URL, built from
+  that branch
+- **DNS** — Route 53 hosted zone for `pquadrant.com`. The domain is
+  registered at GoDaddy but its nameservers point to Route 53.
+- **SSL** — Amplify-managed certificate, renewed automatically
 
-## Learn More
+There is no staging environment. Pull request previews serve that purpose.
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how work moves from ticket to
+production, including branch naming, pull request expectations, and the
+rules for AI-assisted changes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Source-available, all rights reserved. See [LICENSE](LICENSE).
