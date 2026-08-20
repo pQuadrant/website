@@ -192,4 +192,4 @@ repository and will block the push — do not look for a way around it.
 ## Conventions
 
 Code conventions — folder structure, naming, where content lives — are in
-[AGENTS.md](../AGENTS.md). They apply to humans and agents equally.
+[AGENTS.md](AGENTS.md). They apply to humans and agents equally.
