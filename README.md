@@ -14,13 +14,16 @@ named `pquadrant-website`.
 
 - **Production** — `main` deploys automatically on merge to
   [pquadrant.com](https://pquadrant.com)
-- **Previews** — every pull request gets its own temporary URL, built from
-  that branch
+- **Previews** — configured to build a URL per pull request, but not
+  currently working; see
+  [CONTRIBUTING.md](CONTRIBUTING.md#previewing-your-work)
 - **DNS** — Route 53 hosted zone for `pquadrant.com`. The domain is
   registered at GoDaddy but its nameservers point to Route 53.
 - **SSL** — Amplify-managed certificate, renewed automatically
 
-There is no staging environment. Pull request previews serve that purpose.
+There is no staging environment. Pull request previews are meant to serve
+that purpose; until they work, a change is verified by running the branch
+locally.
 
 ## Contributing
 

@@ -8,7 +8,7 @@
 
 ## How to test
 
-<!-- Steps to verify on the preview URL. Be specific enough that someone
+<!-- Steps to verify this change. Be specific enough that someone
      who did not write this can check it. -->
 
 ## Checklist
