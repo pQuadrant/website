@@ -14,7 +14,7 @@
 ## Checklist
 
 - [ ] Ran `format`, `lint`, `typecheck`, `build` locally
-- [ ] Checked the preview URL, including on mobile
+- [ ] Checked the change visually, including on mobile
 - [ ] Acceptance criteria from the ticket are met
 - [ ] No copy hardcoded in `.tsx` files
 - [ ] No new dependencies added without discussion

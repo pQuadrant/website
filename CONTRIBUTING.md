@@ -111,6 +111,35 @@ There is no staging environment and no batching. Small changes go to
 production one at a time. If something breaks, you know exactly what caused
 it.
 
+## Previewing your work
+
+Three places to look at a change, cheapest first.
+
+**Local, while building.** `npm run dev` serves on `localhost:3000` with
+hot reload. Use this for anything you are still shaping.
+
+**Local, as production.** `npm run build && npm start`. Dev mode and
+production are not the same — static generation, caching, and metadata only
+behave like production in a real build. Anything that depends on the
+rendered HTML gets checked here, not in dev.
+
+**The preview URL.** Every pull request gets one, rebuilt on each push. It
+is the only place someone who is not you can confirm the acceptance
+criteria, which the Definition of Done requires. This is why the PR is
+opened as a draft early — the URL exists from that moment.
+
+> **Note:** Pull request previews are not currently working. Amplify is
+> configured for them but no preview is created. Likely cause is that the
+> repository is public — Amplify appears to restrict previews for public
+> repos. Resolving it probably means moving to GitHub Team so the repo can
+> be private while keeping branch protection. Until then, reviewers should
+> check out the branch and run `npm run dev` locally.
+
+A shared staging environment is deliberately not one of these options, for
+the reason above: it accumulates several unreleased changes at once, so
+when it breaks, nobody knows whose change did it. Per-PR previews isolate
+instead.
+
 ## Working with AI agents
 
 Most code here is written with coding agents. These rules exist because the
