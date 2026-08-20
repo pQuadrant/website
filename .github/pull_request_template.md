@@ -8,13 +8,13 @@
 
 ## How to test
 
-<!-- Steps to verify on the preview URL. Be specific enough that someone
+<!-- Steps to verify this change. Be specific enough that someone
      who did not write this can check it. -->
 
 ## Checklist
 
 - [ ] Ran `format`, `lint`, `typecheck`, `build` locally
-- [ ] Checked the preview URL, including on mobile
+- [ ] Checked the change visually, including on mobile
 - [ ] Acceptance criteria from the ticket are met
 - [ ] No copy hardcoded in `.tsx` files
 - [ ] No new dependencies added without discussion

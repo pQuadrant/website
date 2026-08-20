@@ -34,8 +34,8 @@ produces vague code, reliably.
 - Merged to `main`
 - CI green
 - Deployed
-- Someone other than the author has confirmed the acceptance criteria on the
-  preview URL
+- Someone other than the author has confirmed the acceptance criteria
+  against a running copy of the change — see "Previewing your work"
 
 Work sitting unfinished on a branch is not progress.
 
@@ -74,9 +74,9 @@ points, and you will need them.
 
 ## Pull requests
 
-Open the PR early, as a draft, before the work is finished. The preview URL
-exists from that moment, and the team can see the direction while it is
-still cheap to change.
+Open the PR early, as a draft, before the work is finished. The team can see
+the direction while it is still cheap to change, and CI starts reporting
+from that moment.
 
 **Open pull requests in the browser.** Push your branch, then go to the
 repository on GitHub and click "Compare & pull request." The description box
@@ -88,7 +88,7 @@ the same template in an editor. Passing `--body "..."` skips the template
 entirely, so avoid that.
 
 The template exists because the reviewer did not write your code and cannot
-guess how to check it. "Fixed the nav" tells them nothing. "Open the preview,
+guess how to check it. "Fixed the nav" tells them nothing. "Run the branch,
 narrow the window to phone width, tap the menu button, confirm the menu
 closes when you tap a link" tells them exactly what to do.
 
@@ -110,6 +110,35 @@ automatically.
 There is no staging environment and no batching. Small changes go to
 production one at a time. If something breaks, you know exactly what caused
 it.
+
+## Previewing your work
+
+Three places to look at a change, cheapest first.
+
+**Local, while building.** `npm run dev` serves on `localhost:3000` with
+hot reload. Use this for anything you are still shaping.
+
+**Local, as production.** `npm run build && npm start`. Dev mode and
+production are not the same — static generation, caching, and metadata only
+behave like production in a real build. Anything that depends on the
+rendered HTML gets checked here, not in dev.
+
+**The preview URL.** Amplify is meant to build one per pull request, rebuilt
+on each push — a deployed URL a reviewer can open without touching your
+branch. That is the intended answer to the Definition of Done, which needs
+someone other than the author to confirm the acceptance criteria.
+
+> **Note:** Pull request previews are not currently working. Amplify is
+> configured for them but no preview is created. Likely cause is that the
+> repository is public — Amplify appears to restrict previews for public
+> repos. Resolving it probably means moving to GitHub Team so the repo can
+> be private while keeping branch protection. Until then, reviewers should
+> check out the branch and run `npm run dev` locally.
+
+A shared staging environment is deliberately not one of these options, for
+the reason above: it accumulates several unreleased changes at once, so
+when it breaks, nobody knows whose change did it. Per-PR previews isolate
+instead.
 
 ## Working with AI agents
 
