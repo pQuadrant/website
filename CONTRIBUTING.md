@@ -78,6 +78,20 @@ Open the PR early, as a draft, before the work is finished. The preview URL
 exists from that moment, and the team can see the direction while it is
 still cheap to change.
 
+**Open pull requests in the browser.** Push your branch, then go to the
+repository on GitHub and click "Compare & pull request." The description box
+will already contain a template with questions to answer — what changed, why,
+and how to test it. Fill it in.
+
+If you prefer the terminal, run `gh pr create` with no arguments. It opens
+the same template in an editor. Passing `--body "..."` skips the template
+entirely, so avoid that.
+
+The template exists because the reviewer did not write your code and cannot
+guess how to check it. "Fixed the nav" tells them nothing. "Open the preview,
+narrow the window to phone width, tap the menu button, confirm the menu
+closes when you tap a link" tells them exactly what to do.
+
 **Size.** Aim for under 200 lines changed. Treat 400 as the ceiling. Above
 that, explain why in the description before requesting review.
 
