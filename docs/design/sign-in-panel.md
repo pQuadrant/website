@@ -199,6 +199,13 @@ deviation, not a design decision to carry over: disabling autocomplete on a sign
 form breaks password managers, which is a real obstacle for the exact users this page
 exists to serve, and it is invisible in a screenshot.
 
+Enabling it means a filled field is styled by the browser, not by this specification.
+The background painted behind an autofilled value cannot be set from the stylesheet;
+it follows the document's declared colour scheme, which `docs/design/home.md` requires
+to be dark. Check both fields with a saved credential, not only empty. A field that
+looks correct on an empty render can be filled with a near-white block on the next
+visit, and nothing in a screenshot of the default state will show it.
+
 **The passphrase placeholder is a placeholder, not a value.** The field must be empty
 on render. Bullet characters as placeholder text make an empty field look filled, so it
 is especially important that nothing else suggests the field has content: no filled
