@@ -1,25 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-ibm-plex-sans);
   --font-mono: var(--font-ibm-plex-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* `static` keeps every token in the output even before anything consumes it.
+   The globe reads its point colours from these variables at runtime. */
+@theme static {
+  /* Surfaces */
+  --color-stage: #080a0f;
+  --color-panel: rgba(8, 10, 15, 0.9);
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+  /* Hairlines */
+  --color-line-panel: #1e242f;
+  --color-line-chrome: #232b36;
+  --color-line-control: #262d3a;
+
+  /* Foreground, fg-0 brightest to fg-3 dimmest */
+  --color-fg-0: #eaedf4;
+  --color-fg-1: #8b94a2;
+  --color-fg-2: #59626e;
+  --color-fg-3: #414a56;
+  --color-fg-processing: #c7d8f5;
+  --color-placeholder: #3f474c;
+  --color-separator: #2b323d;
+
+  /* Accents */
+  --color-accent: #a8c4f0;
+  --color-accent-bright: #4e9bfb;
+  --color-signal: #3183f5;
+  --color-land: #5fd98f;
+
+  /* Type roles. Each carries its own letter-spacing; pair with font-sans or
+     font-mono, which Tailwind cannot fold into a text token. */
+  --text-value-email: 14px;
+  --text-value-email--letter-spacing: -0.01em;
+  --text-value-passphrase: 14px;
+  --text-value-passphrase--letter-spacing: 0.06em;
+  --text-submit: 11px;
+  --text-submit--letter-spacing: 0.22em;
+  --text-label: 10px;
+  --text-label--letter-spacing: 0.2em;
+  --text-subhead: 10px;
+  --text-subhead--letter-spacing: 0.16em;
+  --text-meta: 10px;
+  --text-meta--letter-spacing: 0.14em;
+  --text-error: 10px;
+  --text-error--letter-spacing: 0.12em;
+  --text-error--line-height: 1.6;
+  --text-esc: 9px;
+  --text-esc--letter-spacing: 0.22em;
+
+  /* Transitions */
+  --transition-duration-hover: 160ms;
+  --transition-duration-control: 180ms;
+  --transition-duration-glow: 320ms;
+  --transition-duration-bloom: 520ms;
+  --transition-duration-panel: 700ms;
 }
