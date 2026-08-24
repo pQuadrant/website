@@ -182,6 +182,7 @@ form does not identify which credential was wrong.
 
 |                             | Email              | Passphrase                   |
 | --------------------------- | ------------------ | ---------------------------- |
+| Label                       | `EMAIL`            | `PASSPHRASE`                 |
 | Input type                  | Email              | Password                     |
 | Placeholder                 | `name@company.com` | Twelve bullet characters `•` |
 | Letter-spacing on the value | `-0.01em`          | `0.06em`                     |
