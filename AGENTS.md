@@ -1,6 +1,10 @@
 # pQuadrant website — agent rules
 
-Marketing website. Next.js 16 (App Router), TypeScript, Tailwind 4.
+The sign-in entry point for the pQuadrant platform. One full-screen page:
+a rotating point-cloud globe drawn on a canvas, with a sign-in panel over
+it. There are no other pages, no navigation, and no scrolling content.
+
+Next.js 16 (App Router), TypeScript, Tailwind 4.
 
 ## Before writing code
 
@@ -18,20 +22,32 @@ app/ Routes only. A folder is a URL segment.
 components/
 ui/ Generic primitives. No pQuadrant-specific content.
 layout/ Header, Footer, Nav.
-sections/ Full-width page sections. Hero, FeatureGrid, CTA.
 content/ Page copy. One file per page.
-lib/ Shared utilities.
+lib/ Shared utilities and non-component modules.
 public/ Static assets.
 
 Create a folder when its first file needs it. Do not create empty folders.
 
-Dependencies point one way: `sections` may import from `ui` and `layout`.
-`ui` may not import from `sections`, and may not reference pQuadrant
-copy or branding.
+A surface gets its own folder under `components/`, named after the surface,
+created when that surface is built. The globe and the sign-in panel are
+surfaces.
+
+A component moves into `ui/` on its second use, not its first. One use is
+not yet a primitive, and guessing at the general case before there is one
+produces the wrong abstraction.
+
+`lib/` holds TypeScript modules that are not React components. Rendering
+and animation engines belong there — they are handed a canvas and own their
+own loop, and nothing about them is JSX.
+
+Dependencies point one way: surface folders may import from `ui` and
+`layout`. `ui` may not import from a surface folder, and may not reference
+pQuadrant copy or branding.
 
 ## Naming
 
-- Components: PascalCase, matching the export. `Hero.tsx` exports `Hero`.
+- Components: PascalCase, matching the export. `SignInPanel.tsx` exports
+  `SignInPanel`.
 - Everything else: kebab-case. `site-config.ts`, `home.ts`.
 - Route folders: lowercase. `about/`, `contact/`.
 - One component per file.
@@ -47,10 +63,10 @@ that is a bug.
 
 ```tsx
 // Wrong
-<h1>Improve your realized revenue</h1>
+<p>AUTHENTICATED ACCESS ONLY</p>
 
 // Right
-<h1>{content.hero.heading}</h1>
+<p>{content.signIn.subhead}</p>
 ```
 
 ## Styling
@@ -58,6 +74,15 @@ that is a bug.
 Tailwind utility classes only. No CSS modules, no styled-components, no
 inline `style` props. `globals.css` holds Tailwind directives and design
 tokens only.
+
+## Design specs
+
+Every visual surface has a specification in `docs/design/`. Read the one
+for the surface you are working on before building it, and build against
+it.
+
+If the code and the spec disagree, one of them is a bug. Fix whichever is
+wrong rather than working around the difference.
 
 ## Types
 
@@ -74,8 +99,13 @@ Prefer CSS over a library for animation.
 
 ## Images and media
 
-Use `next/image`, not raw `<img>`. Images must have `alt` text. Use WebP or
-AVIF for stills. Use muted looping video for motion — never GIF.
+Raster images go through `next/image`, never a raw `<img>`, and must have
+`alt` text. Use WebP or AVIF for stills. Use muted looping video for
+motion — never GIF.
+
+SVG assets are written directly into the component that uses them, as
+markup. Do not route SVG through `next/image`: that requires enabling
+`dangerouslyAllowSVG`, and we are not turning it on.
 
 ## Before saying you are done
 
