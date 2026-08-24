@@ -1,3 +1,13 @@
+# pQuadrant website
+
+The sign-in entry point for the pQuadrant platform. It is a single
+full-screen page: a rotating point-cloud globe drawn on a canvas, with a
+sign-in panel over it. There are no other pages, no navigation, and no
+scrolling content — a visitor either signs in to the platform or they do
+not.
+
+Built with Next.js 16 (App Router), TypeScript, and Tailwind 4.
+
 Folders under `src/` are created as they are first needed, so some may not
 exist yet. Conventions for what belongs where are in [AGENTS.md](AGENTS.md).
 
