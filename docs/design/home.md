@@ -231,13 +231,25 @@ specification covers this — see _Related files_.
 
 ## Window size behaviour
 
-**Short windows.** When the window height falls below **700px**, the stage stops
-centring its content and allows the page to scroll normally. The motif remains fixed
-behind the scrolling content.
+**Short windows.** The stage is at least the height of the window, and taller only when
+something on it does not fit. In practice that means one case: the panel is open on a
+window too short to hold it and its clearance. Then the page scrolls, which is correct
+behaviour — clipping is not, and content must never be silently cut off. The motif
+remains fixed behind the scrolling content.
 
-700px is the panel's height plus its 64px clearance above and below. Above this
-threshold everything fits and is centred. Below it, scrolling is correct behaviour and
-clipping is not: content must never be silently cut off.
+**With the panel closed the page does not scroll at any window size.** There is no
+content below the fold on this page, so a scroll with nothing on screen that needs it is
+revealing empty room reserved for something that is not there. This matters most on a
+phone, where every window is shorter than the panel and the reservation would otherwise
+apply always. It is also what keeps the corner chrome in place: the chrome is positioned
+in the document and the motif is fixed, so any scroll slides the frame across the
+instrument.
+
+**The clearance is the padding.** The stage does not compute a minimum height from the
+panel's height. It reserves 64px above and below its content and lets the content decide
+the rest, so the panel keeps its clearance without the stage needing to know how tall the
+panel is. A stated minimum said the same thing a second time and the two could disagree —
+and would, the moment the panel's height changed.
 
 **Wide windows.** No maximum width. Chrome remains pinned to the window corners at the
 margins described above. The motif is capped as described above, so on very wide

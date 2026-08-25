@@ -77,13 +77,6 @@
      `docs/design/home.md`. Below it the motif is min(width, height) x 0.88. */
   --spacing-motif-max: 792px;
 
-  /* The height at which the stage stops centring its content and lets the page
-     scroll: the panel plus its clearance above and below. Both the centring and
-     the scroll fallback are driven by this one value. */
-  --spacing-stage-min-height: calc(
-    var(--spacing-panel-height) + 2 * var(--spacing-stage-margin)
-  );
-
   /* The width below which the horizontal margin tightens. */
   --breakpoint-stage: 1100px;
 
