@@ -6,6 +6,7 @@ import { BottomLeftCluster } from "@/components/chrome/BottomLeftCluster";
 import { BottomRightCluster } from "@/components/chrome/BottomRightCluster";
 import { TopLeftCluster } from "@/components/chrome/TopLeftCluster";
 import { TopRightCluster } from "@/components/chrome/TopRightCluster";
+import { Globe } from "@/components/globe/Globe";
 import { Stage } from "@/components/stage/Stage";
 import { homeContent } from "@/content/home";
 
@@ -21,6 +22,7 @@ export default function HomePage() {
 
   return (
     <Stage
+      motif={<Globe />}
       topLeft={<TopLeftCluster content={chrome.topLeft} />}
       topRight={
         <TopRightCluster
