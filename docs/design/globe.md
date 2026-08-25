@@ -9,7 +9,7 @@ and the layers above and below it.
 
 This file is longer than the others and different in kind. The other surfaces can be
 matched against a screenshot. This one cannot: nothing about an even distribution of
-nine thousand points across a sphere is recoverable by looking at a picture of it. The
+fifteen thousand points across a sphere is recoverable by looking at a picture of it. The
 numbers and methods below are the specification.
 
 ---
@@ -34,7 +34,7 @@ that knows nothing about React, forms, or authentication. See _Module contract_.
 
 ## Terms
 
-**Point** — one of the ~9,000 dots. Drawn as an axis-aligned square, never a circle.
+**Point** — one of the ~15,000 dots. Drawn as an axis-aligned square, never a circle.
 
 **Land point / ocean point** — a point whose position falls over land, or not.
 Determined once at generation time and never recomputed.
@@ -80,47 +80,88 @@ longitude = atan2(y, x)
 latitude  = asin(clamp(z, −1, 1))
 ```
 
-are tested against a land bitmask, described below.
+are tested against the land geometry described below.
+
+### The land test
+
+Source geometry is Natural Earth 50m land, taken from the `world-atlas` package as
+TopoJSON and converted to GeoJSON. The coordinate is tested against the land polygons
+directly, as spherical polygons, with `d3-geo`'s `geoContains`.
+
+It is not rasterised into a bitmask first. A 2048 × 1024 mask has cells about 0.18°
+across, which is coarser than the coastline detail the source geometry carries, and
+quantising to it costs small islands for no benefit — the polygon test is exact at any
+resolution and runs once, at build time, where its cost does not matter.
+
+`geoContains` treats rings as spherical polygons, so Antarctica and polygons crossing
+the antimeridian are handled without special cases, and polygon holes — inland lakes —
+correctly read as ocean. A per-polygon spherical bounding box, from `geoBounds`, rejects
+most of the 1,419 polygons before the containment test runs.
 
 ### Land and ocean balance
 
-Land covers roughly 29% of the sphere, but the design wants **64% land points and 36%
-ocean points**, so the continents read clearly instead of being lost in a uniform fuzz.
+Natural Earth 50m land covers **28.748%** of the sphere, but the design wants **64% land
+points and 36% ocean points**, so the continents read clearly instead of being lost in a
+uniform fuzz.
 
-This is achieved by generating more candidate points than are needed and discarding most
-of the ocean ones:
+This is achieved by generating more candidate points than are needed, classifying all of
+them, and then thinning each class to its target:
 
 ```
 landTarget  = round(N × 0.64)
 oceanTarget = N − landTarget
-total       = ceil(landTarget / 0.29)
-oceanStep   = max(1, round((total × 0.71) / oceanTarget))
+coverage    = area of the land geometry ÷ 4π
+total       = ceil((landTarget / coverage) × 1.02)
 ```
 
-Walking the candidates in order: every land point is kept until `landTarget` is
-reached, and every `oceanStep`-th ocean point is kept until `oceanTarget` is reached.
-Everything else is discarded.
+Every candidate is classified, and each class is then thinned by taking the `k`-th kept
+point from position `floor(k × available / target)` of that class, for `k` from `0` to
+`target − 1`.
 
-The even distribution is preserved within each group because the discards are regular
+Two properties of this are load-bearing:
+
+**The coverage figure is measured, not assumed.** It comes from the spherical area of
+the source geometry, so replacing the geometry cannot silently undersize the candidate
+pool. The 1.02 margin covers the few tenths of a percent by which Fibonacci sampling of
+the geometry varies from its true area; if even that is not enough, the pool grows and
+the pass repeats.
+
+**The stride spans the whole candidate list.** Keeping every n-th point until the target
+is met instead would stop partway through the walk, and because the walk runs from one
+pole to the other, that empties a cap of the sphere. Thinning across the full list keeps
+both classes present at every latitude.
+
+The even distribution is preserved within each class because the discards are regular
 rather than random.
 
-`N` is **9,000**. This is a floor, not a ceiling. It may be tuned upward toward 15,000
-while watching frame time on the slowest machine that has to run it.
+`N` is **15,000**.
 
-### The land bitmask
+This number is not yet confirmed. It was set at 9,000, with 15,000 named as the ceiling
+to test toward while watching frame time; it was raised to that ceiling before the
+renderer existed, so the measurement it is conditioned on has not happened. When the
+globe first draws, check 60fps at 15,000 on the slowest machine in the team, and drop
+back toward 9,000 if it does not hold. Do not raise it further without that number.
 
-Source geometry is Natural Earth 50m land, rendered into a **2048 × 1024**
-equirectangular bitmask: the land polygons filled white on a black field, then reduced
-to one bit per pixel with a threshold at a red channel value above 110.
+### What the point count does and does not buy
 
-Sampling a coordinate against the mask:
+At 15,000 the land points sit about **1.1°** apart, and that spacing is what decides
+which islands exist.
 
-```
-u = floor(((longitude + π) / 2π) × 2048)
-v = floor(((π/2 − latitude) / π) × 1024)
-```
+Islands from roughly 1.5° across up are reliable: Iceland, Sri Lanka, Hispaniola,
+Hokkaido, Svalbard, Tasmania. Islands well under 1° never appear, and no affordable
+point count recovers them — at 160,000 points, eighteen times the frame budget the
+design targets, Tahiti and Malta are still missing. Treat the Azores, the Faroes, Crete,
+Cape Verde and Malta as permanently absent.
 
-both clamped to the mask bounds.
+Between those sizes it is a lottery, and it re-rolls whenever `N` changes, because a
+different candidate total moves every point on the sphere rather than adding to the
+existing ones. Going from 9,000 to 15,000 gained Hawaii and lost the Falklands, the
+Galápagos and the Solomons. That is expected behaviour, not a regression.
+
+So the point count is the wrong instrument for making a particular island appear. If one
+ever has to be present — a marker anchoring to it, a client region — the generator would
+need to place it deliberately, by forcing a point onto any landmass above some area that
+the sampling missed. Nothing does that today.
 
 ### Generation happens at build time, not in the browser
 
@@ -142,12 +183,32 @@ cannot render correctly if an external CDN is unavailable.
 changes.
 
 Instead: generate the point set once, in a script committed to the repository, and ship
-the result as a compact data file. Positions and the land flag are all that is needed at
-runtime. No mapping library reaches the browser, there is no fetch, and the first
-assemble is the only assemble.
+the result as a compact data file. No mapping library reaches the browser, there is no
+fetch, and the first assemble is the only assemble.
+
+**What is stored.** Only the surviving candidate indices, as gaps between consecutive
+indices, LEB128 varint encoded and base64'd into a generated TypeScript module, land and
+ocean in separate streams so the flag is implicit in which stream a point came from.
+That is about 20KB of source for 15,000 points, against roughly 180KB for the positions
+themselves.
+
+**Where positions come from.** They are rebuilt at runtime from those indices by the same
+module the generator used to place the candidates, `src/lib/globe/fibonacci-sphere.ts`.
+Placement exists in exactly one function, so the stored classification and the drawn
+position cannot come to describe different points on the sphere.
+
+| File                                   | Role                                         |
+| -------------------------------------- | -------------------------------------------- |
+| `scripts/generate-globe-points.mts`    | The generator. `npm run generate:globe`      |
+| `src/lib/globe/fibonacci-sphere.ts`    | Placement. Used by the generator and runtime |
+| `src/lib/globe/point-set.generated.ts` | Generated data. Not edited by hand           |
+| `src/lib/globe/point-set.ts`           | Decodes the data into typed arrays           |
 
 The generation script is part of the codebase and re-runnable, so changing the point
-count or the source geometry is a build step rather than a rewrite.
+count (`npm run generate:globe -- --count 12000`) or the source geometry is a build step
+rather than a rewrite. It takes an optional `--chart <path>` that writes an
+equirectangular plot of the result, for confirming by eye that the continents are where
+they should be.
 
 ---
 
@@ -218,14 +279,14 @@ inspection and is part of the look.
 ### Opacity bucketing
 
 Canvas cannot vary opacity within a single fill, and changing it per point would mean
-9,000 separate draw calls.
+15,000 separate draw calls.
 
 Instead, opacity is quantised into **10 buckets**. Every point is assigned to the bucket
 matching its computed alpha, each bucket is drawn as one path containing all its
 rectangles, and the whole path is filled once at that bucket's opacity, which is
 `(bucketIndex + 0.5) / 10`.
 
-This reduces roughly 9,000 draw calls to 20: ten land buckets and ten ocean buckets. The
+This reduces roughly 15,000 draw calls to 20: ten land buckets and ten ocean buckets. The
 ocean pass applies an additional ×1.15 to the bucket opacity.
 
 Ten buckets is enough that the banding is invisible at these point sizes. Do not reduce
@@ -438,7 +499,7 @@ the impression of features that do not exist.
 
 ## Performance
 
-Target 60 frames per second at 9,000 points on the slowest machine in the team.
+Target 60 frames per second at 15,000 points on the slowest machine in the team.
 
 The techniques that make this achievable, all of which are load-bearing:
 

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "generate:globe": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-globe-points.mts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -18,14 +19,20 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3-geo": "^3.1.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
+    "d3-geo": "^3.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "topojson-client": "^3.1.0",
+    "typescript": "^5",
+    "world-atlas": "^2.0.2"
   }
 }
