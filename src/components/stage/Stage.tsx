@@ -51,16 +51,23 @@ export function Stage({
           while a sign-in attempt is processing, which nothing triggers yet. */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(42%_46%_at_50%_50%,var(--color-bloom-core)_0%,var(--color-bloom-mid)_46%,var(--color-bloom-edge)_78%)] opacity-0 mix-blend-screen transition-opacity duration-bloom ease-out motion-reduce:hidden" />
 
-      {/* The panel region. Above the stage's minimum height the panel is
-          centred in the window. Below it the region holds at that height, so
-          the page scrolls rather than clipping and the clearance survives. One
-          value drives both, so there is no threshold to cross while resizing
-          and nothing jumps.
+      {/* The panel region. It is at least the height of the window, and grows
+          past it only when something inside it does not fit — which means the
+          page scrolls when the panel is open on a short window, and does not
+          scroll at all when the panel is closed. There is nothing below the
+          fold on this page, so a page that scrolls with the panel shut is
+          revealing empty room reserved for something that is not on screen.
+
+          The clearance is the padding, and only the padding. An explicit
+          minimum height computed from the panel's height said the same thing a
+          second time, and the two could disagree; the region sizes itself to
+          its contents, so the padding alone keeps the panel off the window
+          edges without anything needing to know how tall the panel is.
 
           The region spans the stage, so it is inert for the same reason the
           corner regions are: were it not, it would take every click meant for
           the motif. The panel opts back in. */}
-      <div className="pointer-events-none relative flex min-h-[max(100dvh,var(--spacing-stage-min-height))] items-center justify-center py-stage-margin">
+      <div className="pointer-events-none relative flex min-h-dvh items-center justify-center py-stage-margin">
         {children}
       </div>
 
