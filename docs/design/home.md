@@ -116,6 +116,25 @@ This layer is suppressed entirely when the user has requested reduced motion.
 Layers 1, 2, 4 and 5 must not intercept pointer events. Only the canvas and the chrome
 and panel above it are interactive.
 
+**Colour scheme**
+
+There is no light mode. The stage fill is the surface colour in every condition, and
+the page does not respond to the operating system's colour scheme preference.
+
+The document declares a dark colour scheme, so the parts of the page the browser draws
+rather than the stylesheet — scrollbars, form controls, focus rings, and the background
+the browser paints behind an autofilled field — are drawn dark. Autofill is the reason
+this is not optional: the panel's fields must accept password managers, and a browser
+filling them paints its own near-white background over the field, which no rule in the
+stylesheet can override.
+
+**Reach of the stage fill**
+
+The stage fill must cover the document, not only the element that draws the other four
+layers. Overscrolling past the top or bottom edge exposes the document's background, so
+a fill applied to the stage element alone leaves a white band at the point of the
+rubber-band. The same applies to the scrolling case described under _Short windows_.
+
 **Prohibited on the stage**
 
 No curvature, no displacement or SVG filters, no scanline texture, no noise or grain,
