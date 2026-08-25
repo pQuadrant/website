@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { BottomLeftCluster } from "@/components/chrome/BottomLeftCluster";
 import { BottomRightCluster } from "@/components/chrome/BottomRightCluster";
 import { TopLeftCluster } from "@/components/chrome/TopLeftCluster";
 import { TopRightCluster } from "@/components/chrome/TopRightCluster";
 import { Globe } from "@/components/globe/Globe";
+import { useClearZone } from "@/components/globe/use-clear-zone";
 import { Stage } from "@/components/stage/Stage";
 import { homeContent } from "@/content/home";
 
@@ -18,11 +19,16 @@ export default function HomePage() {
   // shared state lives here, at the nearest parent of both.
   const [panelOpen, setPanelOpen] = useState(false);
 
+  // The panel's footprint, measured here and handed to the motif as four
+  // numbers. Measuring belongs to whoever renders the panel; see the hook.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const clearZone = useClearZone(panelRef, panelOpen);
+
   const { chrome } = homeContent;
 
   return (
     <Stage
-      motif={<Globe />}
+      motif={<Globe clearZone={clearZone} />}
       topLeft={<TopLeftCluster content={chrome.topLeft} />}
       topRight={
         <TopRightCluster
@@ -42,6 +48,7 @@ export default function HomePage() {
            see `docs/design/sign-in-panel.md`. */
         <div
           id={PANEL_ID}
+          ref={panelRef}
           className="pointer-events-auto h-panel-height w-panel-width border border-line-panel bg-panel"
         />
       )}

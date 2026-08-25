@@ -44,12 +44,63 @@ const TAU = Math.PI * 2;
 
 export type GlobeStatus = "idle" | "loading" | "error";
 
-/** A rectangle inside which points are dimmed, in CSS pixels. */
+/**
+ * A rectangle inside which points are dimmed, in viewport CSS pixels.
+ *
+ * Viewport rather than canvas coordinates because that is what whoever owns the
+ * panel can measure without knowing where the canvas sits. The projection
+ * subtracts the canvas origin once a frame.
+ */
 export interface ClearZone {
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+/** How far the zone reaches beyond the panel's footprint, on every side. */
+const CLEAR_ZONE_MARGIN = 26;
+
+/**
+ * Turns a measured panel footprint into the zone.
+ *
+ * The margin is a property of the motif rather than of the panel, so it lives
+ * here; the caller measures an element and passes the rectangle in. This is the
+ * whole of the module's knowledge of the panel: four numbers, and no way back.
+ */
+export function expandToClearZone(rect: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): ClearZone {
+  return {
+    x: rect.x - CLEAR_ZONE_MARGIN,
+    y: rect.y - CLEAR_ZONE_MARGIN,
+    width: rect.width + CLEAR_ZONE_MARGIN * 2,
+    height: rect.height + CLEAR_ZONE_MARGIN * 2,
+  };
+}
+
+/**
+ * Whether a viewport point falls inside the zone.
+ *
+ * Used once a frame, for the cursor. The projection tests the same rectangle
+ * against fifteen thousand points and hoists its edges into locals rather than
+ * calling this.
+ */
+function insideClearZone(
+  zone: ClearZone | null,
+  x: number,
+  y: number,
+): boolean {
+  return (
+    zone !== null &&
+    x >= zone.x &&
+    x <= zone.x + zone.width &&
+    y >= zone.y &&
+    y <= zone.y + zone.height
+  );
 }
 
 /** What each status eases toward. `dotGlow` is not here; it follows focus. */
@@ -87,6 +138,8 @@ const GLOW_RATE_RISING = 5;
 const GLOW_RATE_FALLING = 2.6;
 const DOT_GLOW_RATE_RISING = 6;
 const DOT_GLOW_RATE_FALLING = 3;
+const INFLUENCE_RATE_RISING = 7;
+const INFLUENCE_RATE_FALLING = 3.4;
 const TILT_RATE = 3.2;
 
 /** Everything that varies between frames. */
@@ -109,6 +162,22 @@ export interface GlobeState {
   assembleElapsed: number;
   /** Seconds left on the error state's self-clearing hold. */
   errorHold: number;
+  /**
+   * Milliseconds the globe has been running, accumulated from clamped frame
+   * deltas rather than read from the clock.
+   *
+   * It drives the cursor scatter's rotary drift and nothing else, so a tab that
+   * spent ten minutes in the background resuming ten minutes behind the wall
+   * clock is not a defect: what matters is that the phase advances smoothly.
+   */
+  elapsed: number;
+  /** Cursor position, in viewport CSS pixels. Meaningless while inactive. */
+  pointerX: number;
+  pointerY: number;
+  /** Whether the cursor is over the canvas at all. */
+  pointerActive: boolean;
+  /** How strongly the cursor disturbs the points, 0 to 1. Eases. */
+  influence: number;
   clearZone: ClearZone | null;
   status: GlobeStatus;
   focused: boolean;
@@ -128,6 +197,11 @@ export function createGlobeState(): GlobeState {
     assemble: 0,
     assembleElapsed: 0,
     errorHold: 0,
+    elapsed: 0,
+    pointerX: 0,
+    pointerY: 0,
+    pointerActive: false,
+    influence: 0,
     clearZone: null,
     status: "idle",
     focused: false,
@@ -181,6 +255,30 @@ export function applyStatus(state: GlobeState, status: GlobeStatus): void {
   state.errorHold = status === "error" ? ERROR_HOLD_SECONDS : 0;
 }
 
+/** Records where the cursor is. The listener is `globe.ts`'s business. */
+export function setPointer(state: GlobeState, x: number, y: number): void {
+  state.pointerX = x;
+  state.pointerY = y;
+  state.pointerActive = true;
+}
+
+/** The cursor has left the canvas; the disturbance eases away rather than cutting. */
+export function clearPointer(state: GlobeState): void {
+  state.pointerActive = false;
+}
+
+/**
+ * The cursor disturbs the points only while it is over the canvas and outside
+ * the zone. The globe does not react to the cursor while the visitor is filling
+ * in the form.
+ */
+function influenceTarget(state: GlobeState): number {
+  const reacting =
+    state.pointerActive &&
+    !insideClearZone(state.clearZone, state.pointerX, state.pointerY);
+  return reacting ? 1 : 0;
+}
+
 /** Point bloom follows focus, and is suppressed while processing. */
 function dotGlowTarget(state: GlobeState): number {
   return state.focused && state.status !== "loading" ? 1 : 0;
@@ -209,9 +307,12 @@ export function advance(state: GlobeState, delta: number): void {
     state.assemble = 1 - (1 - t) ** 3;
   }
 
+  state.elapsed += step * 1000;
+
   const target = TARGETS[state.status];
   const processing = state.status === "loading";
   const dotGlow = dotGlowTarget(state);
+  const influence = influenceTarget(state);
 
   state.spin = ease(
     state.spin,
@@ -236,6 +337,14 @@ export function advance(state: GlobeState, delta: number): void {
     state.dotGlow,
     dotGlow,
     dotGlow > state.dotGlow ? DOT_GLOW_RATE_RISING : DOT_GLOW_RATE_FALLING,
+    step,
+  );
+  state.influence = ease(
+    state.influence,
+    influence,
+    influence > state.influence
+      ? INFLUENCE_RATE_RISING
+      : INFLUENCE_RATE_FALLING,
     step,
   );
   state.tilt = ease(state.tilt, TILT, TILT_RATE, step);
@@ -275,4 +384,6 @@ export function snap(state: GlobeState): void {
   state.dim = target.dim;
   state.glow = target.glow;
   state.dotGlow = dotGlowTarget(state);
+  // Reduced motion has no scatter to settle: there is no pointer listener.
+  state.influence = 0;
 }

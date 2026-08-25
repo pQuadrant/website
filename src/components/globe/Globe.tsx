@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 
 import { attachStateKeys } from "@/components/globe/state-keys";
-import { createGlobe } from "@/lib/globe/globe";
+import { type GlobeHandle, createGlobe } from "@/lib/globe/globe";
+import type { ClearZone } from "@/lib/globe/state";
 
 /**
  * Owns the canvas the motif is drawn on, and nothing else.
@@ -15,10 +16,21 @@ import { createGlobe } from "@/lib/globe/globe";
  *
  * Nothing here re-renders the globe. Other elements on the page update on their
  * own schedules — the clock every second, the form on every keystroke — and none
- * of that may reach the render loop.
+ * of that may reach the render loop. A new clear zone re-renders this component
+ * and calls one method; the canvas is not recreated and the loop never learns
+ * that React ran.
  */
-export function Globe() {
+interface GlobeProps {
+  /**
+   * Where the panel sits, or null when it is closed. Four numbers: the globe
+   * is told nothing else about it.
+   */
+  clearZone?: ClearZone | null;
+}
+
+export function Globe({ clearZone = null }: GlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const globeRef = useRef<GlobeHandle | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,6 +43,8 @@ export function Globe() {
         ocean: styles.getPropertyValue("--color-ocean").trim(),
       },
     });
+
+    globeRef.current = globe;
 
     const observer = new ResizeObserver(() => globe.resize());
     observer.observe(canvas);
@@ -47,8 +61,14 @@ export function Globe() {
       detachStateKeys(); // SCAFFOLDING
       observer.disconnect();
       globe.destroy();
+      globeRef.current = null;
     };
   }, []);
+
+  // Runs after the effect above on mount, so the handle is always there.
+  useEffect(() => {
+    globeRef.current?.setClearZone(clearZone);
+  }, [clearZone]);
 
   return (
     /* Decorative: it carries nothing a screen reader can use. */

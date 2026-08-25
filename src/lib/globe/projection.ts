@@ -30,6 +30,37 @@ const CLEAR_ZONE_ALPHA = 0.13;
 const LAND_SIZE = 1.1;
 const OCEAN_SIZE = 0.85;
 
+/** Cursor scatter: `max(70, min(width, height) x 0.13)`. */
+const SCATTER_RADIUS_FLOOR = 70;
+const SCATTER_RADIUS_FACTOR = 0.13;
+
+/** How the disturbance falls away from the cursor, and how hard it pushes. */
+const SCATTER_FALLOFF = 1.7;
+const SCATTER_PUSH = 0.34;
+
+/**
+ * The rotary drift: a slow individual wander, at `angle`, so the disturbed
+ * region shimmers rather than moving as a rigid blob.
+ *
+ * The turn is the specification's own rounding of a full circle. It is a phase
+ * spread over points that share a jitter value, not a rotation, so the fourth
+ * decimal buys nothing.
+ */
+const SCATTER_DRIFT = 9;
+const SCATTER_DRIFT_RATE = 0.0016;
+const SCATTER_JITTER_TURN = 6.283;
+const SCATTER_INDEX_PHASE = 0.7;
+
+/** Displaced points are brightened by this much of their falloff. */
+const SCATTER_BRIGHTNESS = 1.5;
+
+/**
+ * Below this influence the furthest a point could move is a fiftieth of a
+ * pixel, so the whole pass is skipped and a settled globe pays one comparison a
+ * frame for it.
+ */
+const INFLUENCE_FLOOR = 0.0005;
+
 /** The canvas as the projection sees it, in CSS pixels. */
 export interface GlobeView {
   width: number;
@@ -37,6 +68,15 @@ export interface GlobeView {
   centreX: number;
   centreY: number;
   radius: number;
+  /**
+   * Where the canvas's top left corner sits in the viewport.
+   *
+   * The cursor and the clear zone both arrive in viewport coordinates, because
+   * that is what the page outside can measure. This is what converts them, and
+   * it is the only reason the module knows where its canvas is.
+   */
+  originX: number;
+  originY: number;
 }
 
 /**
@@ -120,7 +160,7 @@ function projectRange(
   buckets: number[][],
 ): void {
   const { positions } = points;
-  const { scatter } = field;
+  const { scatter, jitter } = field;
 
   const cosYaw = Math.cos(state.yaw);
   const sinYaw = Math.sin(state.yaw);
@@ -131,7 +171,26 @@ function projectRange(
   const sizeGlow = 1 + 0.3 * state.glow + 0.22 * state.dotGlow;
   const alphaGlow = 1 + 0.5 * state.glow + 0.55 * state.dotGlow;
   const arrival = 0.35 + 0.65 * state.assemble;
+
+  // The zone and the cursor arrive in viewport coordinates and are compared
+  // against canvas ones, so both are converted here rather than per point.
   const zone = state.clearZone;
+  const zoneLeft = zone === null ? 0 : zone.x - view.originX;
+  const zoneTop = zone === null ? 0 : zone.y - view.originY;
+  const zoneRight = zoneLeft + (zone === null ? 0 : zone.width);
+  const zoneBottom = zoneTop + (zone === null ? 0 : zone.height);
+
+  const scattering = state.influence > INFLUENCE_FLOOR;
+  const scatterRadius = Math.max(
+    SCATTER_RADIUS_FLOOR,
+    Math.min(view.width, view.height) * SCATTER_RADIUS_FACTOR,
+  );
+  // Compared against the squared distance, so the square root is taken only for
+  // the few hundred points that are actually within reach.
+  const scatterReach = scatterRadius * scatterRadius;
+  const pointerX = state.pointerX - view.originX;
+  const pointerY = state.pointerY - view.originY;
+  const drift = state.elapsed * SCATTER_DRIFT_RATE;
 
   // Once the sphere has settled the blend below is the identity, so the whole
   // branch drops out for the rest of the globe's life.
@@ -167,17 +226,42 @@ function projectRange(
       alphaGlow *
       alphaScale;
 
-    const x = view.centreX + (-ax * sinYaw + ay * cosYaw) * radius;
-    const y =
+    let x = view.centreX + (-ax * sinYaw + ay * cosYaw) * radius;
+    let y =
       view.centreY -
       (-ax * sinTilt * cosYaw - ay * sinTilt * sinYaw + az * cosTilt) * radius;
 
+    if (scattering) {
+      const dx = x - pointerX;
+      const dy = y - pointerY;
+      const reach = dx * dx + dy * dy;
+
+      // The point sitting exactly under the cursor has no direction to be
+      // pushed in, and dividing by its distance would produce one.
+      if (reach < scatterReach && reach > 0) {
+        const distance = Math.sqrt(reach);
+        const falloff =
+          (1 - distance / scatterRadius) ** SCATTER_FALLOFF * state.influence;
+        const push = falloff * scatterRadius * SCATTER_PUSH;
+        const angle =
+          jitter[index] * SCATTER_JITTER_TURN +
+          drift +
+          index * SCATTER_INDEX_PHASE;
+
+        x += (dx / distance) * push + Math.cos(angle) * falloff * SCATTER_DRIFT;
+        y += (dy / distance) * push + Math.sin(angle) * falloff * SCATTER_DRIFT;
+        alpha *= 1 + falloff * SCATTER_BRIGHTNESS;
+      }
+    }
+
+    // Tested where the point is drawn rather than where it started, so one
+    // pushed across the boundary dims with the rest of the rectangle.
     if (
       zone !== null &&
-      x >= zone.x &&
-      x <= zone.x + zone.width &&
-      y >= zone.y &&
-      y <= zone.y + zone.height
+      x >= zoneLeft &&
+      x <= zoneRight &&
+      y >= zoneTop &&
+      y <= zoneBottom
     ) {
       alpha *= CLEAR_ZONE_ALPHA;
     }
