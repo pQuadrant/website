@@ -31,6 +31,7 @@
   --color-accent-bright: #4e9bfb;
   --color-signal: #3183f5;
   --color-land: #5fd98f;
+  --color-ocean: #4e9bfb;
 
   /* Type roles. Each carries its own letter-spacing; pair with font-sans or
      font-mono, which Tailwind cannot fold into a text token. */

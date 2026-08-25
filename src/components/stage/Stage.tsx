@@ -11,6 +11,8 @@ import type { ReactNode } from "react";
  * white band where an overscroll rubber-bands past the top or bottom edge.
  */
 interface StageProps {
+  /** The motif, layer three, spanning the stage behind everything above it. */
+  motif?: ReactNode;
   /** The chrome clusters, pinned at the four corners. */
   topLeft?: ReactNode;
   topRight?: ReactNode;
@@ -21,6 +23,7 @@ interface StageProps {
 }
 
 export function Stage({
+  motif,
   topLeft,
   topRight,
   bottomLeft,
@@ -33,18 +36,11 @@ export function Stage({
           black. If it reads as a distinct glow, it is too strong. */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(46%_52%_at_50%_50%,var(--color-centre-lift)_0%,transparent_72%)]" />
 
-      {/* Layer 3 — motif canvas. Fixed, so it stays put behind the scrolling
-          content in a short window.
-
-          SCAFFOLDING: empty, and sized to the motif's own box rather than to
-          the whole stage, so the radius rule and its 396px cap are observable
-          while there is nothing drawn on it. The hairline is here for the same
-          reason. When the globe lands the canvas spans the stage and the radius
-          becomes a drawing parameter — see `docs/design/globe.md`. */}
-      <canvas
-        aria-hidden="true"
-        className="fixed top-1/2 left-1/2 size-[min(88dvmin,var(--spacing-motif-max))] -translate-x-1/2 -translate-y-1/2 border border-line-chrome"
-      />
+      {/* Layer 3 — the motif. Its canvas spans the stage and is fixed, so it
+          stays put behind the scrolling content in a short window. The radius
+          is a drawing parameter inside the module, not the size of the element
+          — see `docs/design/globe.md`. */}
+      {motif}
 
       {/* Layer 4 — vignette. Above the canvas, so it darkens the motif's outer
           edge as well as the background, which is what keeps the corner chrome
