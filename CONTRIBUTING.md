@@ -173,9 +173,38 @@ npm run format
 npm run lint
 npm run typecheck
 npm run build
+npm ci --dry-run
 ```
 
 CI runs these anyway. Running them locally saves a round trip.
+
+**The last one only matters when you have touched dependencies, and it is
+the one that will catch you.** It checks that `package-lock.json` and
+`package.json` still agree, which is the first thing CI does — before any
+of the other four run.
+
+The other four cannot catch a broken lockfile, because they all run
+against the `node_modules` you already have, where nothing is missing.
+Only a resolver working from the lockfile alone sees the problem, and the
+runner is the only place that happens.
+
+The way it breaks is quiet. Installing a package on top of an existing
+`node_modules` can drop transitive dependencies of optional packages that
+do not install on your platform. Your local tree still works, the
+lockfile you commit does not, and CI dies at install with a wall of npm
+usage text that does not obviously say "your lockfile is short three
+entries". If that happens:
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
+A resolve from scratch keeps what an incremental install pruned.
+
+There is also a free tell, before you push anything. **A commit that adds
+a dependency should only add lines to `package-lock.json`.** If
+`git diff main -- package-lock.json` shows packages being _removed_,
+something was pruned that you did not mean to prune.
 
 ## Secrets
 
