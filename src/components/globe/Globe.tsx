@@ -71,11 +71,24 @@ export function Globe({ clearZone = null }: GlobeProps) {
   }, [clearZone]);
 
   return (
-    /* Decorative: it carries nothing a screen reader can use. */
+    /* Decorative: it carries nothing a screen reader can use.
+
+       Sized to the large viewport rather than to 100%. A fixed element sized to
+       the layout viewport is resized by a mobile browser retracting its address
+       bar, which fires the ResizeObserver above and re-measures the globe part
+       way through a scroll — and on a short window the page does scroll, by
+       design. The large viewport is the one height that does not move during
+       that transition, and being the largest it also covers the stage in both
+       positions.
+
+       The width is set rather than inferred from left and right offsets. A
+       canvas is a replaced element, so an `auto` width resolves to its intrinsic
+       size — the backing store — and the backing store is computed from the
+       layout size, which is a loop that settles on the wrong number. */
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="fixed inset-0 size-full"
+      className="fixed top-0 left-0 h-lvh w-full"
     />
   );
 }

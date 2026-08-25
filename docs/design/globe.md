@@ -402,8 +402,22 @@ Displaced points are also brightened: `alpha × (1 + falloff × 1.5)`.
 zone, and 0 when the pointer leaves the canvas entirely. The globe does not react to the
 cursor while the visitor is filling in the form.
 
-The scatter is suppressed entirely under reduced motion, and no pointer listener is
-attached in that case.
+The scatter is suppressed entirely, with no pointer listener attached at all, in two
+cases: under reduced motion, and on an input that cannot hover.
+
+**Coarse pointers.** This effect is written for a cursor that passes over the canvas
+without touching it. A touch screen reports pointer events too, so left unguarded the
+scatter fires on a finger drag and blips on every tap — an effect designed around
+hovering, driven by an input that cannot hover. There is no cursor to follow, so there is
+nothing to draw. The condition is a fine pointer that supports hover.
+
+Do not set `touch-action` on the canvas to compensate. The canvas cancels no default
+behaviour, so with no listener attached there is nothing for a touch drag to fight, and
+a restrictive `touch-action` would break scrolling on the short windows where the page is
+specified to scroll.
+
+Both conditions are re-evaluated if they change while the page is open. A machine can
+change input without reloading: a tablet gains a trackpad, a laptop screen is touched.
 
 ---
 
@@ -430,7 +444,8 @@ When the visitor has requested reduced motion:
 - The globe paints a single static frame in its fully assembled state. No assemble
   animation.
 - No rotation. No animation frame loop runs at all.
-- No cursor scatter, and no pointer listener is attached.
+- No cursor scatter, and no pointer listener is attached. The same is true on a coarse
+  pointer, for its own reasons — see _Cursor interaction_.
 - State changes still apply their visual values — contract, dim, glow — but are painted
   immediately rather than eased.
 
@@ -520,8 +535,15 @@ Do not invent behaviour for any of the following. Stop and ask.
   supported by the approach, but nothing about marker appearance or behaviour is decided.
 - **Region focus.** Zooming to a country is planned and not designed.
 - **Hit testing.** Nothing on the globe is clickable yet.
-- **Any window narrower than 1024px.** No mobile behaviour has been decided, including
-  whether the point count is reduced.
+- **Whether the point count is reduced on a phone.** Still open, and deliberately so.
+  15,000 points costs 4–5ms of JavaScript per frame on the development machine, which
+  leaves no headroom on a CPU three to five times slower — but that is an inference, not
+  a measurement. Measure on real hardware before changing the count. A guessed reduction
+  is a worse globe for a saving nobody has confirmed exists.
+
+  Everything else about the motif on a narrow window is decided: the radius formula in
+  `docs/design/home.md` already scales it, and the canvas sizing rule is in that file
+  too.
 
 ---
 

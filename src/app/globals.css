@@ -65,6 +65,7 @@
   /* Stage geometry */
   --spacing-stage-margin: 64px;
   --spacing-stage-margin-narrow: 40px;
+  --spacing-stage-margin-tight: 24px;
   --spacing-panel-width: 400px;
 
   /* The panel's fixed height, from `docs/design/sign-in-panel.md`. Every state
@@ -85,6 +86,13 @@
 
   /* The width below which the horizontal margin tightens. */
   --breakpoint-stage: 1100px;
+
+  /* The width below which the chrome runs as columns rather than rows, and the
+     margin tightens a second time. A cluster laid out as a horizontal row above
+     this width becomes a vertical stack below it; see `docs/design/chrome.md`.
+     There are two breakpoints and there is no third: the page has one
+     composition and one reflow of it, not a ladder of device sizes. */
+  --breakpoint-row: 640px;
 
   /* Transitions */
   --transition-duration-hover: 160ms;

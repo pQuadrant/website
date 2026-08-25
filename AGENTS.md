@@ -84,6 +84,34 @@ it.
 If the code and the spec disagree, one of them is a bug. Fix whichever is
 wrong rather than working around the difference.
 
+## Viewports
+
+Every surface is built for every window it can be opened in. A phone is not
+a later phase of this site; it is the device most people will arrive on.
+
+Do not implement a surface whose narrow-window behaviour its spec does not
+cover. That is not permission to invent it — stop and ask, decide it, write
+it into `docs/design/`, and then build it. A spec that stops at the desktop
+composition is incomplete, and shipping against it produces a page that
+overlaps itself on a phone while every check passes.
+
+**320px is the narrowest window supported.** No fixed pixel width above that
+may be used without a stated fallback for windows narrower than it. A fixed
+width on a flexible element does not overflow — it silently shrinks past its
+own clearance, so nothing warns you and no scrollbar appears.
+
+Reflow is the lever, not scale. Nothing is hidden and no type is shrunk to
+make a narrow window fit; a group laid out as a row becomes a column — unless
+it holds two controls that still fit beside each other, which is a judgement
+the surface's spec records rather than a rule applied blindly.
+
+A coarse pointer is a different input, not a smaller cursor. Anything
+interactive needs a hit area of at least 44px and a state that responds to a
+tap — Tailwind confines `hover:` to devices that hover, so a control with
+only a hover state does nothing at all on a phone.
+
+The sizes to verify at are the table in `docs/design/home.md`.
+
 ## Types
 
 Component prop types live in the component file. Shared content types live
@@ -140,6 +168,12 @@ Check the diff too. **A change that adds a dependency should only add lines to
 being removed, something was pruned unintentionally — do not commit it. If
 `npm install` reports that it removed packages you did not ask it to remove,
 that is the same signal, and it is not dedupe.
+
+If the change touches layout, also check it at the window sizes in the table
+in `docs/design/home.md`, with a coarse pointer as well as a fine one. None
+of the five commands above can see a page overlapping itself: the chrome
+collided on a phone for as long as it did precisely because all of them were
+passing the whole time.
 
 ## Testing
 

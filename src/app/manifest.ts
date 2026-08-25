@@ -8,8 +8,13 @@ export default function manifest(): MetadataRoute.Manifest {
       "AI-powered software that helps businesses understand what is happening, act on it, and continuously improve.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#111111",
+    // Both are the stage fill. `background_color` is what the platform paints
+    // while a launch from the home screen is starting, so a white one flashes
+    // white before the dark page arrives. See the note in `layout.tsx`: this
+    // value is `--color-stage`, written out because a manifest cannot read a
+    // CSS custom property.
+    background_color: "#080a0f",
+    theme_color: "#080a0f",
     icons: [
       {
         src: "/web-app-manifest-192x192.png",

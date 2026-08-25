@@ -48,6 +48,16 @@ const MAX_PIXEL_RATIO = 1.5;
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
+/**
+ * The input the cursor scatter is written for.
+ *
+ * A touch screen reports pointer events too, so without this the scatter fires
+ * on a finger drag and blips on every tap — an effect designed around a cursor
+ * that hovers, driven by an input that cannot. There is no cursor to follow, so
+ * there is nothing to draw.
+ */
+const FINE_POINTER = "(hover: hover) and (pointer: fine)";
+
 export interface GlobeOptions {
   /** Point colours, read from the design tokens by whoever mounts the globe. */
   colours: GlobeColours;
@@ -95,6 +105,7 @@ export function createGlobe(
   };
 
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
+  const finePointer = window.matchMedia(FINE_POINTER);
 
   let animationFrame = 0;
   let running = false;
@@ -214,6 +225,21 @@ export function createGlobe(
   }
 
   /**
+   * Attaches the scatter's listener only when both conditions for it hold.
+   *
+   * Two reasons to have no listener rather than one feeding a disturbance that
+   * is never drawn: reduced motion, and an input that does not hover. Either is
+   * enough on its own, so they are decided in one place.
+   */
+  function applyPointerPreference(): void {
+    if (finePointer.matches && !reducedMotion.matches) {
+      attachPointer();
+    } else {
+      detachPointer();
+    }
+  }
+
+  /**
    * Switches between the running loop and a single static frame.
    *
    * Re-read on every change rather than once at start-up, so turning the
@@ -222,16 +248,19 @@ export function createGlobe(
   function applyMotionPreference(): void {
     if (reducedMotion.matches) {
       stopLoop();
-      detachPointer();
+      applyPointerPreference();
       settle();
     } else {
       clearErrorTimer();
-      attachPointer();
+      applyPointerPreference();
       startLoop();
     }
   }
 
   reducedMotion.addEventListener("change", applyMotionPreference);
+  // A hybrid machine can change input without reloading: a tablet gains a
+  // trackpad, a laptop screen is touched.
+  finePointer.addEventListener("change", applyPointerPreference);
 
   measure();
   applyMotionPreference();
@@ -265,6 +294,7 @@ export function createGlobe(
       detachPointer();
       clearErrorTimer();
       reducedMotion.removeEventListener("change", applyMotionPreference);
+      finePointer.removeEventListener("change", applyPointerPreference);
     },
   };
 }

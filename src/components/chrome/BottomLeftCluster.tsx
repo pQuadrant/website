@@ -12,7 +12,9 @@ interface BottomLeftClusterProps {
 
 export function BottomLeftCluster({ content }: BottomLeftClusterProps) {
   return (
-    <div className="flex gap-[40px] font-mono text-meta text-fg-3">
+    /* A row above the breakpoint, a column below it, on the same 7px rhythm the
+       top-left cluster stacks to. */
+    <div className="flex flex-col gap-[7px] font-mono text-meta text-fg-3 row:flex-row row:gap-[40px]">
       <p>{content.coreVersion}</p>
       <p>{content.transport}</p>
     </div>

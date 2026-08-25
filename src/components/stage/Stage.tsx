@@ -68,19 +68,30 @@ export function Stage({
           in them is the chrome's business. The two top offsets are optical and
           differ from each other by design — do not normalise them.
 
+          The horizontal margin has three tiers, tightening twice as the window
+          narrows. The bottom margin has one: only the horizontal margin moves,
+          because only the horizontal axis runs out of room.
+
+          The safe-area padding is added to the margin rather than substituted
+          for it. The margins are measured from the edge of the usable display,
+          and on a notched phone the notch and the home indicator move that edge
+          inward — so the design's 62px is 62px clear of the island, not 62px
+          from a point underneath it. On every display without an inset the
+          padding is zero and nothing moves.
+
           The regions are inert, so anything they hold sits over the motif
           without taking its clicks. A cluster with something interactive in it
           opts that element back in. */}
-      <div className="pointer-events-none absolute top-[62px] left-stage-margin-narrow stage:left-stage-margin">
+      <div className="pointer-events-none absolute top-[62px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin">
         {topLeft}
       </div>
-      <div className="pointer-events-none absolute top-[56px] right-stage-margin-narrow stage:right-stage-margin">
+      <div className="pointer-events-none absolute top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin">
         {topRight}
       </div>
-      <div className="pointer-events-none absolute bottom-stage-margin left-stage-margin-narrow stage:left-stage-margin">
+      <div className="pointer-events-none absolute bottom-stage-margin left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin">
         {bottomLeft}
       </div>
-      <div className="pointer-events-none absolute right-stage-margin-narrow bottom-stage-margin stage:right-stage-margin">
+      <div className="pointer-events-none absolute right-stage-margin-tight bottom-stage-margin pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] row:right-stage-margin-narrow stage:right-stage-margin">
         {bottomRight}
       </div>
     </main>
