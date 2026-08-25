@@ -31,8 +31,10 @@ import {
   type GlobeStatus,
   advance,
   applyStatus,
+  clearPointer,
   createGlobeState,
   createMotionField,
+  setPointer,
   snap,
 } from "@/lib/globe/state";
 
@@ -88,6 +90,8 @@ export function createGlobe(
     centreX: 0,
     centreY: 0,
     radius: 0,
+    originX: 0,
+    originY: 0,
   };
 
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
@@ -96,15 +100,21 @@ export function createGlobe(
   let running = false;
   let lastFrameTime = 0;
   let errorTimer: ReturnType<typeof setTimeout> | undefined;
+  let pointerAttached = false;
   let destroyed = false;
 
   function measure(): void {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
+    // Read once here rather than on every pointer event, which would be a
+    // layout read per mouse move.
+    const bounds = canvas.getBoundingClientRect();
 
     view.width = width;
     view.height = height;
+    view.originX = bounds.left;
+    view.originY = bounds.top;
     view.centreX = width / 2;
     view.centreY = height / 2;
     view.radius = motifRadius(width, height);
@@ -174,6 +184,35 @@ export function createGlobe(
     render();
   }
 
+  function onPointerMove(event: PointerEvent): void {
+    setPointer(state, event.clientX, event.clientY);
+  }
+
+  function onPointerLeave(): void {
+    clearPointer(state);
+  }
+
+  /**
+   * The cursor scatter's listener, attached only while motion is allowed.
+   *
+   * Under reduced motion there is no listener at all, rather than a listener
+   * feeding a disturbance that is never drawn.
+   */
+  function attachPointer(): void {
+    if (pointerAttached || destroyed) return;
+    pointerAttached = true;
+    canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerleave", onPointerLeave);
+  }
+
+  function detachPointer(): void {
+    if (!pointerAttached) return;
+    pointerAttached = false;
+    canvas.removeEventListener("pointermove", onPointerMove);
+    canvas.removeEventListener("pointerleave", onPointerLeave);
+    clearPointer(state);
+  }
+
   /**
    * Switches between the running loop and a single static frame.
    *
@@ -183,9 +222,11 @@ export function createGlobe(
   function applyMotionPreference(): void {
     if (reducedMotion.matches) {
       stopLoop();
+      detachPointer();
       settle();
     } else {
       clearErrorTimer();
+      attachPointer();
       startLoop();
     }
   }
@@ -221,6 +262,7 @@ export function createGlobe(
       if (destroyed) return;
       destroyed = true;
       stopLoop();
+      detachPointer();
       clearErrorTimer();
       reducedMotion.removeEventListener("change", applyMotionPreference);
     },
