@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { attachStateKeys } from "@/components/globe/state-keys";
 import { createGlobe } from "@/lib/globe/globe";
 
 /**
@@ -34,10 +35,16 @@ export function Globe() {
     const observer = new ResizeObserver(() => globe.resize());
     observer.observe(canvas);
 
+    // SCAFFOLDING: drives the states from the keyboard until the sign-in panel
+    // drives them for real. Delete this line, the one in the cleanup below, and
+    // `state-keys.ts`; see that file.
+    const detachStateKeys = attachStateKeys(globe);
+
     // Both halves matter: a fast refresh in development runs this cleanup and
     // then the effect again, and a globe that outlived it would leave a second
     // loop drawing to the same canvas.
     return () => {
+      detachStateKeys(); // SCAFFOLDING
       observer.disconnect();
       globe.destroy();
     };

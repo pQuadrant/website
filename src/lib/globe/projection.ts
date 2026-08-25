@@ -1,21 +1,17 @@
 /**
- * The globe's state and maths. Nothing here touches a canvas.
+ * The globe's maths. Nothing here touches a canvas, and nothing here decides
+ * what a value should be — `state.ts` owns that.
  *
- * This half owns point positions, the view, the eased state values and the
- * projection. It turns the point set into flat arrays of rectangles grouped by
- * opacity bucket, and `draw.ts` turns those into fills. Keeping the two apart is
- * what makes a later move to a graphics-card renderer a contained change rather
- * than a rebuild — see the module contract in `docs/design/globe.md`.
+ * It turns the point set into flat arrays of rectangles grouped by opacity
+ * bucket, and `draw.ts` turns those into fills.
  */
 
 import { COMPONENTS_PER_POINT } from "@/lib/globe/fibonacci-sphere";
 import type { GlobePointSet } from "@/lib/globe/point-set";
+import type { GlobeMotionField, GlobeState } from "@/lib/globe/state";
 
 /** Opacity buckets per pass. Ten is enough that the banding is invisible. */
 export const BUCKET_COUNT = 10;
-
-/** The tilt the sphere eases to and holds. */
-export const TILT = 0.16;
 
 /** Radius is this share of the smaller window dimension... */
 const RADIUS_FACTOR = 0.44;
@@ -33,56 +29,6 @@ const OCEAN_ALPHA = 0.95;
 const CLEAR_ZONE_ALPHA = 0.13;
 const LAND_SIZE = 1.1;
 const OCEAN_SIZE = 0.85;
-
-/** A rectangle inside which points are dimmed, in CSS pixels. */
-export interface ClearZone {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export type GlobeStatus = "idle" | "loading" | "error";
-
-/**
- * Everything that varies between frames.
- *
- * The values below the rotation are all pinned at their idle settings while the
- * sphere is static. They are read by the projection regardless, so the motion
- * ticket animates them rather than reworking the formulas.
- */
-export interface GlobeState {
-  yaw: number;
-  tilt: number;
-  /** Scales the radius. */
-  contract: number;
-  /** Scales opacity globally. */
-  dim: number;
-  /** Drives the halo and point bloom. */
-  glow: number;
-  /** Drives point bloom only. */
-  dotGlow: number;
-  /** Assemble easing, 0 scattered to 1 settled. */
-  assemble: number;
-  clearZone: ClearZone | null;
-  status: GlobeStatus;
-  focused: boolean;
-}
-
-export function createGlobeState(): GlobeState {
-  return {
-    yaw: 0,
-    tilt: TILT,
-    contract: 1,
-    dim: 1,
-    glow: 0,
-    dotGlow: 0,
-    assemble: 1,
-    clearZone: null,
-    status: "idle",
-    focused: false,
-  };
-}
 
 /** The canvas as the projection sees it, in CSS pixels. */
 export interface GlobeView {
@@ -124,6 +70,7 @@ export function motifRadius(width: number, height: number): number {
  */
 export function project(
   points: GlobePointSet,
+  field: GlobeMotionField,
   state: GlobeState,
   view: GlobeView,
   frame: GlobeFrame,
@@ -133,6 +80,7 @@ export function project(
 
   projectRange(
     points,
+    field,
     0,
     points.landCount,
     LAND_SIZE,
@@ -143,6 +91,7 @@ export function project(
   );
   projectRange(
     points,
+    field,
     points.landCount,
     points.count,
     OCEAN_SIZE,
@@ -161,6 +110,7 @@ function clear(buckets: number[][]): void {
 
 function projectRange(
   points: GlobePointSet,
+  field: GlobeMotionField,
   from: number,
   to: number,
   sizeScale: number,
@@ -170,6 +120,7 @@ function projectRange(
   buckets: number[][],
 ): void {
   const { positions } = points;
+  const { scatter } = field;
 
   const cosYaw = Math.cos(state.yaw);
   const sinYaw = Math.sin(state.yaw);
@@ -182,11 +133,24 @@ function projectRange(
   const arrival = 0.35 + 0.65 * state.assemble;
   const zone = state.clearZone;
 
+  // Once the sphere has settled the blend below is the identity, so the whole
+  // branch drops out for the rest of the globe's life.
+  const settling = state.assemble < 1;
+  const settled = state.assemble;
+
   for (let index = from; index < to; index += 1) {
     const offset = index * COMPONENTS_PER_POINT;
-    const ax = positions[offset];
-    const ay = positions[offset + 1];
-    const az = positions[offset + 2];
+    let ax = positions[offset];
+    let ay = positions[offset + 1];
+    let az = positions[offset + 2];
+
+    if (settling) {
+      // A linear blend from the scattered position to the sphere, on the eased
+      // value, so the deceleration is carried by the easing rather than here.
+      ax = scatter[offset] + (ax - scatter[offset]) * settled;
+      ay = scatter[offset + 1] + (ay - scatter[offset + 1]) * settled;
+      az = scatter[offset + 2] + (az - scatter[offset + 2]) * settled;
+    }
 
     const z = ax * cosTilt * cosYaw + ay * cosTilt * sinYaw + az * sinTilt;
 
