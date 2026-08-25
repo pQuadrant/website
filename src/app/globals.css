@@ -52,6 +52,39 @@
   --text-esc: 9px;
   --text-esc--letter-spacing: 0.22em;
 
+  /* Stage layer colours. The stage's five background layers compose with
+     gradients rather than flat fills, so each stop is a token of its own.
+     See `docs/design/home.md`. */
+  --color-centre-lift: rgba(168, 196, 240, 0.055);
+  --color-vignette: rgba(0, 0, 0, 0.6);
+  --color-bloom-core: rgba(49, 131, 245, 0.42);
+  --color-bloom-mid: rgba(79, 209, 131, 0.16);
+  --color-bloom-edge: rgba(49, 131, 245, 0);
+
+  /* Stage geometry */
+  --spacing-stage-margin: 64px;
+  --spacing-stage-margin-narrow: 40px;
+  --spacing-panel-width: 400px;
+
+  /* The panel's fixed height, from `docs/design/sign-in-panel.md`. Every state
+     it can enter fits inside it, so nothing on the page moves when the form's
+     contents change. */
+  --spacing-panel-height: 572px;
+
+  /* The motif's diameter ceiling: twice the 396px radius cap in
+     `docs/design/home.md`. Below it the motif is min(width, height) x 0.88. */
+  --spacing-motif-max: 792px;
+
+  /* The height at which the stage stops centring its content and lets the page
+     scroll: the panel plus its clearance above and below. Both the centring and
+     the scroll fallback are driven by this one value. */
+  --spacing-stage-min-height: calc(
+    var(--spacing-panel-height) + 2 * var(--spacing-stage-margin)
+  );
+
+  /* The width below which the horizontal margin tightens. */
+  --breakpoint-stage: 1100px;
+
   /* Transitions */
   --transition-duration-hover: 160ms;
   --transition-duration-control: 180ms;
