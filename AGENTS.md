@@ -116,9 +116,30 @@ npm run format
 npm run lint
 npm run typecheck
 npm run build
+npm ci --dry-run
 ```
 
 Do not report work as complete without running them.
+
+The last one is only relevant when you have added, removed or upgraded a
+dependency, and it is the one you will skip and regret. The other four run
+against the `node_modules` already installed, where nothing is missing, so none
+of them can see a broken lockfile. CI resolves from the lockfile alone and
+fails at the install step, before any of the other four get to run.
+
+Installing on top of an existing `node_modules` can silently drop transitive
+dependencies of optional packages that do not install on this platform. When
+that happens, resolve from scratch rather than patching:
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
+Check the diff too. **A change that adds a dependency should only add lines to
+`package-lock.json`.** If `git diff main -- package-lock.json` shows packages
+being removed, something was pruned unintentionally — do not commit it. If
+`npm install` reports that it removed packages you did not ask it to remove,
+that is the same signal, and it is not dedupe.
 
 ## Testing
 
