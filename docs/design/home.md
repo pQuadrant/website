@@ -80,6 +80,18 @@ if it reads as a distinct glow, it is too strong.
 A single `<canvas>` element filling the stage. Specified separately — see _Related
 files_.
 
+Its height is the **large viewport height** — the viewport with any retractable browser
+UI retracted — rather than the current viewport height. A mobile browser retracts its
+address bar as the page scrolls, and a canvas sized to the current viewport is resized
+by that, which re-measures the motif part way through a scroll. The large viewport is
+the one height that does not move during the transition, and being the largest it covers
+the stage in both positions.
+
+Its width must be set explicitly rather than inferred from left and right offsets. A
+canvas is a replaced element, so an `auto` width resolves to its intrinsic size — which
+is the backing store, which is computed from the layout size. That is a loop, and it
+settles on a width several hundred pixels wider than the window.
+
 The canvas must be marked as decorative for assistive technology, since it conveys no
 information a screen reader can use.
 
@@ -154,9 +166,30 @@ a shared grid line, because they contain type at different sizes and one of them
 bordered control. Their exact offsets are given in the chrome specification. Do not
 normalise them to a single value.
 
-Below **1100px** of window width the horizontal margin reduces to **40px**. Below that
-width the top-left and top-right chrome clusters begin closing on each other, and the
-wider margin runs them together.
+The horizontal margin has three tiers, and only the horizontal margin moves — the
+bottom margin is **64px** at every width, because only the horizontal axis runs out of
+room.
+
+| Window width     | Horizontal margin |
+| ---------------- | ----------------- |
+| 1100px and wider | 64px              |
+| 640px to 1100px  | 40px              |
+| Below 640px      | 24px              |
+
+Below 1100px the top-left and top-right clusters begin closing on each other and the
+widest margin runs them together. Below 640px the clusters stack — see the chrome
+specification — and 24px is what the stacked composition needs to clear 320px, the
+narrowest window supported.
+
+**Safe areas.** The page declares `viewport-fit: cover`, so the stage reaches under a
+notch, a dynamic island and a home indicator rather than being letterboxed inside them.
+The margins above are then measured from the edge of the _usable_ display: the device's
+safe-area inset is added to the margin, not substituted for it. The design's 62px top
+offset means 62px clear of the island, not 62px from a point underneath it. On a display
+with no inset the addition is zero and nothing moves.
+
+Only the chrome takes the insets. The motif spans the whole stage, insets included, and
+the panel is centred far from any of them.
 
 ---
 
@@ -182,6 +215,12 @@ describes.
 
 The panel is **400px** wide, centred horizontally and vertically on the stage.
 
+Where 400px plus its clearance does not fit, the panel narrows to the window rather than
+holding 400px: its width is 400px or the window width less twice the narrow margin,
+whichever is smaller. At 320px the panel is 272px. It must never be allowed to shrink
+into its own clearance and sit edge to edge, which is what a fixed width on a flexible
+element does when the window is narrower than the width.
+
 It must never come closer than **64px** to the top or bottom edge of the window.
 
 The panel has a fixed height that does not change between its states, so its position
@@ -204,15 +243,42 @@ clipping is not: content must never be silently cut off.
 margins described above. The motif is capped as described above, so on very wide
 windows the globe holds its size while the corners spread further apart.
 
+**Narrow windows.** Below **640px** the page keeps its composition and changes the
+direction most of the chrome runs in. Nothing is hidden, no type is scaled, and all four
+corners stay corners. The full rule, including which cluster stays a row, is in the
+chrome specification; the stage's part of it is the 24px margin tier and the panel width
+above.
+
+**320px is the narrowest window supported.** Below that the composition is not defined
+and is not verified.
+
+There is no tablet composition. Between 640px and 1100px the page uses the desktop
+composition at the 40px margin, and that is all a tablet gets. Two breakpoints exist and
+a third should not be added: the page has one composition and one reflow of it, not a
+ladder of device sizes.
+
 **Verify at these window sizes:**
 
 | Size                        | Why                                                       |
 | --------------------------- | --------------------------------------------------------- |
+| 320 × 568                   | The narrowest window supported; the tightest gutter       |
+| 360 × 640                   | Common small Android                                      |
+| 390 × 844                   | Common iPhone, the size the mobile problem was found at   |
+| 430 × 932                   | Large iPhone                                              |
+| 768 × 1024                  | Tablet portrait, on the desktop composition               |
+| 844 × 390                   | Phone in landscape: short and wide at once                |
 | 1512 × 855                  | 14-inch MacBook Pro, the primary development machine      |
 | 1440 × 900                  | The size the design was composed at                       |
 | 1920 × 1080                 | Common external monitor                                   |
 | 2560 × 1440                 | Confirms the motif cap holds and the composition survives |
 | Any window under 700px tall | Confirms the page scrolls rather than clipping            |
+
+Verify with a coarse pointer as well as a fine one. They are different compositions and
+different behaviour, not the same page at two sizes.
+
+At every width, the check is that no two chrome clusters overlap **and** that every
+string is still on screen. A string that has gone missing is a failure, not a pass — the
+rule is that nothing is hidden.
 
 ---
 
@@ -220,8 +286,8 @@ windows the globe holds its size while the corners spread further apart.
 
 Do not invent behaviour for any of the following. Stop and ask.
 
-- **Any window narrower than 1024px.** Mobile and tablet layouts are not designed. No
-  responsive behaviour below this width has been decided.
+- **Any window narrower than 320px.** The composition is not defined below the narrowest
+  supported window and is not verified there.
 - **Print styles, offline state, and error pages.**
 
 ---

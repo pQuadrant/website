@@ -38,7 +38,11 @@ decisions below.
 | Backdrop filter | None                                       |
 | Box shadow      | None                                       |
 
-Placement on the stage is specified in `docs/design/home.md`.
+Placement on the stage is specified in `docs/design/home.md`, including the one case in
+which the width is not 400px: on a window too narrow to hold 400px plus its clearance,
+the panel narrows with the window rather than holding 400px and sitting edge to edge.
+At 320px it is 272px. The composition below is unchanged by this — it is a full-width
+column inside the panel's padding, so it narrows with the container.
 
 **Height.** Fixed, and equal to the height the panel occupies in its tallest state,
 which is the state with an error message showing. Because the error slot is always
@@ -156,16 +160,16 @@ input.
 
 **Input**
 
-| Property    | Value                                |
-| ----------- | ------------------------------------ |
-| Width       | Full inner width                     |
-| Height      | 34px                                 |
-| Padding     | 0                                    |
-| Border      | None, except a 1px bottom rule       |
-| Background  | Transparent                          |
-| Text colour | `#EAEDF4`                            |
-| Text size   | 14px, IBM Plex Sans                  |
-| Transition  | 180ms ease on the bottom rule colour |
+| Property    | Value                                          |
+| ----------- | ---------------------------------------------- |
+| Width       | Full inner width                               |
+| Height      | 34px                                           |
+| Padding     | 0                                              |
+| Border      | None, except a 1px bottom rule                 |
+| Background  | Transparent                                    |
+| Text colour | `#EAEDF4`                                      |
+| Text size   | 14px, IBM Plex Sans — 16px on a coarse pointer |
+| Transition  | 180ms ease on the bottom rule colour           |
 
 Bottom rule colour by state:
 
@@ -188,6 +192,14 @@ form does not identify which credential was wrong.
 | Letter-spacing on the value | `-0.01em`          | `0.06em`                     |
 | Spellcheck                  | Off                | Off                          |
 | Autocomplete                | Username           | Current password             |
+
+**16px on a coarse pointer is not a style preference.** Safari on iOS zooms the page
+whenever a field below 16px takes focus. It scales the whole document, pushes the
+composition off centre, and the visitor cannot undo it — they are left typing into a
+form that has jumped sideways. The two ways out are a 16px field or disabling pinch
+zoom in the viewport meta tag, and disabling pinch zoom is not on the table: it takes
+zoom away from everyone, including the people who need it, to protect two pixels of
+type. The field is 16px where the input is coarse and 14px everywhere else.
 
 **Placeholder colour** is `#3F474C`. This is below the AA contrast threshold and is
 accepted, because both fields carry a permanently visible label and the placeholder
@@ -385,8 +397,11 @@ Do not invent behaviour for any of the following. Stop and ask.
   scaffolding and must not be carried over in any form.
 - **Rate limiting and attempt logging.** Required by the error copy, not yet
   implemented. See _Error slot_.
-- **Any window narrower than 1024px.** No panel behaviour has been decided for mobile
-  or tablet.
+- **How the panel behaves while an on-screen keyboard is open.** The width, the type
+  size and the page's scrolling behaviour on a short window are decided; what the panel
+  does when a virtual keyboard takes half the viewport is not, and cannot be settled
+  against a placeholder. Decide it when the fields are built, and verify it on a device
+  rather than in an emulator.
 
 ---
 

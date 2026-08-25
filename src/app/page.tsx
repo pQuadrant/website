@@ -49,7 +49,7 @@ export default function HomePage() {
         <div
           id={PANEL_ID}
           ref={panelRef}
-          className="pointer-events-auto h-panel-height w-panel-width border border-line-panel bg-panel"
+          className="pointer-events-auto h-panel-height w-panel-width max-w-[calc(100dvw-2*var(--spacing-stage-margin-tight))] border border-line-panel bg-panel"
         />
       )}
     </Stage>

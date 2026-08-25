@@ -12,8 +12,22 @@ margin rules, and the terms used here.
 ## What the chrome is for
 
 The chrome frames the page the way instrument markings frame a display. It is
-deliberately small, dim and dense. It is not navigation, it is not marketing copy, and
-it should never be scaled up to improve legibility. Its low prominence is the design.
+deliberately small, dim and dense. It is not marketing copy, and it should never be
+scaled up to improve legibility. Its low prominence is the design.
+
+**How far that rule reaches.** It binds the ambient telemetry — `SERVER EG-CAI-1`,
+`PQ-CORE 4.2.118`, `TLS 1.3 · AES-256-GCM` and the Cairo clock — permanently. Those
+convey nothing the visitor needs and their dimness is the point.
+
+It binds the two product names only for as long as they are plain text. The rule's
+reason is that the chrome is not navigation; the product names are going to become
+buttons that open a product surface, and on the day they do, the reason no longer
+describes them and the rule stops governing their size. Their type is decided on that
+ticket, in this file, before the code changes. Until then they are 10px like everything
+else here.
+
+The rule has never barred a larger **touch target**, which is not the same thing as
+larger type. See _Narrow windows_ below.
 
 Everything here is set in IBM Plex Mono. The mono typeface carries anything labelled,
 metered or system-voiced, which on this page is all of the chrome. Wide letter-spacing
@@ -118,8 +132,16 @@ A 1px wide vertical hairline in `#232B36`, spanning the full 34px height of the 
 | Type          | IBM Plex Mono, 10px, letter-spacing `0.2em` |
 | Hover border  | `#4E9BFB`                                   |
 | Hover colour  | `#EAEDF4`                                   |
+| Active border | `#4E9BFB`                                   |
+| Active colour | `#EAEDF4`                                   |
 | Transition    | 160ms ease on border colour and text colour |
 | Border radius | 0                                           |
+
+The active state repeats the hover state's colours and is not redundant with it. Hover
+styling must be confined to inputs that can hover, or it sticks to the last thing
+tapped on a touch screen; confined, it never applies on a phone, and without an active
+state this control would acknowledge a tap with nothing at all. The active state is what
+gives the only action on the page a response on the device most visitors arrive on.
 
 The label and resting colour depend on whether the panel is open:
 
@@ -220,6 +242,60 @@ time on each update rather than incrementing a stored value.
 
 ---
 
+## Narrow windows
+
+Below **640px** the clusters carrying more than two items become vertical columns. The
+top-right cluster is the exception and stays a row at every width.
+
+**Nothing is hidden and no type is scaled.** Every string in this file is on screen at
+every supported width, at 10px, in the corner it belongs to. If a narrow window is ever
+made to fit by dropping a string or shrinking type, that is the wrong fix — the lever is
+the direction a cluster runs in.
+
+| Cluster      | Above 640px                      | Below 640px                     |
+| ------------ | -------------------------------- | ------------------------------- |
+| Top-left     | Product line as a row, 14px gaps | Product names stacked, 7px gaps |
+| Top-right    | Row, 34px tall, 18px gap         | Row, 44px tall, 10px gap        |
+| Bottom-left  | Row, 40px gap                    | Stacked, 7px gap                |
+| Bottom-right | One line                         | Unchanged — already one line    |
+
+The stacked gap is **7px** throughout, which is the gap the top-left cluster already
+uses between its two rows. Stacking does not introduce a second vertical rhythm.
+
+**Why the top-right cluster stays a row.** It is the only cluster holding two controls
+rather than lines of telemetry, and two controls fit beside each other at 320px where
+three lines of text do not. Keeping them together also keeps every control on the page
+in one place instead of running them down the corner: the entry point is a button too,
+and it will do something once the surface behind it exists. At 320px the row leaves a
+23px gutter between the two top clusters.
+
+Its gap tightens from 18px to 10px below the breakpoint, for the same reason the stage
+margin tightens: there is less room. Nothing else about it changes, and its divider
+stays.
+
+**The product line's separator is dropped.** The `/` divides two items sitting side by
+side. Stacked, they are not side by side, and a divider between two things one above the
+other is a different mark making a different claim. It is drawn in the component and
+marked as decorative, so nothing in `src/content/` changes when it goes.
+
+The top-right cluster's hairline divider is **not** dropped, because that cluster is
+still a row and the items it divides are still beside each other.
+
+**Touch targets.** Below the breakpoint every interactive element in the chrome has a hit
+area at least **44px** tall. The label stays 10px: this is padding, not scale, and it is
+the distinction the low-prominence rule turns on.
+
+The height belongs to the row, not to the controls. The top-right row is 34px above the
+breakpoint and 44px below it, and both children stretch to fill it, so neither carries a
+height or padding of its own. A control that sizes itself is a control that can disagree
+with the one beside it.
+
+**Anchoring** is unchanged — all four clusters stay pinned to the four true corners at
+every width. The margins they are pinned at, and the safe-area insets added to them, are
+in `docs/design/home.md`.
+
+---
+
 ## Reduced motion
 
 Nothing in the chrome animates except the 160ms hover transitions, which are colour
@@ -248,8 +324,8 @@ Do not invent behaviour for any of the following. Stop and ask.
   designed.
 - **Making the product names clickable.** They are plain text for now. Do not add link
   markup, routes, or hover states in anticipation.
-- **Any window narrower than 1024px.** No chrome behaviour has been decided for mobile
-  or tablet, including whether these clusters reflow, stack, or are hidden.
+- **The type size of the product names once they become buttons.** Decided on that
+  ticket, in this file, before the code changes. See _What the chrome is for_.
 
 ---
 
