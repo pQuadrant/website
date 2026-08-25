@@ -11,11 +11,22 @@ import type { ReactNode } from "react";
  * white band where an overscroll rubber-bands past the top or bottom edge.
  */
 interface StageProps {
+  /** The chrome clusters, pinned at the four corners. */
+  topLeft?: ReactNode;
+  topRight?: ReactNode;
+  bottomLeft?: ReactNode;
+  bottomRight?: ReactNode;
   /** The panel, centred over the motif. */
   children?: ReactNode;
 }
 
-export function Stage({ children }: StageProps) {
+export function Stage({
+  topLeft,
+  topRight,
+  bottomLeft,
+  bottomRight,
+  children,
+}: StageProps) {
   return (
     <main className="relative">
       {/* Layer 2 — centre lift. A cool wash that keeps the motif off dead
@@ -48,20 +59,34 @@ export function Stage({ children }: StageProps) {
           centred in the window. Below it the region holds at that height, so
           the page scrolls rather than clipping and the clearance survives. One
           value drives both, so there is no threshold to cross while resizing
-          and nothing jumps. */}
-      <div className="relative flex min-h-[max(100dvh,var(--spacing-stage-min-height))] items-center justify-center py-stage-margin">
+          and nothing jumps.
+
+          The region spans the stage, so it is inert for the same reason the
+          corner regions are: were it not, it would take every click meant for
+          the motif. The panel opts back in. */}
+      <div className="pointer-events-none relative flex min-h-[max(100dvh,var(--spacing-stage-min-height))] items-center justify-center py-stage-margin">
         {children}
       </div>
 
-      {/* The four corner regions. Empty until the chrome is built; they carry
-          the margin rules only. The two top offsets are optical and differ from
-          each other by design — do not normalise them.
+      {/* The four corner regions. They carry the margin rules only; what sits
+          in them is the chrome's business. The two top offsets are optical and
+          differ from each other by design — do not normalise them.
 
-          SCAFFOLDING: the hairline squares mark where each cluster anchors. */}
-      <div className="absolute top-[62px] left-stage-margin-narrow size-4 border border-line-chrome stage:left-stage-margin" />
-      <div className="absolute top-[56px] right-stage-margin-narrow size-4 border border-line-chrome stage:right-stage-margin" />
-      <div className="absolute bottom-stage-margin left-stage-margin-narrow size-4 border border-line-chrome stage:left-stage-margin" />
-      <div className="absolute right-stage-margin-narrow bottom-stage-margin size-4 border border-line-chrome stage:right-stage-margin" />
+          The regions are inert, so anything they hold sits over the motif
+          without taking its clicks. A cluster with something interactive in it
+          opts that element back in. */}
+      <div className="pointer-events-none absolute top-[62px] left-stage-margin-narrow stage:left-stage-margin">
+        {topLeft}
+      </div>
+      <div className="pointer-events-none absolute top-[56px] right-stage-margin-narrow stage:right-stage-margin">
+        {topRight}
+      </div>
+      <div className="pointer-events-none absolute bottom-stage-margin left-stage-margin-narrow stage:left-stage-margin">
+        {bottomLeft}
+      </div>
+      <div className="pointer-events-none absolute right-stage-margin-narrow bottom-stage-margin stage:right-stage-margin">
+        {bottomRight}
+      </div>
     </main>
   );
 }
