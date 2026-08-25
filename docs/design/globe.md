@@ -134,13 +134,8 @@ both classes present at every latitude.
 The even distribution is preserved within each class because the discards are regular
 rather than random.
 
-`N` is **15,000**.
-
-This number is not yet confirmed. It was set at 9,000, with 15,000 named as the ceiling
-to test toward while watching frame time; it was raised to that ceiling before the
-renderer existed, so the measurement it is conditioned on has not happened. When the
-globe first draws, check 60fps at 15,000 on the slowest machine in the team, and drop
-back toward 9,000 if it does not hold. Do not raise it further without that number.
+`N` is **15,000**, and that is settled. Do not change it without measuring frame time
+at the new count first.
 
 ### What the point count does and does not buy
 

@@ -3,28 +3,38 @@
  * a canvas it is handed.
  *
  * It contains no React, imports nothing from `src/components/`, holds no colour
- * value, and reads nothing from the DOM other than the canvas itself. Everything
- * else arrives through the handle returned by `createGlobe`. See the module
- * contract in `docs/design/globe.md`.
+ * value, and reads nothing from the DOM other than the canvas itself and the
+ * visitor's motion preference. Everything else arrives through the handle
+ * returned by `createGlobe`. See the module contract in `docs/design/globe.md`.
  *
- * The sphere is static in this ticket: it holds one rotation and one tilt, and
- * every eased value sits at its idle setting. The loop still runs, because its
- * lifecycle has to be right before anything depends on it — two loops on one
- * canvas present as stutter and a slow memory climb rather than an error, and
- * that is much easier to find now than with motion on top of it.
+ * This file owns the lifecycle only: the frame clock, the motion preference,
+ * and shutdown. What the values are is `state.ts`, where they land on screen is
+ * `projection.ts`, and how they are painted is `draw.ts`.
  */
 
-import { type GlobeColours, paint } from "@/lib/globe/draw";
+import {
+  type GlobeColours,
+  type PaintColours,
+  paint,
+  resolveColours,
+} from "@/lib/globe/draw";
 import { createGlobePointSet } from "@/lib/globe/point-set";
 import {
-  type ClearZone,
-  type GlobeStatus,
   type GlobeView,
   createGlobeFrame,
-  createGlobeState,
   motifRadius,
   project,
 } from "@/lib/globe/projection";
+import {
+  type ClearZone,
+  ERROR_HOLD_SECONDS,
+  type GlobeStatus,
+  advance,
+  applyStatus,
+  createGlobeState,
+  createMotionField,
+  snap,
+} from "@/lib/globe/state";
 
 /**
  * Ceiling on the canvas backing store, as a multiple of the layout size.
@@ -33,6 +43,8 @@ import {
  * shows nothing at these point sizes.
  */
 const MAX_PIXEL_RATIO = 1.5;
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 export interface GlobeOptions {
   /** Point colours, read from the design tokens by whoever mounts the globe. */
@@ -66,8 +78,10 @@ export function createGlobe(
 
   // Allocated once, for the lifetime of the globe.
   const points = createGlobePointSet();
+  const field = createMotionField(points.count);
   const state = createGlobeState();
   const frame = createGlobeFrame();
+  const colours: PaintColours = resolveColours(context, options.colours);
   const view: GlobeView = {
     width: 0,
     height: 0,
@@ -76,7 +90,12 @@ export function createGlobe(
     radius: 0,
   };
 
+  const reducedMotion = window.matchMedia(REDUCED_MOTION);
+
   let animationFrame = 0;
+  let running = false;
+  let lastFrameTime = 0;
+  let errorTimer: ReturnType<typeof setTimeout> | undefined;
   let destroyed = false;
 
   function measure(): void {
@@ -98,36 +117,112 @@ export function createGlobe(
   }
 
   function render(): void {
-    project(points, state, view, frame);
-    paint(context, frame, options.colours, view);
+    project(points, field, state, view, frame);
+    paint(context, frame, colours, view, state);
   }
 
-  function loop(): void {
+  function loop(time: number): void {
     animationFrame = requestAnimationFrame(loop);
+
+    // The first frame has nothing to measure against, so it advances nothing.
+    const delta = lastFrameTime === 0 ? 0 : (time - lastFrameTime) / 1000;
+    lastFrameTime = time;
+
+    advance(state, delta);
     render();
   }
 
+  function startLoop(): void {
+    if (running || destroyed) return;
+    running = true;
+    lastFrameTime = 0;
+    animationFrame = requestAnimationFrame(loop);
+  }
+
+  function stopLoop(): void {
+    if (!running) return;
+    running = false;
+    cancelAnimationFrame(animationFrame);
+  }
+
+  function clearErrorTimer(): void {
+    if (errorTimer === undefined) return;
+    clearTimeout(errorTimer);
+    errorTimer = undefined;
+  }
+
+  /**
+   * Applies a state change when no loop is running.
+   *
+   * Under reduced motion the values still change; they are painted immediately
+   * rather than eased toward, and the error hold runs off a timer because there
+   * are no frames to count it down.
+   */
+  function settle(): void {
+    if (!reducedMotion.matches) return;
+
+    clearErrorTimer();
+    if (state.status === "error") {
+      errorTimer = setTimeout(() => {
+        errorTimer = undefined;
+        applyStatus(state, "idle");
+        settle();
+      }, ERROR_HOLD_SECONDS * 1000);
+    }
+
+    snap(state);
+    render();
+  }
+
+  /**
+   * Switches between the running loop and a single static frame.
+   *
+   * Re-read on every change rather than once at start-up, so turning the
+   * preference on or off while the page is open takes effect without a reload.
+   */
+  function applyMotionPreference(): void {
+    if (reducedMotion.matches) {
+      stopLoop();
+      settle();
+    } else {
+      clearErrorTimer();
+      startLoop();
+    }
+  }
+
+  reducedMotion.addEventListener("change", applyMotionPreference);
+
   measure();
-  loop();
+  applyMotionPreference();
 
   return {
     setStatus(status) {
-      state.status = status;
+      if (destroyed) return;
+      applyStatus(state, status);
+      settle();
     },
     setFocused(focused) {
+      if (destroyed) return;
       state.focused = focused;
+      settle();
     },
     setClearZone(zone) {
+      if (destroyed) return;
       state.clearZone = zone;
+      settle();
     },
     resize() {
       if (destroyed) return;
       measure();
+      // The loop repaints on its own; the static frame has to be asked.
+      if (!running) render();
     },
     destroy() {
       if (destroyed) return;
       destroyed = true;
-      cancelAnimationFrame(animationFrame);
+      stopLoop();
+      clearErrorTimer();
+      reducedMotion.removeEventListener("change", applyMotionPreference);
     },
   };
 }

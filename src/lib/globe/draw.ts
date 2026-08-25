@@ -12,24 +12,115 @@ import {
   type GlobeFrame,
   type GlobeView,
 } from "@/lib/globe/projection";
+import type { GlobeState } from "@/lib/globe/state";
 
 /** The ocean pass is lifted slightly against the land pass. */
 const OCEAN_OPACITY = 1.15;
+
+/** Below this, a glow is not worth the cost of a blurred fill. */
+const GLOW_FLOOR = 0.05;
+
+/** Point bloom: shadow blur is this multiplied by the stronger glow. */
+const BLOOM_BLUR = 12;
+
+/** The processing halo, as multiples of the current radius. */
+const HALO_INNER = 0.15;
+const HALO_OUTER = 2.05;
+
+/** How far out the halo stays solid, as a share of its span. */
+const HALO_SOLID = 0.42;
+
+const HALO_OPACITY = 0.4;
 
 export interface GlobeColours {
   land: string;
   ocean: string;
 }
 
+/**
+ * The colours as the halo needs them: the ocean colour again at zero alpha, for
+ * the gradient's outer stop.
+ *
+ * Canvas interpolates gradient stops in unpremultiplied RGBA, so fading to
+ * `transparent` — which is transparent *black* — drags the halo through grey on
+ * its way out. Fading to the same colour at zero alpha does not.
+ */
+export interface PaintColours extends GlobeColours {
+  oceanFade: string;
+}
+
+/**
+ * Resolves the fade colour once, at creation, by letting the canvas normalise
+ * the token for us rather than parsing CSS colours by hand.
+ */
+export function resolveColours(
+  context: CanvasRenderingContext2D,
+  colours: GlobeColours,
+): PaintColours {
+  const previous = context.fillStyle;
+  context.fillStyle = colours.ocean;
+  const normalised = context.fillStyle;
+  context.fillStyle = previous;
+
+  return { ...colours, oceanFade: fadeOut(normalised) };
+}
+
+/** Canvas serialises an opaque colour as `#rrggbb`, and any other as `rgba()`. */
+function fadeOut(colour: string | CanvasGradient | CanvasPattern): string {
+  if (typeof colour !== "string") return "transparent";
+  if (/^#[0-9a-f]{6}$/i.test(colour)) return `${colour}00`;
+
+  const channels = colour.match(/^rgba?\(([^)]*)\)$/);
+  if (channels === null) return "transparent";
+
+  const [red, green, blue] = channels[1].split(",");
+  return `rgba(${red}, ${green}, ${blue}, 0)`;
+}
+
 export function paint(
   context: CanvasRenderingContext2D,
   frame: GlobeFrame,
-  colours: GlobeColours,
+  colours: PaintColours,
   view: GlobeView,
+  state: GlobeState,
 ): void {
   context.clearRect(0, 0, view.width, view.height);
-  paintPass(context, frame.land, colours.land, 1);
-  paintPass(context, frame.ocean, colours.ocean, OCEAN_OPACITY);
+
+  paintHalo(context, colours, view, state);
+
+  // Both passes bloom on the stronger of the two glows, each in its own colour.
+  const bloom = Math.max(state.glow, state.dotGlow);
+  paintPass(context, frame.land, colours.land, 1, bloom);
+  paintPass(context, frame.ocean, colours.ocean, OCEAN_OPACITY, bloom);
+}
+
+/** The processing halo: a wash of ocean colour behind the points. */
+function paintHalo(
+  context: CanvasRenderingContext2D,
+  colours: PaintColours,
+  view: GlobeView,
+  state: GlobeState,
+): void {
+  if (state.glow <= GLOW_FLOOR) return;
+
+  const radius = view.radius * state.contract;
+  const gradient = context.createRadialGradient(
+    view.centreX,
+    view.centreY,
+    radius * HALO_INNER,
+    view.centreX,
+    view.centreY,
+    radius * HALO_OUTER,
+  );
+
+  gradient.addColorStop(0, colours.ocean);
+  gradient.addColorStop(HALO_SOLID, colours.ocean);
+  gradient.addColorStop(1, colours.oceanFade);
+
+  context.globalAlpha = HALO_OPACITY * state.glow;
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, view.width, view.height);
+  context.globalAlpha = 1;
 }
 
 function paintPass(
@@ -37,8 +128,14 @@ function paintPass(
   buckets: number[][],
   colour: string,
   opacityScale: number,
+  bloom: number,
 ): void {
   context.fillStyle = colour;
+
+  if (bloom > GLOW_FLOOR) {
+    context.shadowBlur = BLOOM_BLUR * bloom;
+    context.shadowColor = colour;
+  }
 
   for (let bucket = 0; bucket < buckets.length; bucket += 1) {
     const rectangles = buckets[bucket];
@@ -59,4 +156,5 @@ function paintPass(
   }
 
   context.globalAlpha = 1;
+  context.shadowBlur = 0;
 }
