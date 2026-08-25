@@ -1,7 +1,7 @@
 /**
  * Generates the globe motif's point set and writes it into the repository.
  *
- *   npm run generate:globe -- [--count 9000] [--chart path/to/chart.svg]
+ *   npm run generate:globe -- [--count 15000] [--chart path/to/chart.svg]
  *
  * Implements the "Geometry generation" section of `docs/design/globe.md`:
  * candidates are placed by the Fibonacci sphere method, classified as land or
@@ -46,7 +46,7 @@ const LAND_SHARE = 0.64;
 const POOL_MARGIN = 1.02;
 
 /** Default point count. The spec calls this a floor, not a ceiling. */
-const DEFAULT_COUNT = 9000;
+const DEFAULT_COUNT = 15000;
 
 const RAD_TO_DEG = 180 / Math.PI;
 
