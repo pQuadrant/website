@@ -54,7 +54,7 @@ export function Stage({
       {/* Layer 5 — vignette. Above the canvas, so it darkens the motif's outer
           edge as well as the background, which is what keeps the corner chrome
           legible. Its centre sits above the middle of the stage. */}
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(118%_88%_at_50%_46%,transparent_40%,var(--color-vignette)_100%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(118%_88%_at_50%_46%,transparent_52%,var(--color-vignette)_100%)]" />
 
       {/* Layer 6 — auth bloom. At rest it is invisible; it is revealed only
           while a sign-in attempt is processing, which nothing triggers yet. */}

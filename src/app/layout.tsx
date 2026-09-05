@@ -34,7 +34,7 @@ export const viewport: Viewport = {
   // manifest can read a CSS custom property, so this value is written out here,
   // in `manifest.ts`, and as `--color-stage` in `globals.css`. All three are the
   // same colour and have to stay that way.
-  themeColor: "#080a0f",
+  themeColor: "#060b10",
 
   // The stage fills the display exactly, which on a notched phone means
   // reaching under the notch and the home indicator rather than being

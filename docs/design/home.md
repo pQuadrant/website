@@ -64,7 +64,16 @@ Six layers compose the stage. Listed bottom to top. Every layer spans the full s
 
 **1. Stage fill**
 
-Flat colour `#080A0F`. The base surface. Nothing sits below it.
+Flat colour `#060B10`. The base surface. Nothing sits below it.
+
+Lifted off true black rather than sitting on it, and cool rather than neutral: blue
+runs ten levels above red. A crushed black reads as an unlit panel no matter what is
+drawn on top of it, and the cast is what makes the surface read as a lit space rather
+than a switched-off screen.
+
+The value is low deliberately. Depth on this page comes from the range between the
+base and the light on it, not from lifting the base — a brighter floor flattens that
+range and is what makes a dark interface read as synthetic rather than photographic.
 
 **2. Starfield canvas**
 
@@ -81,11 +90,18 @@ information a screen reader can use.
 **3. Centre lift**
 
 A radial gradient, 46% of the stage width by 52% of its height, centred at 50% / 50%,
-running from `rgba(168, 196, 240, 0.055)` at the centre to fully transparent at 72%.
+running from `rgba(232, 238, 248, 0.05)` at the centre to fully transparent at 72%.
 
 This is a very faint cool wash that lifts the area behind the motif so the globe does
 not sit on dead black. It is close to invisible in isolation and should stay that way;
-if it reads as a distinct glow, it is too strong.
+if it reads as a distinct glow, it is too strong. The wash reaches the fill again
+before its 72% stop, so the stop itself is not an edge anyone can trace.
+
+**It is near-white, not blue.** A saturated blue wash at this scale reads as a coloured
+gradient laid over the page rather than as light falling on it, and that is the single
+strongest tell of a synthetic interface. The cool cast belongs in the stage fill, which
+carries it at low saturation across the whole surface; this layer's job is only to stop
+the motif sitting on dead black, and light does that without a hue.
 
 **4. Motif canvas**
 
@@ -110,12 +126,25 @@ information a screen reader can use.
 **5. Vignette**
 
 A radial gradient, 118% of the stage width by 88% of its height, centred at 50% / 46%,
-fully transparent until 40% and reaching `rgba(0, 0, 0, 0.6)` at 100%.
+fully transparent until 52% and reaching `rgba(0, 0, 0, 0.38)` at 100%.
 
 Note the centre sits slightly above the middle of the stage, which pushes more of the
 falloff toward the bottom corners. It sits above the canvas, so it darkens the globe's
 outer edge as well as the background. This is what keeps the corner chrome legible
 against the motif.
+
+**The two percentages are radii, not extents.** 118% of the stage width is an ellipse
+radius wider than the stage itself, so on a 1920px window the gradient's horizontal
+reach is 2266px while the furthest pixel is 960px away. The consequence is worth
+knowing before either number is touched again: along the left and right edges at
+mid-height the vignette contributes nothing at all, and it only engages approaching the
+corners — most at the bottom two. That is the right shape for what it is for, since the
+chrome it protects sits in the corners, but it means this layer is not a uniform edge
+darkening and cannot be reasoned about as one.
+
+The 0.38 replaces a 0.6 that was chosen against an empty stage. At 0.6 the corners were
+painted down to below the stage fill's own value, which was defensible when they held
+nothing but chrome text and is not now that there is a starfield in them.
 
 **6. Auth bloom**
 
