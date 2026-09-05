@@ -11,9 +11,9 @@ import type { ReactNode } from "react";
  * white band where an overscroll rubber-bands past the top or bottom edge.
  */
 interface StageProps {
-  /** The starfield, layer two, spanning the stage below every layer above it. */
+  /** The starfield, layer three, spanning the stage below every layer above it. */
   starfield?: ReactNode;
-  /** The motif, layer four, spanning the stage behind everything above it. */
+  /** The motif, layer five, spanning the stage behind everything above it. */
   motif?: ReactNode;
   /** The chrome clusters, pinned at the four corners. */
   topLeft?: ReactNode;
@@ -35,28 +35,44 @@ export function Stage({
 }: StageProps) {
   return (
     <main className="relative">
-      {/* Layer 2 — starfield. A field of small static points that gives the
+      {/* Layer 2 — ambient light. The field-wide structure that gives the page
+          a tonal range: the fill below it is near-black, and this is what puts
+          light on it. Its ellipse is deliberately smaller than the stage, so
+          the corners fall outside it entirely and stay in genuine shadow —
+          without that, every pixel is lit and the page is a slab again.
+
+          Five stops rather than three. The last two exist to bring the ramp
+          into the fill with almost no slope left in it: a gradient that is
+          still descending when it reaches zero leaves a Mach band at its own
+          boundary, which is visible on a dark surface even though there is no
+          step in the values. Softening the tail halves the slope break.
+
+          Below the starfield, so the stars sit in front of the glow rather than
+          being washed by it. */}
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(66%_62%_at_50%_44%,var(--color-ambient)_0%,var(--color-ambient-mid)_35%,var(--color-ambient-far)_70%,var(--color-ambient-edge)_88%,transparent_100%)]" />
+
+      {/* Layer 3 — starfield. A field of small static points that gives the
           stage depth, so the globe reads as sitting in something rather than
           floating on a void. It sits below the centre lift, so the wash passes
           over the stars near the middle and slightly mutes them there. */}
       {starfield}
 
-      {/* Layer 3 — centre lift. A cool wash that keeps the motif off dead
+      {/* Layer 4 — centre lift. A cool wash that keeps the motif off dead
           black. If it reads as a distinct glow, it is too strong. */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(46%_52%_at_50%_50%,var(--color-centre-lift)_0%,transparent_72%)]" />
 
-      {/* Layer 4 — the motif. Its canvas spans the stage and is fixed, so it
+      {/* Layer 5 — the motif. Its canvas spans the stage and is fixed, so it
           stays put behind the scrolling content in a short window. The radius
           is a drawing parameter inside the module, not the size of the element
           — see `docs/design/globe.md`. */}
       {motif}
 
-      {/* Layer 5 — vignette. Above the canvas, so it darkens the motif's outer
+      {/* Layer 6 — vignette. Above the canvas, so it darkens the motif's outer
           edge as well as the background, which is what keeps the corner chrome
           legible. Its centre sits above the middle of the stage. */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(118%_88%_at_50%_46%,transparent_52%,var(--color-vignette)_100%)]" />
 
-      {/* Layer 6 — auth bloom. At rest it is invisible; it is revealed only
+      {/* Layer 7 — auth bloom. At rest it is invisible; it is revealed only
           while a sign-in attempt is processing, which nothing triggers yet. */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(42%_46%_at_50%_50%,var(--color-bloom-core)_0%,var(--color-bloom-mid)_46%,var(--color-bloom-edge)_78%)] opacity-0 mix-blend-screen transition-opacity duration-bloom ease-out motion-reduce:hidden" />
 

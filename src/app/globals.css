@@ -9,7 +9,7 @@
    The globe reads its point colours from these variables at runtime. */
 @theme static {
   /* Surfaces */
-  --color-stage: #060b10;
+  --color-stage: #020306;
   --color-panel: rgba(8, 10, 15, 0.9);
 
   /* Hairlines */
@@ -56,6 +56,10 @@
   /* Stage layer colours. The stage's five background layers compose with
      gradients rather than flat fills, so each stop is a token of its own.
      See `docs/design/home.md`. */
+  --color-ambient: rgba(226, 236, 250, 0.08);
+  --color-ambient-mid: rgba(226, 236, 250, 0.068);
+  --color-ambient-far: rgba(226, 236, 250, 0.0272);
+  --color-ambient-edge: rgba(226, 236, 250, 0.0072);
   --color-centre-lift: rgba(232, 238, 248, 0.05);
   --color-vignette: rgba(0, 0, 0, 0.38);
   --color-bloom-core: rgba(49, 131, 245, 0.42);
