@@ -9,6 +9,7 @@ import { TopRightCluster } from "@/components/chrome/TopRightCluster";
 import { Globe } from "@/components/globe/Globe";
 import { useClearZone } from "@/components/globe/use-clear-zone";
 import { Stage } from "@/components/stage/Stage";
+import { Starfield } from "@/components/starfield/Starfield";
 import { homeContent } from "@/content/home";
 
 /** Ties the toggle in the chrome to the panel it controls. */
@@ -28,6 +29,7 @@ export default function HomePage() {
 
   return (
     <Stage
+      starfield={<Starfield />}
       motif={<Globe clearZone={clearZone} />}
       topLeft={<TopLeftCluster content={chrome.topLeft} />}
       topRight={
