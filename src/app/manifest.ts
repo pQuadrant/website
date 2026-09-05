@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // white before the dark page arrives. See the note in `layout.tsx`: this
     // value is `--color-stage`, written out because a manifest cannot read a
     // CSS custom property.
-    background_color: "#080a0f",
-    theme_color: "#080a0f",
+    background_color: "#060b10",
+    theme_color: "#060b10",
     icons: [
       {
         src: "/web-app-manifest-192x192.png",
