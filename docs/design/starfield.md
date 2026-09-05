@@ -112,25 +112,72 @@ survivors.
 
 ### How they look
 
-Each surviving star is assigned a tier, a colour and an opacity.
+Each surviving star is assigned a **magnitude** and a colour. Everything else about its
+appearance is derived from the magnitude. There are no tiers and no size classes: a star
+is one number, and the number decides how large it is, how bright it is, whether it
+glows, and how much of its colour survives in the middle.
 
-**Tiers.** Radii are in CSS pixels, before device-pixel-ratio scaling.
+**Magnitude.** Drawn from a power distribution, not a uniform one:
 
-| Tier | Share | Core radius | Base opacity |
-| ---- | ----- | ----------- | ------------ |
-| Far  | 72%   | 0.5 – 0.9px | 0.15 – 0.35  |
-| Mid  | 22%   | 0.9 – 1.4px | 0.35 – 0.60  |
-| Near | 6%    | 1.4 – 2.2px | 0.60 – 0.85  |
+```
+m = u ** 2.8
+```
 
-Values within each range are randomised per star. The point of three tiers is parallax
-without motion: a field of identical dots reads flat, a field with a clear size
-hierarchy reads deep.
+where `u` is uniform 0–1 from the seeded generator. This puts roughly 44% of the field
+below 0.1 and about 8% above 0.8. The lopsidedness is the point. An even spread of
+brightnesses reads as speckle — a regular dusting of dots at one size — because a real
+field is overwhelmingly made of points at the edge of visibility, with a few that carry
+it.
 
-**Near-tier halo.** Near stars get a soft halo: a radial gradient from the star's
-colour at full assigned opacity in the centre, to fully transparent at **3× the core
-radius**. Far and mid stars are drawn as flat filled circles with no halo.
+**Additive compositing.** Every star is drawn with `globalCompositeOperation = 'lighter'`,
+so light adds to what is under it rather than covering it. This is the difference
+between a star that emits and a dot of paint sitting on the background, and it is why
+two overlapping halos sum the way two real sources would. The canvas stays transparent,
+so it still composes correctly over the stage fill.
 
-This halo is drawn _inside the canvas_ as a gradient fill. It is not a CSS `box-shadow`
+The mode is set immediately before the stars are drawn and restored afterwards, never
+once for the lifetime of the context. The cursor response fades its trail with
+`destination-out` in the same frame, and either stage leaving its mode set would
+silently break the other.
+
+**Core.** A hard-edged filled circle. No gradient, no soft edge — the only softness
+anywhere on a star is the halo around it.
+
+| Property | Rule                              |
+| -------- | --------------------------------- |
+| Radius   | `0.35 + m × 1.35` px, so 0.35–1.7 |
+| Alpha    | `0.30 + m ** 0.55 × 0.70`         |
+
+**The sub-pixel rule.** Never draw a circle below **0.5px** radius. Anti-aliasing turns
+a sub-pixel circle into a smudge, which is the exact artefact this model exists to
+remove. Below the floor the radius is held at 0.5 and the shortfall is paid in alpha
+instead, scaled by `(computed / 0.5) ** 2` — squared, because the light a disc carries
+goes with its area. Brightness carries what size cannot.
+
+This applies to roughly 47% of the field, so it is not an edge case; it is how the faint
+majority is drawn. They must stay **sharp**. Faint does not mean blurry: a field of tiny
+crisp points reads as real, and a field of dim soft ones reads as dust on the screen.
+
+**Halo — only on the brightest.** A star at `m ≤ 0.80` gets **no halo at all**. Around
+92% of the field is a bare core. This is the most important rule in this section: a halo
+on every star is what makes a field read as a scattering of grey discs rather than as
+points of light.
+
+| Property   | Rule                                                                   |
+| ---------- | ---------------------------------------------------------------------- |
+| Radius     | `coreRadius × (4 + m × 5)`, so 4×–9×                                   |
+| Peak alpha | `((m − 0.80) / 0.20) × 0.16`                                           |
+| Falloff    | Radial gradient, peak at centre to fully transparent at the outer edge |
+
+The peak alpha is zero exactly on the threshold, so halos fade in rather than switching
+on. There is no magnitude at which a star visibly acquires a glow, which is what stops
+the glowing and bare populations reading as two populations.
+
+**Bloom.** Stars above `m = 0.96` — around 1.5% of the field, a handful on screen —
+extend instead to `coreRadius × 12` at a peak alpha of 0.20. These are the few that
+carry the field's sense of depth.
+
+Halos are drawn _inside the canvas_ as gradient fills. They are not a CSS `box-shadow`
 and not a blur filter. `home.md` prohibits both of those on the stage and that
 prohibition still stands.
 
@@ -147,10 +194,16 @@ monochrome dust and gives it the sense of being made of different objects at dif
 distances. It is also the only warm colour anywhere on the page, which is why it is
 held to 8%.
 
-Bias the warm and blue stars toward the **mid and near tiers**. A coloured star at 0.5px
-and 0.2 opacity is indistinguishable from a white one, so spending the colour budget on
-the far tier wastes it. A reasonable rule: far-tier stars are 92% cool white; mid and
-near tiers carry most of the blue and amber.
+Colour does not depend on magnitude. It does not need to, because of the rule below.
+
+**Bright cores desaturate toward white.** Blend the star's colour toward pure white by
+`m ** 2`, and use the blended colour for the core while the halo keeps the star's full
+colour. Only the brightest cores go white-hot, and the tint stays in the glow around
+them. This is how a bright point actually renders — the centre saturates and the colour
+survives at the edges — and it is a large part of why the reference reads as
+photographic rather than drawn.
+
+The faint majority keeps its full colour. Those are the stars carrying the palette.
 
 **Under review.** The amber share and the exact amber value are provisional and expected
 to be adjusted once the field is on screen. Keep the ratio and the colour as named
@@ -182,6 +235,9 @@ usually not animating at all.
 capped at **2**. Above 2 the extra pixels are not visible on a sub-pixel dot and the
 memory cost is real. Without any scaling the stars render as fuzzy squares on a retina
 display.
+
+**Compositing.** See _How they look_: the field is drawn additively, and the composite
+mode is set per drawing stage rather than once on the context.
 
 **At rest, nothing runs.** Once the field is drawn, there is no animation frame loop, no
 timer and no listener doing per-frame work. Idle CPU cost is zero. This is a hard
