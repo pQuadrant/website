@@ -75,6 +75,20 @@ Tailwind utility classes only. No CSS modules, no styled-components, no
 inline `style` props. `globals.css` holds Tailwind directives and design
 tokens only.
 
+**A radial gradient's size percentages are radii, not extents.** `118% 88%`
+is an ellipse whose horizontal radius is 1.18 times the element's width — wider
+than the element itself, so most of the ramp falls outside it. This has been
+misread twice on this project, in both directions: once producing a vignette
+that contributes nothing along the left and right edges, once producing an
+ambient layer that covered every pixel and flattened the page it was meant to
+give depth to. Work out where the stops actually land before tuning them.
+
+**A gradient still descending when it reaches its last stop leaves a visible
+edge**, even though no value steps. The eye reads the change in slope, not the
+change in level, and on a dark surface a slope break of about one level per
+sampled step is enough to see. Ease the tail into its endpoint, and check by
+sampling a radial profile rather than by looking for a step.
+
 ## Design specs
 
 Every visual surface has a specification in `docs/design/`. Read the one
@@ -174,6 +188,60 @@ in `docs/design/home.md`, with a coarse pointer as well as a fine one. None
 of the five commands above can see a page overlapping itself: the chrome
 collided on a phone for as long as it did precisely because all of them were
 passing the whole time.
+
+## Measuring the page
+
+Several acceptance criteria here are tonal — contrast, black point, whether a
+gradient is traceable, whether the motif still reads against its background.
+None of those can be settled by looking at a screenshot and deciding it looks
+right, and doing that has produced confidently wrong answers on this project
+more than once. Measure them.
+
+The Chrome extension does not connect in this repository. Drive headless Chrome
+over the DevTools Protocol from a Node script instead: launch with
+`--headless=new --remote-debugging-port=<port>`, read the page target from
+`http://127.0.0.1:<port>/json/list`, and connect with Node's global `WebSocket`.
+Set the viewport with `Emulation.setDeviceMetricsOverride` rather than
+`--window-size`, which reserves space for browser UI and silently gives you a
+shorter viewport than you asked for.
+
+To read the composited page, screenshot it and draw the PNG back into a canvas
+**inside the page** — the background layers are CSS, so there is nothing else to
+sample them from. Luminance is `0.2126R + 0.7152G + 0.0722B` over raw sRGB.
+To read the background behind something, hide the thing and screenshot again.
+
+**Assert the page rendered before trusting a number.** A dev server serving an
+error overlay screenshots perfectly happily and returns plausible figures. Check
+for something that only exists when the page works — `main canvas` will do — and
+fail loudly when it is missing.
+
+**Identical results across different inputs mean a broken harness, not a
+finding.** A sweep whose rows are all the same is measuring something that is not
+responding to the parameter being changed. Find out what before reading a
+conclusion into it.
+
+**This shell is zsh, and zsh does not word-split unquoted variables.** A loop
+like `for cfg in "1.25 0.05" ...; set -- $cfg` puts the entire string in `$1` and
+leaves `$2` empty. That has already written a malformed constant into a source
+file, broken the build, and produced a four-row parameter sweep of the Next.js
+error page — every row identical, and all of it garbage. Drive parameter sweeps
+from Node or Python, where arguments are explicit, rather than from shell loops.
+
+## Reading a ticket
+
+A ticket usually states a value and then states what that value produces. **Re-derive
+the second before designing against it.** Three times now the stated consequence has
+not followed from the stated formula: a star count whose "roughly 340 survivors"
+was arithmetically 157, a magnitude exponent whose "60% below 0.1" was 44%, and a
+sequencing claim that turned out backwards. In each case the formula was right and
+the prose about it was wrong.
+
+When they disagree, say so in the work and fix the file. Do not quietly implement
+one and leave the other standing — the next person reads the prose.
+
+The same applies to a ticket's own scope notes. `home.md` moved on while several
+tickets still said behaviour below 1024px was undecided; the tickets were stale,
+not the spec.
 
 ## Testing
 

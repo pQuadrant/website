@@ -35,10 +35,14 @@ export function Stage({
 }: StageProps) {
   return (
     <main className="relative">
-      {/* Layer 2 — starfield. A field of small static points that gives the
-          stage depth, so the globe reads as sitting in something rather than
-          floating on a void. It sits below the centre lift, so the wash passes
-          over the stars near the middle and slightly mutes them there. */}
+      {/* Layer 2 — starfield. Carries the ambient light as well as the stars,
+          which is what gives the page its tonal range: the fill below is the
+          black point, and this puts light on it.
+
+          Both live on a canvas rather than in CSS because both are positioned
+          relative to the motif radius, and no CSS gradient can be — a
+          gradient's stops follow the stage, the motif radius does not, and the
+          two drift apart as the window changes. See `docs/design/starfield.md`. */}
       {starfield}
 
       {/* Layer 3 — the motif. Its canvas spans the stage and is fixed, so it
