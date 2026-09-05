@@ -15,6 +15,34 @@ import type { Star } from "@/lib/starfield/starfield-points";
 const TAU = Math.PI * 2;
 
 /**
+ * Ambient light: the field-wide glow that gives the page its tonal range.
+ *
+ * Expressed in multiples of the motif radius, which is why it lives on this
+ * canvas rather than in a CSS gradient. A gradient's stops are relative to the
+ * stage, but the motif's radius is `min(width, height) x 0.44` capped at 396 —
+ * a different function of the window. The two drift apart as the window
+ * changes, so a gradient tuned to clear the globe at one size lands its ramp on
+ * the globe's rim at another, which reads as a halo welded to the sphere.
+ *
+ * Anchoring the light to the motif instead makes the relationship hold at every
+ * size by construction. It is the same radius the density falloff uses.
+ */
+const AMBIENT = {
+  /** Nothing at all inside this many motif radii. */
+  hole: 1.35,
+  /**
+   * Peak alpha, reached at the far corner of the stage.
+   *
+   * The light belongs outside the motif, not behind it. The globe is a
+   * transparent point cloud: light behind it passes between its points and
+   * lifts the gaps, which is what collapses the contrast that makes the
+   * continents read at all.
+   */
+  peak: 0.038,
+  colour: [226, 236, 250],
+} as const;
+
+/**
  * Clears the canvas and paints the field once.
  *
  * Called on mount and after a resize, and never on a timer or an animation
@@ -28,9 +56,61 @@ export function drawStarfield(
   stars: readonly Star[],
   width: number,
   height: number,
+  motifRadius: number,
 ): void {
   context.clearRect(0, 0, width, height);
+  paintAmbient(context, width, height, motifRadius);
   paintStars(context, stars);
+}
+
+/**
+ * Paints the ambient glow, before the stars so they sit in front of it.
+ *
+ * Monotonic from the hole outward: it only ever gets brighter toward the
+ * corners, never turning over. A gradient with a peak somewhere in the middle
+ * of the stage would put a visible ring on the page at whichever window size
+ * moved that peak inside the frame.
+ */
+function paintAmbient(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  motifRadius: number,
+): void {
+  if (motifRadius <= 0) return;
+
+  const centreX = width / 2;
+  const centreY = height / 2;
+  const corner = Math.hypot(centreX, centreY);
+  const inner = AMBIENT.hole * motifRadius;
+  if (corner <= inner) return;
+
+  const [red, green, blue] = AMBIENT.colour;
+  const glow = context.createRadialGradient(
+    centreX,
+    centreY,
+    inner,
+    centreX,
+    centreY,
+    corner,
+  );
+
+  // Sampled rather than left to the browser's linear interpolation: the ramp is
+  // a smoothstep, so it leaves the hole and arrives at the corner with no slope
+  // in it. A ramp still moving when it lands shows an edge at its own boundary,
+  // which on a dark surface is visible even though no value steps.
+  const STEPS = 12;
+  for (let step = 0; step <= STEPS; step += 1) {
+    const t = step / STEPS;
+    const eased = t * t * (3 - 2 * t);
+    glow.addColorStop(
+      t,
+      `rgba(${red}, ${green}, ${blue}, ${(AMBIENT.peak * eased).toFixed(5)})`,
+    );
+  }
+
+  context.fillStyle = glow;
+  context.fillRect(0, 0, width, height);
 }
 
 /**

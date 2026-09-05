@@ -224,6 +224,55 @@ cryptographic one.
 
 ---
 
+## Ambient light
+
+This canvas carries one thing besides the stars: the ambient glow that gives the whole
+page its tonal range. The stage fill beneath it is a black point, near enough to nothing;
+this is what puts light on it.
+
+It is painted first, before any star, so the stars sit in front of it rather than being
+washed by it.
+
+**It is dark through the motif and brightens outward.** That is the opposite of where a
+glow instinctively belongs, and the reason is the motif itself: the globe is a transparent
+point cloud, so light behind it passes between its points and lifts the gaps. The gaps are
+what its continents are read against, so lighting them destroys the thing they are for.
+Measured, a lit centre costs the globe most of its local contrast. The light goes around
+the motif, not behind it.
+
+| Property   | Rule                                                               |
+| ---------- | ------------------------------------------------------------------ |
+| Inner edge | Nothing at all inside **1.25 × the motif radius**                  |
+| Ramp       | Smoothstep, from the inner edge to the stage's far corner          |
+| Peak alpha | **0.05**, reached only at the corner                               |
+| Colour     | `rgb(226, 236, 250)` — near-white, the same cool cast as the field |
+
+**Everything here is in multiples of the motif radius, which is why it is on this canvas
+at all.** A CSS gradient's stops are relative to the stage; the motif radius is
+`min(width, height) × 0.44` capped at 396. The two are different functions of the window,
+so they drift apart as it changes — a gradient tuned to clear the globe at one size puts
+its ramp on the globe's rim at another, which reads as a halo welded to the sphere. This
+layer was built in CSS first and did exactly that. Anchored to the motif instead, the
+relationship holds at every size by construction, the same way the density falloff does.
+
+The two numbers trade against each other and against one thing: how much the corner
+stars stand out. Lower the peak or push the inner edge out and the corner background
+darkens, so the stars in it read harder; the cost is that the page as a whole gets
+darker, and past a point the corners stop being part of the composition at all. At the
+values above the corner background sits a little under the reference's, and the stars
+there stand about sixteen times clear of it.
+
+**The ramp is monotonic.** It only ever brightens from the inner edge outward, never
+turning over. A glow that peaked somewhere in the middle of the stage would put a visible
+ring on the page at whichever window size moved that peak inside the frame.
+
+The gradient is sampled into twelve stops rather than left to the browser's linear
+interpolation between two, so the smoothstep leaves the inner edge and arrives at the
+corner with no slope in it. A ramp still moving when it lands shows an edge at its own
+boundary, which on a surface this dark is visible even though no value steps.
+
+---
+
 ## Rendering
 
 The starfield is drawn on its own `<canvas>` element filling the stage. It does not

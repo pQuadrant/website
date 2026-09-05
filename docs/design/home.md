@@ -60,7 +60,7 @@ around it, which reads as a webpage rather than an instrument.
 
 ## Background layers
 
-Seven layers compose the stage. Listed bottom to top. Every layer spans the full stage.
+Five layers compose the stage. Listed bottom to top. Every layer spans the full stage.
 
 **1. Stage fill**
 
@@ -71,86 +71,39 @@ be this dark — it is the floor that everything else is measured from, and the 
 depth is the distance between it and the light above it. It keeps the faintest cool
 cast, blue a few levels above red, so the deepest shadow is not a neutral hole.
 
-The reason it is not simply `#000` is that the layer above it has to fall to nothing
+The reason it is not simply `#000` is that the light above it has to fall to nothing
 somewhere, and where it does, this is what is left. A pure black floor with a sparse
 star field over it reads as dead rather than deep.
 
-**2. Ambient light**
+**There is no centre lift any more.** A faint cool wash used to sit behind the motif, on
+the stated reasoning that the globe should not sit on dead black. That reasoning was
+backwards. The motif is a transparent point cloud, so light behind it passes between its
+points and lifts the gaps — and the gaps are what the continents are read against.
+Measured, that layer alone cost the globe roughly three quarters of its local contrast:
+44:1 between its bright points and the gaps without it, against 14:1 with it. The globe
+sits on the black point deliberately, and that is what makes it read.
 
-A radial gradient, 66% of the stage width by 62% of its height, centred at 50% / 44%,
-with five stops:
+**2. Starfield canvas**
 
-| Position | Colour                        |
-| -------- | ----------------------------- |
-| 0%       | `rgba(226, 236, 250, 0.08)`   |
-| 35%      | `rgba(226, 236, 250, 0.068)`  |
-| 70%      | `rgba(226, 236, 250, 0.0272)` |
-| 88%      | `rgba(226, 236, 250, 0.0072)` |
-| 100%     | transparent                   |
+A `<canvas>` element filling the stage, carrying the **ambient light** and a field of
+small static points. Both are specified separately — see _Related files_.
 
-This is the layer that gives the page a tonal range. The fill below it is near-black;
-this is what puts light on it, and the variation between the two is what stops the
-surface reading as a slab.
+The ambient light is the layer that gives the page its tonal range: the fill below it is
+the black point, and this is what puts light on it. It is on this canvas rather than in
+a CSS gradient because it has to be positioned relative to the **motif radius**, and no
+CSS gradient can be. A gradient's stops are relative to the stage, while the motif radius
+is `min(width, height) × 0.44` capped at 396 — a different function of the window. The
+two drift apart as the window changes, so a gradient tuned to clear the globe at one size
+lands its ramp on the globe's rim at another, which reads as a halo welded to the sphere.
+This was built as a CSS layer first and that is exactly what it did.
 
-**Its ellipse is deliberately smaller than the stage.** The percentages are radii, not
-extents — the same reading that applies to the vignette below — so at 66% of the width
-the ellipse spans just over the frame horizontally and falls well short of the corners.
-That is the point. A gradient large enough to cover every pixel lifts every pixel, which
-reintroduces a uniform floor at a higher value and undoes the whole layer. The corners
-have to fall genuinely outside it.
-
-The stops matter as much as the size, in two separate ways. Holding near-peak out to 35%
-before falling away is what lifts the middle of the picture without lifting the edges — a
-plain ramp puts its half-value close to the centre and leaves most of the frame dim.
-
-The last two stops are there for a different reason: to bring the ramp into the fill with
-almost no slope left in it. A gradient still descending when it reaches zero leaves a Mach
-band at its own boundary — no step in the values, but a visible edge, because the eye reads
-the change in slope rather than the change in level. Measured along a diagonal to the
-corner, the three-stop version broke slope by 0.88 levels at 85% of the ray; the tail above
-halves that to 0.54, which is below anything visible. If these numbers are ever retuned,
-measure the slope break rather than looking for a step.
-
-It sits **below the starfield**, so the stars sit in front of the glow rather than being
-washed by it.
-
-**Why this layer exists at all.** The reference this page is measured against paints its
-hero on `#000` with no background layer whatsoever: every non-black pixel there is light
-emitted by the subject, a dense particle scene bright enough to generate the entire
-tonal range on its own. Our motif is a dim point-cloud globe and our field is a few
-hundred stars, so we cannot emit that range — we have to synthesise it. This layer is
-that synthesis. It is not decoration, and deleting it does not return the page to a
-neutral state; it returns it to a black rectangle with dots on it.
-
-**3. Starfield canvas**
-
-A `<canvas>` element filling the stage, carrying a field of small static points.
-Specified separately — see _Related files_.
-
-It sits above the ambient light and below the centre lift, so the cool wash passes over
-the stars near the middle of the stage and slightly mutes them there, and below the
-vignette, so they fade toward the window edges along with everything else.
+It sits below the vignette, so the stars fade toward the window edges along with
+everything else.
 
 The canvas must be marked as decorative for assistive technology, since it conveys no
 information a screen reader can use.
 
-**4. Centre lift**
-
-A radial gradient, 46% of the stage width by 52% of its height, centred at 50% / 50%,
-running from `rgba(232, 238, 248, 0.05)` at the centre to fully transparent at 72%.
-
-This is a very faint cool wash that lifts the area behind the motif so the globe does
-not sit on dead black. It is close to invisible in isolation and should stay that way;
-if it reads as a distinct glow, it is too strong. The wash reaches the fill again
-before its 72% stop, so the stop itself is not an edge anyone can trace.
-
-**It is near-white, not blue.** A saturated blue wash at this scale reads as a coloured
-gradient laid over the page rather than as light falling on it, and that is the single
-strongest tell of a synthetic interface. The cool cast belongs in the stage fill, which
-carries it at low saturation across the whole surface; this layer's job is only to stop
-the motif sitting on dead black, and light does that without a hue.
-
-**5. Motif canvas**
+**3. Motif canvas**
 
 A single `<canvas>` element filling the stage. Specified separately — see _Related
 files_.
@@ -170,7 +123,7 @@ settles on a width several hundred pixels wider than the window.
 The canvas must be marked as decorative for assistive technology, since it conveys no
 information a screen reader can use.
 
-**6. Vignette**
+**4. Vignette**
 
 A radial gradient, 118% of the stage width by 88% of its height, centred at 50% / 46%,
 fully transparent until 52% and reaching `rgba(0, 0, 0, 0.38)` at 100%.
@@ -201,7 +154,7 @@ again if the fill rose or the motif grew, which is why it is kept rather than de
 Do not read its presence as evidence that it is doing visible work today, and do not
 reach for it as a lever — at this fill value it does not have the authority to be one.
 
-**7. Auth bloom**
+**5. Auth bloom**
 
 A radial gradient composited in screen blend mode, 42% of the stage width by 46% of its
 height, centred at 50% / 50%, with three stops:
@@ -221,8 +174,8 @@ This layer is suppressed entirely when the user has requested reduced motion.
 
 **Pointer behaviour**
 
-Layers 1, 2, 3, 4, 6 and 7 must not intercept pointer events. Only the motif canvas and
-the chrome and panel above it are interactive.
+Layers 1, 2, 4 and 5 must not intercept pointer events. Only the motif canvas and the
+chrome and panel above it are interactive.
 
 **Colour scheme**
 
@@ -238,7 +191,7 @@ stylesheet can override.
 
 **Reach of the stage fill**
 
-The stage fill must cover the document, not only the element that draws the other six
+The stage fill must cover the document, not only the element that draws the other four
 layers. Overscrolling past the top or bottom edge exposes the document's background, so
 a fill applied to the stage element alone leaves a white band at the point of the
 rubber-band. The same applies to the scrolling case described under _Short windows_.
