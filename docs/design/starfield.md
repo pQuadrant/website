@@ -34,24 +34,28 @@ it is too strong.
 
 ## Position in the layer stack
 
-The starfield sits **directly above the stage fill and below the centre lift**. The
-full stack, bottom to top, becomes:
+This canvas sits **directly above the stage fill**, and carries two things: the ambient
+light and the stars. The full stack, bottom to top:
 
-| #   | Layer                |
-| --- | -------------------- |
-| 1   | Stage fill           |
-| 2   | **Starfield canvas** |
-| 3   | Centre lift          |
-| 4   | Motif canvas         |
-| 5   | Vignette             |
-| 6   | Auth bloom           |
+| #   | Layer                                  |
+| --- | -------------------------------------- |
+| 1   | Stage fill                             |
+| 2   | **Starfield canvas** — ambient + stars |
+| 3   | Motif canvas                           |
+| 4   | Vignette                               |
+| 5   | Auth bloom                             |
 
-Placing it below the centre lift means the faint cool wash passes over the stars near
-the middle of the stage and slightly mutes them there. This is intentional. It softens
-the transition into the empty region around the globe.
+There is no centre lift. One used to sit between this canvas and the motif, a faint cool
+wash on the reasoning that the globe should not sit on dead black. That reasoning was
+backwards and it is worth knowing why, because it is the same mistake the ambient light
+was built to avoid: the motif is a **transparent point cloud**, so anything luminous
+behind it shows through the gaps between its points, and those gaps are what its
+continents are read against. Measured, that layer alone took the globe from 44:1 between
+its bright points and the gaps down to 14:1. The globe sits on the black point
+deliberately.
 
-Placing it below the vignette means the stars fade toward the window edges along with
-everything else. Also intentional — a starfield at uniform brightness edge to edge
+Placing this canvas below the vignette means the stars fade toward the window edges along
+with everything else. That is intentional — a starfield at uniform brightness edge to edge
 looks like a wallpaper tile.
 
 The canvas must not intercept pointer events, and must be marked decorative for
@@ -224,6 +228,55 @@ cryptographic one.
 
 ---
 
+## Ambient light
+
+This canvas carries one thing besides the stars: the ambient glow that gives the whole
+page its tonal range. The stage fill beneath it is a black point, near enough to nothing;
+this is what puts light on it.
+
+It is painted first, before any star, so the stars sit in front of it rather than being
+washed by it.
+
+**It is dark through the motif and brightens outward.** That is the opposite of where a
+glow instinctively belongs, and the reason is the motif itself: the globe is a transparent
+point cloud, so light behind it passes between its points and lifts the gaps. The gaps are
+what its continents are read against, so lighting them destroys the thing they are for.
+Measured, a lit centre costs the globe most of its local contrast. The light goes around
+the motif, not behind it.
+
+| Property   | Rule                                                               |
+| ---------- | ------------------------------------------------------------------ |
+| Inner edge | Nothing at all inside **1.35 × the motif radius**                  |
+| Ramp       | Smoothstep, from the inner edge to the stage's far corner          |
+| Peak alpha | **0.038**, reached only at the corner                              |
+| Colour     | `rgb(226, 236, 250)` — near-white, the same cool cast as the field |
+
+**Everything here is in multiples of the motif radius, which is why it is on this canvas
+at all.** A CSS gradient's stops are relative to the stage; the motif radius is
+`min(width, height) × 0.44` capped at 396. The two are different functions of the window,
+so they drift apart as it changes — a gradient tuned to clear the globe at one size puts
+its ramp on the globe's rim at another, which reads as a halo welded to the sphere. This
+layer was built in CSS first and did exactly that. Anchored to the motif instead, the
+relationship holds at every size by construction, the same way the density falloff does.
+
+The two numbers trade against each other and against one thing: how much the corner
+stars stand out. Lower the peak or push the inner edge out and the corner background
+darkens, so the stars in it read harder; the cost is that the page as a whole gets
+darker, and past a point the corners stop being part of the composition at all. At the
+values above the corner background sits a little under the reference's, and the stars
+there stand about sixteen times clear of it.
+
+**The ramp is monotonic.** It only ever brightens from the inner edge outward, never
+turning over. A glow that peaked somewhere in the middle of the stage would put a visible
+ring on the page at whichever window size moved that peak inside the frame.
+
+The gradient is sampled into twelve stops rather than left to the browser's linear
+interpolation between two, so the smoothstep leaves the inner edge and arrives at the
+corner with no slope in it. A ramp still moving when it lands shows an edge at its own
+boundary, which on a surface this dark is visible even though no value steps.
+
+---
+
 ## Rendering
 
 The starfield is drawn on its own `<canvas>` element filling the stage. It does not
@@ -391,18 +444,21 @@ Touch devices get the static field, which is the whole of this ticket's field an
 
 The window sizes from `home.md` apply here unchanged. In addition:
 
-| Check                    | What to look for                                                    |
-| ------------------------ | ------------------------------------------------------------------- |
-| Load at 1440 × 900       | Stars across the whole window, thinning to nothing behind the globe |
-| Look at the falloff edge | No visible ring or hard boundary where density changes              |
-| Reload twice             | Identical field both times                                          |
-| Retina display           | Stars are crisp dots, not fuzzy squares                             |
-| Idle for 30 seconds      | No animation frames running, CPU at zero                            |
-| Slow pointer sweep       | Stars lean and return; no jitter                                    |
-| Fast diagonal flick      | Visible smear, no stars thrown off course, field recovers           |
-| Reduced motion on        | Field renders, nothing moves, no loop starts                        |
-| Resize slowly            | Field regenerates, no stretched or oval stars, no empty gap         |
-| Click chrome and sign-in | Canvas does not block any pointer target                            |
+| Check                      | What to look for                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                   |
+| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                |
+| Reload twice               | Identical field both times                                                                            |
+| Retina display             | Stars are crisp dots, not fuzzy squares                                                               |
+| Idle for 30 seconds        | No animation frames running, CPU at zero                                                              |
+| Slow pointer sweep         | Stars lean and return; no jitter                                                                      |
+| Fast diagonal flick        | Visible smear, no stars thrown off course, field recovers                                             |
+| Reduced motion on          | Field renders, nothing moves, no loop starts                                                          |
+| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                           |
+| Click chrome and sign-in   | Canvas does not block any pointer target                                                              |
+| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere       |
+| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                     |
+| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits |
 
 ---
 

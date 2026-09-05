@@ -84,8 +84,9 @@ export function Starfield() {
 
       // The falloff is defined against the motif radius, so it is read from the
       // motif's own module rather than a second copy of the formula living here.
-      const stars = createStarfield(width, height, motifRadius(width, height));
-      drawStarfield(context, stars, width, height);
+      const radius = motifRadius(width, height);
+      const stars = createStarfield(width, height, radius);
+      drawStarfield(context, stars, width, height, radius);
     };
 
     draw();
