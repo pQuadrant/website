@@ -60,13 +60,25 @@ around it, which reads as a webpage rather than an instrument.
 
 ## Background layers
 
-Five layers compose the stage. Listed bottom to top. Every layer spans the full stage.
+Six layers compose the stage. Listed bottom to top. Every layer spans the full stage.
 
 **1. Stage fill**
 
 Flat colour `#080A0F`. The base surface. Nothing sits below it.
 
-**2. Centre lift**
+**2. Starfield canvas**
+
+A `<canvas>` element filling the stage, carrying a field of small static points.
+Specified separately — see _Related files_.
+
+It sits below the centre lift, so the cool wash passes over the stars near the middle
+of the stage and slightly mutes them there, and below the vignette, so they fade toward
+the window edges along with everything else.
+
+The canvas must be marked as decorative for assistive technology, since it conveys no
+information a screen reader can use.
+
+**3. Centre lift**
 
 A radial gradient, 46% of the stage width by 52% of its height, centred at 50% / 50%,
 running from `rgba(168, 196, 240, 0.055)` at the centre to fully transparent at 72%.
@@ -75,7 +87,7 @@ This is a very faint cool wash that lifts the area behind the motif so the globe
 not sit on dead black. It is close to invisible in isolation and should stay that way;
 if it reads as a distinct glow, it is too strong.
 
-**3. Motif canvas**
+**4. Motif canvas**
 
 A single `<canvas>` element filling the stage. Specified separately — see _Related
 files_.
@@ -95,7 +107,7 @@ settles on a width several hundred pixels wider than the window.
 The canvas must be marked as decorative for assistive technology, since it conveys no
 information a screen reader can use.
 
-**4. Vignette**
+**5. Vignette**
 
 A radial gradient, 118% of the stage width by 88% of its height, centred at 50% / 46%,
 fully transparent until 40% and reaching `rgba(0, 0, 0, 0.6)` at 100%.
@@ -105,7 +117,7 @@ falloff toward the bottom corners. It sits above the canvas, so it darkens the g
 outer edge as well as the background. This is what keeps the corner chrome legible
 against the motif.
 
-**5. Auth bloom**
+**6. Auth bloom**
 
 A radial gradient composited in screen blend mode, 42% of the stage width by 46% of its
 height, centred at 50% / 50%, with three stops:
@@ -125,8 +137,8 @@ This layer is suppressed entirely when the user has requested reduced motion.
 
 **Pointer behaviour**
 
-Layers 1, 2, 4 and 5 must not intercept pointer events. Only the canvas and the chrome
-and panel above it are interactive.
+Layers 1, 2, 3, 5 and 6 must not intercept pointer events. Only the motif canvas and
+the chrome and panel above it are interactive.
 
 **Colour scheme**
 
@@ -142,7 +154,7 @@ stylesheet can override.
 
 **Reach of the stage fill**
 
-The stage fill must cover the document, not only the element that draws the other four
+The stage fill must cover the document, not only the element that draws the other five
 layers. Overscrolling past the top or bottom edge exposes the document's background, so
 a fill applied to the stage element alone leaves a white band at the point of the
 rubber-band. The same applies to the scrolling case described under _Short windows_.
