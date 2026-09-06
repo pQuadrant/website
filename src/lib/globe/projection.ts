@@ -13,6 +13,52 @@ import type { GlobeMotionField, GlobeState } from "@/lib/globe/state";
 /** Opacity buckets per pass. Ten is enough that the banding is invisible. */
 export const BUCKET_COUNT = 10;
 
+/**
+ * The highlight: a white core drawn inside the nearest points.
+ *
+ * Land tops out at luminance 186 and ocean lower still, so at the top bucket's
+ * 0.95 the motif cannot exceed 176 whatever its alphas do. The ceiling is the
+ * paint, not the opacity, and the only way past it is a second colour.
+ *
+ * Depth is the source: the points facing the viewer are lit, as they would be
+ * under a light behind the shoulder. It is the one candidate that varies
+ * smoothly as the sphere turns, so a point entering the highlight enters it at
+ * zero strength — see the exponent below.
+ */
+const HIGHLIGHT_DEPTH = 0.86;
+
+/**
+ * How the highlight grows past its threshold, over `1 - HIGHLIGHT_DEPTH`.
+ *
+ * Above one, so strength leaves the threshold with zero gradient. A linear ramp
+ * would still be continuous, but points would visibly wink on at the boundary
+ * as they rotate through it; this is what keeps the population small and the
+ * arrival invisible.
+ */
+const HIGHLIGHT_EXPONENT = 2.5;
+
+/**
+ * The core's size as a share of the point's, and its floor.
+ *
+ * The core sits inside the point rather than replacing it, which is what leaves
+ * the green and the blue intact around a white centre. The floor is a pixel:
+ * below that the rectangle is pure antialiasing and the highlight dims instead
+ * of shrinking.
+ */
+const HIGHLIGHT_CORE = 0.6;
+const HIGHLIGHT_CORE_FLOOR = 1;
+
+/**
+ * Buckets for the highlight pass. Four, against the ten the point passes use.
+ *
+ * The population is a few hundred points across a narrow range, so the banding
+ * ten buckets exist to hide is not there to hide, and each bucket is a fill.
+ */
+export const HIGHLIGHT_BUCKET_COUNT = 4;
+
+/** Below this strength the core is dimmer than the point under it. */
+const HIGHLIGHT_FLOOR = 0.05;
+
 /** Radius is this share of the smaller window dimension... */
 const RADIUS_FACTOR = 0.44;
 
@@ -89,12 +135,24 @@ export interface GlobeView {
 export interface GlobeFrame {
   land: number[][];
   ocean: number[][];
+  /**
+   * The white cores, from both passes at once.
+   *
+   * One set rather than one per pass: the core is the same colour whichever
+   * point it sits in, so splitting it would double the fills to draw the same
+   * pixels.
+   */
+  highlight: number[][];
 }
 
 export function createGlobeFrame(): GlobeFrame {
-  const buckets = () =>
-    Array.from({ length: BUCKET_COUNT }, (): number[] => []);
-  return { land: buckets(), ocean: buckets() };
+  const buckets = (count: number) =>
+    Array.from({ length: count }, (): number[] => []);
+  return {
+    land: buckets(BUCKET_COUNT),
+    ocean: buckets(BUCKET_COUNT),
+    highlight: buckets(HIGHLIGHT_BUCKET_COUNT),
+  };
 }
 
 /** Radius rule and cap, from `docs/design/home.md`. */
@@ -117,6 +175,7 @@ export function project(
 ): void {
   clear(frame.land);
   clear(frame.ocean);
+  clear(frame.highlight);
 
   projectRange(
     points,
@@ -128,6 +187,7 @@ export function project(
     state,
     view,
     frame.land,
+    frame.highlight,
   );
   projectRange(
     points,
@@ -139,6 +199,7 @@ export function project(
     state,
     view,
     frame.ocean,
+    frame.highlight,
   );
 }
 
@@ -158,6 +219,7 @@ function projectRange(
   state: GlobeState,
   view: GlobeView,
   buckets: number[][],
+  highlights: number[][],
 ): void {
   const { positions } = points;
   const { scatter, jitter } = field;
@@ -274,5 +336,26 @@ function projectRange(
 
     // Stored as the top left corner, so the drawing half has no maths to do.
     buckets[bucket].push(x - half, y - half, size);
+
+    // The white core, for the points near enough the front to be lit. Carried
+    // on the point's own alpha, so it dims behind the panel, fades in with the
+    // assemble and brightens under the cursor along with everything else.
+    if (depth <= HIGHLIGHT_DEPTH) continue;
+
+    const strength =
+      ((depth - HIGHLIGHT_DEPTH) / (1 - HIGHLIGHT_DEPTH)) ** HIGHLIGHT_EXPONENT;
+    const core = alpha * strength;
+    if (core <= HIGHLIGHT_FLOOR) continue;
+
+    const coreSize = Math.max(HIGHLIGHT_CORE_FLOOR, size * HIGHLIGHT_CORE);
+    const coreBucket = Math.min(
+      HIGHLIGHT_BUCKET_COUNT - 1,
+      Math.floor(core * HIGHLIGHT_BUCKET_COUNT),
+    );
+
+    // Centred on the point rather than sharing its corner, so the colour
+    // survives as a ring around the core instead of an L down two sides.
+    const coreHalf = coreSize / 2;
+    highlights[coreBucket].push(x - coreHalf, y - coreHalf, coreSize);
   }
 }

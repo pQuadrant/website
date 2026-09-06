@@ -11,6 +11,7 @@ import {
   BUCKET_COUNT,
   type GlobeFrame,
   type GlobeView,
+  HIGHLIGHT_BUCKET_COUNT,
 } from "@/lib/globe/projection";
 import type { GlobeState } from "@/lib/globe/state";
 
@@ -35,6 +36,8 @@ const HALO_OPACITY = 0.4;
 export interface GlobeColours {
   land: string;
   ocean: string;
+  /** The white point the nearest points carry. See the highlight rule. */
+  highlight: string;
 }
 
 /**
@@ -88,10 +91,27 @@ export function paint(
 
   paintHalo(context, colours, view, state);
 
-  // Both passes bloom on the stronger of the two glows, each in its own colour.
+  // Every pass blooms on the stronger of the two glows, each in its own colour.
   const bloom = Math.max(state.glow, state.dotGlow);
-  paintPass(context, frame.land, colours.land, 1, bloom);
-  paintPass(context, frame.ocean, colours.ocean, OCEAN_OPACITY, bloom);
+  paintPass(context, frame.land, colours.land, 1, bloom, BUCKET_COUNT);
+  paintPass(
+    context,
+    frame.ocean,
+    colours.ocean,
+    OCEAN_OPACITY,
+    bloom,
+    BUCKET_COUNT,
+  );
+  // Last, so the cores sit on top of the points they belong to rather than
+  // under whichever pass happens to be drawn after them.
+  paintPass(
+    context,
+    frame.highlight,
+    colours.highlight,
+    1,
+    bloom,
+    HIGHLIGHT_BUCKET_COUNT,
+  );
 }
 
 /** The processing halo: a wash of ocean colour behind the points. */
@@ -129,6 +149,7 @@ function paintPass(
   colour: string,
   opacityScale: number,
   bloom: number,
+  bucketCount: number,
 ): void {
   context.fillStyle = colour;
 
@@ -143,7 +164,7 @@ function paintPass(
 
     context.globalAlpha = Math.min(
       1,
-      ((bucket + 0.5) / BUCKET_COUNT) * opacityScale,
+      ((bucket + 0.5) / bucketCount) * opacityScale,
     );
 
     // One path for the whole bucket, filled once.
