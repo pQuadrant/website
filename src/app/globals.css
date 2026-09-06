@@ -32,6 +32,10 @@
   --color-signal: #3183f5;
   --color-land: #5fd98f;
   --color-ocean: #4e9bfb;
+  /* The motif's white point. Land and ocean both top out well short of white —
+     the land green is luminance 186 — so the highlight cannot come from either
+     of them. See the highlight rule in `docs/design/globe.md`. */
+  --color-highlight: #f2f7ff;
 
   /* Type roles. Each carries its own letter-spacing; pair with font-sans or
      font-mono, which Tailwind cannot fold into a text token. */

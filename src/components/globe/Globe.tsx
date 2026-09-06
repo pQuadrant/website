@@ -41,6 +41,7 @@ export function Globe({ clearZone = null }: GlobeProps) {
       colours: {
         land: styles.getPropertyValue("--color-land").trim(),
         ocean: styles.getPropertyValue("--color-ocean").trim(),
+        highlight: styles.getPropertyValue("--color-highlight").trim(),
       },
     });
 

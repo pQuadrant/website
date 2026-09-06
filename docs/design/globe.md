@@ -271,6 +271,62 @@ Points are **axis-aligned squares**, drawn as rectangles. Not circles, not arcs.
 both a visual decision and a performance one; the squareness is visible at close
 inspection and is part of the look.
 
+### The highlight
+
+The points nearest the viewer carry a **white core**: a smaller square of
+`#F2F7FF` drawn centred inside the point, on top of it.
+
+```
+strength = ((depth − 0.86) / 0.14)^2.5      for depth > 0.86, else none
+coreAlpha = alpha × strength                 dropped at or below 0.05
+coreSize  = max(1, size × 0.6)
+```
+
+`alpha` and `size` are the point's own, from _Depth, size and opacity_ above, so the core
+inherits everything they carry — it dims to 13% inside the clear zone, fades in with the
+assemble, brightens under the cursor, and scales with `dim` and the glows.
+
+**Why the motif needs a second colour at all.** Land is luminance 186 and ocean 146, and
+the top opacity bucket is 0.95, so the brightest pixel the motif could produce was
+186 × 0.95 = **176** — and p99 and the maximum were the same number, because a large
+population sat pressed against it. The ceiling was the paint, not the alphas: no change
+to the ocean alpha, the depth cull, the alpha floor or the bucket count can lift a
+colour above its own luminance. Reaching a white point required a colour that has one.
+
+**Why depth is the source.** Three candidates were considered and only one is taken;
+they are not stacked.
+
+- **Depth**, chosen. The projection already carries it, so the term costs nothing, and it
+  varies smoothly and slowly as the sphere turns. Read as a light behind the viewer's
+  shoulder, which is where a viewer assumes one is.
+- **The limb or terminator**, rejected. More photographic, and it would survive behind
+  the panel where depth does not — but the brightest band would fall exactly where the
+  sphere's points are most foreshortened and most crowded, which reads as a rim light
+  drawn around the globe rather than as light falling on it.
+- **Land over ocean**, rejected. It would put the white on the one distinction the motif
+  exists to show, and the two are already separated by colour, size and alpha. Brightening
+  one of them is the most direct route to losing the coastlines.
+
+**Why the exponent is above one.** At 2.5 the strength leaves the threshold with zero
+gradient, so a point rotating into the highlight arrives at zero and grows. A linear ramp
+is continuous too, but points visibly wink on at the boundary; measured across a turn,
+this shape moves the lit population by at most 5% between samples and holds the peak
+luminance flat at 238.
+
+**Desaturation, and its limit.** The core is near-white rather than a brighter green or
+blue, because a saturated bright green point is the strongest synthetic tell the motif
+could offer. The core replaces only the middle of the point: the land green and the ocean
+blue survive as a ring around it, which is where the motif's identity lives. This applies
+to the top of the range only — nothing below `depth 0.86` is touched, and the median
+luminance of the motif is unchanged by the highlight.
+
+**What it does not survive.** With the panel open, every point bright enough to exceed
+luminance 200 projects within 187px of the sphere's centre, and the clear zone reaches
+226px. The highlight is therefore entirely hidden while the panel is open. That is the
+clear zone working as specified rather than a fault in the highlight, and it is the
+accepted cost of taking the highlight from depth: a limb-sourced highlight would have
+survived. If the panel's footprint or the radius changes, this is the number to re-check.
+
 ### Opacity bucketing
 
 Canvas cannot vary opacity within a single fill, and changing it per point would mean
@@ -281,17 +337,25 @@ matching its computed alpha, each bucket is drawn as one path containing all its
 rectangles, and the whole path is filled once at that bucket's opacity, which is
 `(bucketIndex + 0.5) / 10`.
 
-This reduces roughly 15,000 draw calls to 20: ten land buckets and ten ocean buckets. The
-ocean pass applies an additional ×1.15 to the bucket opacity.
+This reduces roughly 15,000 draw calls to 24: ten land buckets, ten ocean buckets, and
+four for the highlight. The ocean pass applies an additional ×1.15 to the bucket opacity.
 
 Ten buckets is enough that the banding is invisible at these point sizes. Do not reduce
 the count to save work.
+
+The highlight pass uses **four**, and one set for both point classes rather than one
+each. Its population is a few hundred points across a narrow range of strengths, so the
+banding that ten buckets exist to hide is not there to hide, and the core is the same
+colour whichever point it sits in — splitting it by class would double the fills to draw
+the same pixels. It is drawn last, so a core sits on top of the point it belongs to.
 
 ### Bloom
 
 While `glow` or `dotGlow` is above 0.05, points are drawn with a shadow blur of
 `12 × max(glow, dotGlow)`, coloured to match the pass: land colour for the land pass,
-ocean colour for the ocean pass.
+ocean colour for the ocean pass, and the highlight colour for the highlight pass. All
+three bloom on the stronger of the two glows, so a state change does not leave the cores
+flat while the points under them glow.
 
 ### Device pixel ratio
 
@@ -514,7 +578,7 @@ Target 60 frames per second at 15,000 points on the slowest machine in the team.
 The techniques that make this achievable, all of which are load-bearing:
 
 - Positions held in typed arrays, allocated once at generation and never rebuilt
-- Bucketed opacity, reducing per-frame draw calls from thousands to twenty
+- Bucketed opacity, reducing per-frame draw calls from thousands to twenty-four
 - Far-side culling, dropping half the hidden hemisphere
 - Backing store capped at 1.5× device pixel ratio
 - Per-frame arrays cleared by resetting length rather than reallocating
