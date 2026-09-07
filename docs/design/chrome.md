@@ -15,6 +15,15 @@ The chrome frames the page the way instrument markings frame a display. It is
 deliberately small, dim and dense. It is not marketing copy, and it should never be
 scaled up to improve legibility. Its low prominence is the design.
 
+**Prominence is not presence, and only one of them is low by design.** Prominence is how
+much of the page a thing claims: its size, its weight, its place in the reading order.
+That is what the rule above protects, and nothing in this file scales, moves or
+recolours a string to make it easier to see. Presence is whether a thing reads as
+sitting _on_ the page or behind it — and the chrome had none. It was the only element on
+this page rendered as flat paint, while the stars, the motif's nearest points and the
+submit button all emit light. That is why the corners receded even where their contrast
+was high. The glow below raises presence and leaves prominence exactly where it was.
+
 **How far that rule reaches.** It binds the ambient telemetry — `SERVER EG-CAI-1`,
 `PQ-CORE 4.2.118`, `TLS 1.3 · AES-256-GCM` and the Cairo clock — permanently. Those
 convey nothing the visitor needs and their dimness is the point.
@@ -33,6 +42,68 @@ Everything here is set in IBM Plex Mono. The mono typeface carries anything labe
 metered or system-voiced, which on this page is all of the chrome. Wide letter-spacing
 is applied throughout and is not optional — these strings were composed with it, and
 they collapse into something generic without it.
+
+---
+
+## The glow
+
+Every string in the chrome carries a soft halo of **its own colour**. This is what makes
+the chrome read as lit rather than printed on the surface.
+
+**A drop shadow is not the alternative, and would not work here.** A shadow is something
+darker cast onto a lighter ground. The stage fill is the black point — see
+`docs/design/home.md` — so there is nothing darker to cast onto it, and a drop shadow on
+this page is invisible by construction. On a dark surface the equivalent tool is the
+inverse: the element's own colour bleeding into the space around it.
+
+| Role   | Applies to                       | Colour    | Glow             |
+| ------ | -------------------------------- | --------- | ---------------- |
+| `fg-0` | `SIGN IN`, and every hover state | `#EAEDF4` | 0.28 alpha, 12px |
+| `fg-1` | Product names, `p_Q`             | `#8B94A2` | 0.22 alpha, 10px |
+| `fg-2` | The toggle's label, panel open   | `#59626E` | 0.21 alpha, 9px  |
+| `fg-3` | Telemetry, server line, clock    | `#414A56` | 0.20 alpha, 8px  |
+
+The values are held as tokens in `globals.css`, `--text-shadow-glow-0` through
+`--text-shadow-glow-3`, and never as literals in a component.
+
+**The proportionality is the point, not a detail of the tuning.** Alpha and radius scale
+with each string's own luminance. A uniform halo would close the gap between the loudest
+element and the quietest, flattening the page's single point of focus — the opposite of
+what the glow is for. Scaled, `SIGN IN` gains the most presence, the telemetry stays
+recessive, and the hierarchy described in this file survives intact.
+
+`fg-2` is interpolated rather than picked. Its luminance, 97.0, sits about a third of
+the way from `fg-3`'s 73.0 to `fg-1`'s 147.1, and its glow sits at the same fraction
+between theirs. The ramp is a ramp, and a value on it is not a special case.
+
+**The two dividers do not glow.** The product line's `/` and the top-right cluster's
+hairline are marks that separate other things, and a halo on a divider makes it compete
+with what it divides. Both stay flat paint. The `/` sits inside a glowing paragraph, so
+it clears the inherited halo explicitly rather than by accident.
+
+**What the glow costs.** A halo of a string's own colour necessarily raises the ground
+immediately around its glyphs, so every string's contrast against its immediate surround
+falls very slightly. There is no version of this technique where that cost is zero; it
+can only be kept small. Measured at 1440 × 900 against the same page with the halos
+switched off:
+
+| Cluster                    | Before  | After   |
+| -------------------------- | ------- | ------- |
+| Product names              | 6.58:1  | 6.54:1  |
+| Server line                | 2.24:1  | 2.24:1  |
+| Core version and transport | 2.24:1  | 2.23:1  |
+| City and clock             | 2.24:1  | 2.23:1  |
+| `p_Q`                      | 6.61:1  | 6.61:1  |
+| `SIGN IN`, on its own fill | 16.23:1 | 16.11:1 |
+
+The largest loss is 0.12 of a contrast point, on the string with sixteen of them to
+spare. The telemetry — the weakest value on the page, and the one to watch if these
+numbers are ever retuned — loses 0.012.
+
+**No halo boundary.** The falloff reaches zero within about 4px of each string's box,
+with no step and no slope break anywhere in the tail. A glow still descending when it
+reaches its last stop leaves a visible edge even though no value steps, so this is
+checked on a radial profile of the amplified difference, not by eye.
 
 ---
 
@@ -101,12 +172,21 @@ gap between each. Three items, left to right.
 | Label                       | `p_Q`                                       |
 | Type                        | IBM Plex Mono, 10px, letter-spacing `0.2em` |
 | Colour                      | `#8B94A2`                                   |
+| Glow                        | `fg-1`; `fg-0` on hover and active          |
 | Hover colour                | `#EAEDF4`                                   |
-| Transition                  | 160ms ease                                  |
+| Active colour               | `#EAEDF4`                                   |
+| Transition                  | 160ms ease on text colour and glow          |
+| Focus                       | See _Focus_ below                           |
 | Border, background, padding | None                                        |
 
 Text only. No border, no fill, no padding — it reads as a word, not a control, until
 hovered.
+
+**The active state is not a duplicate of the hover state**, for the same reason it is
+not on the toggle: Tailwind emits every `hover:` utility inside `@media (hover: hover)`,
+so on a touch device the hover rules never apply. Without an active state this button
+acknowledged a tap with nothing at all, which it did for as long as it existed. It now
+gets the same treatment the toggle has always had.
 
 This label is typed characters in the mono typeface. It is **not** the pQuadrant
 wordmark asset, and must not be replaced with it. The drawn wordmark appears only
@@ -123,19 +203,47 @@ A 1px wide vertical hairline in `#232B36`, spanning the full 34px height of the 
 
 **3. Sign-in toggle**
 
-| Property      | Value                                       |
-| ------------- | ------------------------------------------- |
-| Height        | 34px                                        |
-| Padding       | 0 16px                                      |
-| Border        | 1px solid `#262D3A`                         |
-| Background    | Transparent                                 |
-| Type          | IBM Plex Mono, 10px, letter-spacing `0.2em` |
-| Hover border  | `#4E9BFB`                                   |
-| Hover colour  | `#EAEDF4`                                   |
-| Active border | `#4E9BFB`                                   |
-| Active colour | `#EAEDF4`                                   |
-| Transition    | 160ms ease on border colour and text colour |
-| Border radius | 0                                           |
+| Property      | Value                                                  |
+| ------------- | ------------------------------------------------------ |
+| Height        | 34px                                                   |
+| Padding       | 0 16px                                                 |
+| Border        | 1px solid `#59626E`                                    |
+| Background    | White at 0.03 alpha                                    |
+| Type          | IBM Plex Mono, 10px, letter-spacing `0.2em`            |
+| Glow          | `fg-0` closed, `fg-2` open; `fg-0` on hover and active |
+| Hover border  | `#4E9BFB`                                              |
+| Hover colour  | `#EAEDF4`                                              |
+| Active border | `#4E9BFB`                                              |
+| Active colour | `#EAEDF4`                                              |
+| Transition    | 160ms ease on border colour, text colour and glow      |
+| Focus         | See _Focus_ below                                      |
+| Border radius | 0                                                      |
+
+**The border is `#59626E` because it is the first value on the ramp that clears 3:1.**
+The button previously had no visible body: its border sat at `#262D3A`, which is 1.45:1
+against the corner ground, so the only action on the page read as two floating words
+rather than as a control. WCAG 1.4.11 asks 3:1 of the visual boundary of a UI component.
+Walking the existing blue-grey ramp, `#525C6A` reaches only 2.97:1 and misses; `#59626E`
+reaches 3.25:1 and is already a token, so no new colour entered the palette. Measured on
+the rendered page it holds at **3.20:1 or better at 1440 × 900, 1920 × 1080 and
+2560 × 1440**.
+
+**The fill is capped at 0.03 alpha, and the cap is load-bearing rather than taste.**
+With the panel open the toggle's own label is `#59626E` — an accepted contrast deviation
+recorded below — and a fill underneath it lowers that number. Measured against the
+ground actually under the button, luminance 9.0:
+
+| Fill alpha | Body luminance | `#59626E` on it      |
+| ---------- | -------------- | -------------------- |
+| 0.03       | 17.0           | 3.05:1               |
+| 0.04       | 19.0           | 3.00:1 — no headroom |
+| 0.05       | 21.9           | 2.93:1 — fails       |
+| 0.08       | 28.0           | 2.76:1 — fails       |
+
+Raising the fill takes the open state below 3:1, and it will not be visible in a
+screenshot. Above roughly 0.05 the button also stops reading as a lit control and starts
+reading as a grey card, which `docs/design/home.md` rules out. If this value is ever
+retuned, the open-state label is the number that breaks first.
 
 The active state repeats the hover state's colours and is not redundant with it. Hover
 styling must be confined to inputs that can hover, or it sticks to the last thing
@@ -167,6 +275,20 @@ assistive technology, including whether the panel is currently open.
 
 When the panel opens, keyboard focus moves into it. When it closes, focus returns to
 this button. Focus must never be left on an element that has been removed.
+
+**Focus**
+
+Both controls in this cluster carry a visible focus indicator: a 1px ring in `#EAEDF4`
+with a 16px halo of the same colour at 0.3 alpha, held as `--shadow-glow-focus`.
+
+It is built from this file's glow rather than the browser's default outline, so the page
+keeps one visual language, and the default outline is suppressed where it applies. The
+ring carries the boundary and the halo carries the emission; neither on its own is both
+crisp enough to locate and of a piece with the rest of the chrome.
+
+It is a `focus-visible` treatment, so it appears for a keyboard and not on a click or a
+tap, and it is deliberately outside the 160ms transition — a focus indicator that fades
+in is a focus indicator that is briefly not there.
 
 ---
 
@@ -298,8 +420,11 @@ in `docs/design/home.md`.
 
 ## Reduced motion
 
-Nothing in the chrome animates except the 160ms hover transitions, which are colour
-changes only and involve no movement.
+Nothing in the chrome animates except the 160ms hover transitions, which are changes of
+colour and glow only and involve no movement.
+
+The glow is a static treatment. It starts no loop, timer or listener, and it is
+unaffected by a reduced-motion preference.
 
 The clock continues updating under reduced motion. It is information, not animation.
 
