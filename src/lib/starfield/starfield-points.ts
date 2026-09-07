@@ -12,12 +12,19 @@
 
 /** A single star, in CSS pixels, positioned relative to the stage's top left. */
 export interface Star {
+  /**
+   * Where the star is now.
+   *
+   * As generated that is also where it belongs, and it stays there unless the
+   * pointer response is dragging the field around — that module holds the home
+   * positions and moves these, and is the only thing that writes to them.
+   */
   x: number;
   y: number;
   /**
    * Magnitude, 0 to 1. Every other value on this star derives from it.
    *
-   * Power-distributed, so the field is overwhelmingly faint: around 60% of
+   * Power-distributed, so the field is overwhelmingly faint: around 44% of
    * stars fall below 0.1 and only 8% rise above 0.8. The lopsidedness is the
    * point. An even spread of sizes reads as speckle, because a real field is
    * mostly points you can barely see.

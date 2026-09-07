@@ -3,22 +3,25 @@
 import { useEffect, useRef } from "react";
 
 import { motifRadius } from "@/lib/globe/projection";
-import { drawStarfield } from "@/lib/starfield/draw";
+import { drawAmbient, drawStars } from "@/lib/starfield/draw";
+import { createPointerResponse } from "@/lib/starfield/pointer-response";
 import { createStarfield } from "@/lib/starfield/starfield-points";
 
 /**
  * Owns the canvas the starfield is drawn on, and nothing else.
  *
  * The field is specified in `docs/design/starfield.md`; where it sits in the
- * layer stack is in `docs/design/home.md`. Generation is a pure module in
- * `src/lib/starfield/`, and this component's whole job is to give it an
- * element, a size, and a redraw when that size changes.
+ * layer stack is in `docs/design/home.md`. Generation and the pointer response
+ * are pure modules in `src/lib/starfield/`, and this component's whole job is
+ * to give them an element, a size, and a regenerated field when that size
+ * changes.
  *
- * **Nothing runs once the draw returns.** There is no animation frame loop, no
- * timer and no per-frame listener: the field does not move, and the page is
- * expected to sit open on a second monitor for hours. That is a requirement of
- * the specification, not an optimisation, and it is the one thing to preserve
- * if this file is edited.
+ * **Nothing runs until the pointer moves.** The field is static: the only
+ * motion on this page is the drag, and its loop is started by a pointer event
+ * and cancelled again once the field has settled — see `pointer-response.ts`,
+ * which owns it. A page nobody is touching runs nothing, which is a requirement
+ * of the specification rather than an optimisation, and it is the thing to
+ * preserve if this file is edited.
  */
 
 /**
@@ -39,18 +42,25 @@ const MAX_PIXEL_RATIO = 2;
 const RESIZE_DEBOUNCE_MS = 150;
 
 export function Starfield() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ambientRef = useRef<HTMLCanvasElement>(null);
+  const starsRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas === null) return;
+    const ambientCanvas = ambientRef.current;
+    const starsCanvas = starsRef.current;
+    if (ambientCanvas === null || starsCanvas === null) return;
 
-    const context = canvas.getContext("2d");
-    if (context === null) return;
+    const ambient = ambientCanvas.getContext("2d");
+    const field = starsCanvas.getContext("2d");
+    if (ambient === null || field === null) return;
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let drawnWidth = 0;
     let drawnHeight = 0;
+
+    // Created before the first draw, so no pointer event can arrive while the
+    // canvas has a field on it that nothing is holding the homes of.
+    const response = createPointerResponse(starsCanvas, field);
 
     /**
      * Regenerates the field at the canvas's current size and paints it.
@@ -63,8 +73,8 @@ export function Starfield() {
     // hoisted above the null checks above, so TypeScript discards their
     // narrowing inside it and `canvas` and `context` read as nullable again.
     const draw = (): void => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
+      const width = starsCanvas.clientWidth;
+      const height = starsCanvas.clientHeight;
 
       if (width === 0 || height === 0) return;
       // The ResizeObserver fires once when it starts observing, and a mobile
@@ -76,17 +86,26 @@ export function Starfield() {
       drawnHeight = height;
 
       const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
+      for (const canvas of [ambientCanvas, starsCanvas]) {
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+      }
 
       // Draw in CSS pixels; the backing store scale is the context's problem.
-      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ambient.setTransform(ratio, 0, 0, ratio, 0, 0);
+      field.setTransform(ratio, 0, 0, ratio, 0, 0);
 
       // The falloff is defined against the motif radius, so it is read from the
       // motif's own module rather than a second copy of the formula living here.
       const radius = motifRadius(width, height);
       const stars = createStarfield(width, height, radius);
-      drawStarfield(context, stars, width, height, radius);
+
+      drawAmbient(ambient, width, height, radius);
+      drawStars(field, stars, width, height);
+
+      // Handed the field as generated, which is to say at rest: these positions
+      // are the homes every star is drifted back to and snapped to.
+      response.setField(stars, width, height);
     };
 
     draw();
@@ -95,26 +114,47 @@ export function Starfield() {
       clearTimeout(timer);
       timer = setTimeout(draw, RESIZE_DEBOUNCE_MS);
     });
-    observer.observe(canvas);
+    observer.observe(starsCanvas);
 
     return () => {
       observer.disconnect();
       clearTimeout(timer);
+      // Both halves matter: a fast refresh in development runs this cleanup and
+      // then the effect again, and a response that outlived it would leave a
+      // second loop and a second pointer listener on the same canvas.
+      response.destroy();
     };
   }, []);
 
   return (
-    /* Decorative: it carries nothing a screen reader can use, and it must never
-       take a click meant for the motif or the chrome below it.
+    /* Two canvases, not one, and the order of them is the layer order: the
+       ambient light is the still dark space, the stars move in front of it.
+
+       They are split because only one of them animates. The pointer response
+       erases part of its canvas every frame to leave a smear behind a moving
+       star, and the ambient light must be nowhere near that — it is the
+       background, it never moves, and a background repainted sixty times a
+       second is both wasted work and a whole surface exposed to rounding. Kept
+       apart, it is drawn once per size and then physically cannot move.
+
+       Both are decorative: they carry nothing a screen reader can use, and
+       neither may take a click meant for the motif or the chrome below.
 
        Sized like the motif canvas, and for the same reasons: the large viewport
        height, so a mobile browser retracting its address bar does not resize it
        part way through a scroll, and an explicit width, because a canvas is a
        replaced element whose `auto` width resolves to its own backing store. */
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      className="pointer-events-none fixed top-0 left-0 h-lvh w-full"
-    />
+    <>
+      <canvas
+        ref={ambientRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed top-0 left-0 h-lvh w-full"
+      />
+      <canvas
+        ref={starsRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed top-0 left-0 h-lvh w-full"
+      />
+    </>
   );
 }

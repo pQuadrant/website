@@ -1,9 +1,24 @@
 /**
  * Painting for the starfield layer.
  *
- * It holds no values of its own: every number it draws with arrives on the
- * `Star` objects `starfield-points.ts` produced. The one thing it decides is
- * how a star is put on the canvas.
+ * It holds no values of its own beyond the ambient light: every number a star
+ * is drawn with arrives on the `Star` objects `starfield-points.ts` produced.
+ * The one thing it decides is how a star is put on the canvas.
+ *
+ * **The ambient light and the stars are painted onto different canvases**, and
+ * that is the reason this file has two entry points instead of one. The stars
+ * move under the pointer and the light does not: it is the still, dark space
+ * the field sits in. Sharing a canvas would mean the frame loop erasing and
+ * repainting the light sixty times a second to move the stars in front of it,
+ * which is work spent on something that never changes and a whole background
+ * put at the mercy of a rounding error.
+ *
+ * **Every frame clears its canvas completely.** An earlier version left a
+ * fraction of the previous frame behind to trail a moving star, which is the
+ * usual way to smear a particle. On a field of points on near-black it does not
+ * read as motion: it reads as a haze that settles over the space whenever the
+ * cursor moves, because what is left behind is not just the star but every
+ * pixel of the frame it was in. A star is a point of light, and it stays one.
  *
  * Halos are drawn here as canvas gradients, not as a `box-shadow` and not as a
  * blur filter. `docs/design/home.md` prohibits both of those on the stage and
@@ -17,12 +32,12 @@ const TAU = Math.PI * 2;
 /**
  * Ambient light: the field-wide glow that gives the page its tonal range.
  *
- * Expressed in multiples of the motif radius, which is why it lives on this
- * canvas rather than in a CSS gradient. A gradient's stops are relative to the
- * stage, but the motif's radius is `min(width, height) x 0.44` capped at 396 —
- * a different function of the window. The two drift apart as the window
- * changes, so a gradient tuned to clear the globe at one size lands its ramp on
- * the globe's rim at another, which reads as a halo welded to the sphere.
+ * Expressed in multiples of the motif radius, which is why it lives on a canvas
+ * rather than in a CSS gradient. A gradient's stops are relative to the stage,
+ * but the motif's radius is `min(width, height) x 0.44` capped at 396 — a
+ * different function of the window. The two drift apart as the window changes,
+ * so a gradient tuned to clear the globe at one size lands its ramp on the
+ * globe's rim at another, which reads as a halo welded to the sphere.
  *
  * Anchoring the light to the motif instead makes the relationship hold at every
  * size by construction. It is the same radius the density falloff uses.
@@ -43,40 +58,22 @@ const AMBIENT = {
 } as const;
 
 /**
- * Clears the canvas and paints the field once.
+ * Paints the ambient light, on its own canvas, once.
  *
- * Called on mount and after a resize, and never on a timer or an animation
- * frame — the field does not move, so nothing runs once this returns.
+ * Called on mount and after a resize. Nothing else ever draws to this canvas —
+ * no frame loop, no pointer, no timer.
  *
  * `width` and `height` are in CSS pixels; the context is expected to already
  * carry the device-pixel-ratio transform.
  */
-export function drawStarfield(
+export function drawAmbient(
   context: CanvasRenderingContext2D,
-  stars: readonly Star[],
   width: number,
   height: number,
   motifRadius: number,
 ): void {
   context.clearRect(0, 0, width, height);
-  paintAmbient(context, width, height, motifRadius);
-  paintStars(context, stars);
-}
 
-/**
- * Paints the ambient glow, before the stars so they sit in front of it.
- *
- * Monotonic from the hole outward: it only ever gets brighter toward the
- * corners, never turning over. A gradient with a peak somewhere in the middle
- * of the stage would put a visible ring on the page at whichever window size
- * moved that peak inside the frame.
- */
-function paintAmbient(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  motifRadius: number,
-): void {
   if (motifRadius <= 0) return;
 
   const centreX = width / 2;
@@ -99,6 +96,11 @@ function paintAmbient(
   // a smoothstep, so it leaves the hole and arrives at the corner with no slope
   // in it. A ramp still moving when it lands shows an edge at its own boundary,
   // which on a dark surface is visible even though no value steps.
+  //
+  // Monotonic from the hole outward, only ever brightening toward the corners.
+  // A gradient with a peak somewhere in the middle of the stage would put a
+  // visible ring on the page at whichever window size moved that peak inside
+  // the frame.
   const STEPS = 12;
   for (let step = 0; step <= STEPS; step += 1) {
     const t = step / STEPS;
@@ -114,22 +116,44 @@ function paintAmbient(
 }
 
 /**
- * Paints the field additively.
+ * Clears the star canvas and paints the field, wherever the stars are.
+ *
+ * The only way stars are ever drawn: on mount, on resize, on every frame of the
+ * pointer response, and once more when it settles. A frame during the drag and
+ * a frame at rest are the same call with the stars in different places, which
+ * is what makes "the field returns to exactly how it started" true by
+ * construction rather than by cleanup.
+ */
+export function drawStars(
+  context: CanvasRenderingContext2D,
+  stars: readonly Star[],
+  width: number,
+  height: number,
+): void {
+  context.clearRect(0, 0, width, height);
+  paintStars(context, stars);
+}
+
+/**
+ * Paints the stars additively.
  *
  * Light adds to what is beneath it rather than covering it, which is the
  * difference between a star that emits and a dot of paint sitting on the
  * background. Where two halos overlap they sum, as two real sources would.
  *
- * The composite mode is set here and restored on the way out rather than being
- * set once by whoever owns the canvas. The cursor response draws its trail with
- * `destination-out` immediately before this runs, and a mode left set by either
- * stage would silently break the other.
+ * A star's `x` and `y` are where it is now, not where it belongs: while the
+ * pointer response is running they are somewhere between the two, and this
+ * function neither knows nor cares which.
+ *
+ * The composite mode is set here and restored on the way out rather than left
+ * set on the context, which is shared with nothing but is not this function's
+ * to leave modified.
  */
 function paintStars(
   context: CanvasRenderingContext2D,
   stars: readonly Star[],
 ): void {
-  const previous = context.globalCompositeOperation;
+  const previousOperation = context.globalCompositeOperation;
   context.globalCompositeOperation = "lighter";
 
   for (const star of stars) {
@@ -164,5 +188,5 @@ function paintStars(
     context.fill();
   }
 
-  context.globalCompositeOperation = previous;
+  context.globalCompositeOperation = previousOperation;
 }
