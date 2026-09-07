@@ -90,6 +90,34 @@
      composition and one reflow of it, not a ladder of device sizes. */
   --breakpoint-row: 640px;
 
+  /* The entrance, for the two layers CSS can carry on its own.
+
+     The page opens on empty space and assembles over 2.8 seconds: the starfield
+     fades up first, the four corner clusters follow it in with a 60ms stagger
+     and are settled by 900ms, and the globe forms into the frame they leave.
+     The globe's own share is drawn on its canvas and timed in
+     `src/lib/globe/entrance.ts` — see the Entrance section of
+     `docs/design/globe.md` for the whole sequence.
+
+     Both halves run on the same clock. These animations start with the document
+     timeline and the globe reads `requestAnimationFrame`'s timestamp, which is
+     the same origin, so nothing has to hand a start time between them.
+
+     The delays live on the elements, as `[animation-delay:*]` utilities, because
+     the stagger is a property of which corner a cluster sits in rather than of
+     the animation. */
+  --animate-stars-in: entrance-fade 400ms ease-out both;
+  --animate-chrome-in: entrance-fade 520ms ease-out both;
+
+  @keyframes entrance-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   /* Transitions */
   --transition-duration-hover: 160ms;
   --transition-duration-control: 180ms;

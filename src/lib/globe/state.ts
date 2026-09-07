@@ -14,7 +14,7 @@
  * its character.
  */
 
-import { COMPONENTS_PER_POINT } from "@/lib/globe/fibonacci-sphere";
+import { ENTRANCE, rotationRamp } from "@/lib/globe/entrance";
 
 /** The tilt the sphere eases to and holds. */
 export const TILT = 0.16;
@@ -26,12 +26,6 @@ export const TILT = 0.16;
  * and every eased value snaps instantly.
  */
 const MAX_DELTA = 0.05;
-
-/** How long the opening assemble takes, in seconds. */
-const ASSEMBLE_SECONDS = 1.5;
-
-/** Scattered start positions span this much on each axis, before jitter. */
-const SCATTER_REACH = 2.7;
 
 /** Per-point jitter factor: `JITTER_FLOOR + random × JITTER_RANGE`. */
 const JITTER_FLOOR = 0.55;
@@ -156,10 +150,20 @@ export interface GlobeState {
   glow: number;
   /** Drives point bloom only. */
   dotGlow: number;
-  /** Assemble easing, 0 scattered to 1 settled. */
-  assemble: number;
-  /** Seconds the assemble has been running. Never reset; it runs once. */
-  assembleElapsed: number;
+  /**
+   * Page time, in milliseconds, as of this frame.
+   *
+   * Read straight from the frame clock rather than accumulated, because the
+   * entrance is anchored to when the page loaded and not to how many frames
+   * the globe has managed since. It is the same origin the starfield's and the
+   * chrome's CSS fades run on, which is what keeps one sequence out of three
+   * timelines.
+   */
+  now: number;
+  /** Whether the entrance is still running. False for the rest of the session. */
+  entranceRunning: boolean;
+  /** How much of the steady rotation rate is in effect, 0 to 1. */
+  rotationRamp: number;
   /** Seconds left on the error state's self-clearing hold. */
   errorHold: number;
   /**
@@ -194,8 +198,9 @@ export function createGlobeState(): GlobeState {
     dim: 1,
     glow: 0,
     dotGlow: 0,
-    assemble: 0,
-    assembleElapsed: 0,
+    now: 0,
+    entranceRunning: true,
+    rotationRamp: 0,
     errorHold: 0,
     elapsed: 0,
     pointerX: 0,
@@ -209,39 +214,24 @@ export function createGlobeState(): GlobeState {
 }
 
 /**
- * Where each point starts the assemble, and its share of the per-point
- * randomness.
+ * The per-point randomness the cursor scatter runs on.
  *
- * Allocated once, for the lifetime of the globe. The jitter is baked into the
- * scattered positions so the projection has no multiply to do, and kept
- * separately because the cursor scatter uses the same per-point value.
+ * Allocated once, for the lifetime of the globe. Where a point *starts* is not
+ * here: the entrance owns its own field, seeded, in `entrance.ts`.
  */
 export interface GlobeMotionField {
-  /** Scattered start position per point: x, y, z. */
-  scatter: Float32Array;
   /** Per-point jitter factor, in `[0.55, 1]`. */
   jitter: Float32Array;
 }
 
 export function createMotionField(count: number): GlobeMotionField {
-  const scatter = new Float32Array(count * COMPONENTS_PER_POINT);
   const jitter = new Float32Array(count);
 
   for (let index = 0; index < count; index += 1) {
-    const factor = JITTER_FLOOR + Math.random() * JITTER_RANGE;
-    const offset = index * COMPONENTS_PER_POINT;
-
-    jitter[index] = factor;
-    scatter[offset] = scatterAxis(factor);
-    scatter[offset + 1] = scatterAxis(factor);
-    scatter[offset + 2] = scatterAxis(factor);
+    jitter[index] = JITTER_FLOOR + Math.random() * JITTER_RANGE;
   }
 
-  return { scatter, jitter };
-}
-
-function scatterAxis(jitter: number): number {
-  return (Math.random() * 2 - 1) * SCATTER_REACH * jitter;
+  return { jitter };
 }
 
 /**
@@ -291,20 +281,22 @@ function dotGlowTarget(state: GlobeState): number {
  * multiplied by the frame's delta and clamped to 1. Clamping is what keeps a
  * long frame from overshooting past the target and oscillating.
  */
-export function advance(state: GlobeState, delta: number): void {
+export function advance(state: GlobeState, delta: number, now: number): void {
   const step = Math.min(delta, MAX_DELTA);
+
+  // Anchored to the page clock rather than counted in frames, so a slow first
+  // paint shortens the sequence instead of pushing its end past 2.8 seconds.
+  state.now = now;
+  if (state.entranceRunning) {
+    state.entranceRunning = now < ENTRANCE.endMs;
+    state.rotationRamp = state.entranceRunning ? rotationRamp(now) : 1;
+  }
 
   // Ticked before the targets are read, so the frame the hold expires on is
   // already easing back toward idle.
   if (state.errorHold > 0) {
     state.errorHold -= step;
     if (state.errorHold <= 0) applyStatus(state, "idle");
-  }
-
-  if (state.assemble < 1) {
-    state.assembleElapsed += step;
-    const t = Math.min(1, state.assembleElapsed / ASSEMBLE_SECONDS);
-    state.assemble = 1 - (1 - t) ** 3;
   }
 
   state.elapsed += step * 1000;
@@ -349,9 +341,9 @@ export function advance(state: GlobeState, delta: number): void {
   );
   state.tilt = ease(state.tilt, TILT, TILT_RATE, step);
 
-  // Rotation is damped while the sphere is still forming, so it spins up as it
-  // arrives rather than tumbling while scattered.
-  state.yaw += state.spin * (0.6 + 0.4 * state.assemble) * step;
+  // Held at zero until the ramp opens, so the sphere is barely turning while it
+  // assembles and is at its steady rate as the last points land.
+  state.yaw += state.spin * state.rotationRamp * step;
 
   // Wrapped so the angle stays small over a long session; the projection only
   // ever takes its sine and cosine.
@@ -368,16 +360,18 @@ function ease(
 }
 
 /**
- * Puts every value straight onto its target, with the sphere fully assembled.
+ * Puts every value straight onto its target, with the sphere fully formed.
  *
  * This is the reduced-motion path: the state changes still apply their visual
- * values, they are simply painted rather than eased toward.
+ * values, they are simply painted rather than eased toward. The entrance is
+ * marked finished rather than fast-forwarded — there is no sequence to run,
+ * which is why nothing here starts a clock.
  */
 export function snap(state: GlobeState): void {
   const target = TARGETS[state.status];
 
-  state.assemble = 1;
-  state.assembleElapsed = ASSEMBLE_SECONDS;
+  state.entranceRunning = false;
+  state.rotationRamp = 1;
   state.tilt = TILT;
   state.spin = target.spin;
   state.contract = target.contract;

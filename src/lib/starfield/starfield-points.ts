@@ -10,6 +10,8 @@
  * Every tunable number lives in `STARFIELD` below.
  */
 
+import { mulberry32 } from "@/lib/random";
+
 /** A single star, in CSS pixels, positioned relative to the stage's top left. */
 export interface Star {
   /**
@@ -316,23 +318,6 @@ function pickColour(sample: number): readonly [number, number, number] {
   if (sample < white) return STARFIELD.colours.white;
   if (sample < white + blue) return STARFIELD.colours.blue;
   return STARFIELD.colours.amber;
-}
-
-/**
- * A small deterministic PRNG. Sufficient here and deliberately not a
- * cryptographic one: this is a scatter of background dots, and the only
- * property that matters is that it repeats.
- */
-function mulberry32(seed: number): () => number {
-  let state = seed >>> 0;
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }
 
 function lerp(t: number, from: number, to: number): number {

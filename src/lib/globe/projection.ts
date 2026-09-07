@@ -6,6 +6,12 @@
  * bucket, and `draw.ts` turns those into fills.
  */
 
+import {
+  ENTRANCE,
+  FORMING_COLOUR_STEPS,
+  type GlobeEntranceField,
+  entranceEase,
+} from "@/lib/globe/entrance";
 import { COMPONENTS_PER_POINT } from "@/lib/globe/fibonacci-sphere";
 import type { GlobePointSet } from "@/lib/globe/point-set";
 import type { GlobeMotionField, GlobeState } from "@/lib/globe/state";
@@ -143,6 +149,18 @@ export interface GlobeFrame {
    * pixels.
    */
   highlight: number[][];
+  /**
+   * Entrance only: the points still travelling, as filled circles.
+   *
+   * Bucketed by colour step and then by opacity, `step x BUCKET_COUNT +
+   * bucket`. Step 0 is the starfield white both classes hold until 65% of the
+   * journey; the last step is the point's own land or ocean colour.
+   *
+   * Held as centre x, centre y, radius, because an arc is drawn from its centre
+   * where a rectangle is drawn from its corner.
+   */
+  formingLand: number[][];
+  formingOcean: number[][];
 }
 
 export function createGlobeFrame(): GlobeFrame {
@@ -152,6 +170,8 @@ export function createGlobeFrame(): GlobeFrame {
     land: buckets(BUCKET_COUNT),
     ocean: buckets(BUCKET_COUNT),
     highlight: buckets(HIGHLIGHT_BUCKET_COUNT),
+    formingLand: buckets(FORMING_COLOUR_STEPS * BUCKET_COUNT),
+    formingOcean: buckets(FORMING_COLOUR_STEPS * BUCKET_COUNT),
   };
 }
 
@@ -169,6 +189,7 @@ export function motifRadius(width: number, height: number): number {
 export function project(
   points: GlobePointSet,
   field: GlobeMotionField,
+  entrance: GlobeEntranceField | null,
   state: GlobeState,
   view: GlobeView,
   frame: GlobeFrame,
@@ -176,10 +197,22 @@ export function project(
   clear(frame.land);
   clear(frame.ocean);
   clear(frame.highlight);
+  clear(frame.formingLand);
+  clear(frame.formingOcean);
+
+  // The page opens on empty space: the starfield has four hundred milliseconds
+  // to itself, and the motif's own phase has not started yet.
+  if (state.entranceRunning && state.now < ENTRANCE.startMs) return;
+
+  // Null once the sequence is over, so the per-point branch below drops out for
+  // the rest of the session and a settled globe costs exactly what it did
+  // before the entrance existed.
+  const forming = entrance !== null && state.entranceRunning ? entrance : null;
 
   projectRange(
     points,
     field,
+    forming,
     0,
     points.landCount,
     LAND_SIZE,
@@ -188,10 +221,12 @@ export function project(
     view,
     frame.land,
     frame.highlight,
+    frame.formingLand,
   );
   projectRange(
     points,
     field,
+    forming,
     points.landCount,
     points.count,
     OCEAN_SIZE,
@@ -200,6 +235,7 @@ export function project(
     view,
     frame.ocean,
     frame.highlight,
+    frame.formingOcean,
   );
 }
 
@@ -212,6 +248,7 @@ function clear(buckets: number[][]): void {
 function projectRange(
   points: GlobePointSet,
   field: GlobeMotionField,
+  entrance: GlobeEntranceField | null,
   from: number,
   to: number,
   sizeScale: number,
@@ -220,9 +257,10 @@ function projectRange(
   view: GlobeView,
   buckets: number[][],
   highlights: number[][],
+  forming: number[][],
 ): void {
   const { positions } = points;
-  const { scatter, jitter } = field;
+  const { jitter } = field;
 
   const cosYaw = Math.cos(state.yaw);
   const sinYaw = Math.sin(state.yaw);
@@ -232,7 +270,6 @@ function projectRange(
   const radius = view.radius * state.contract;
   const sizeGlow = 1 + 0.3 * state.glow + 0.22 * state.dotGlow;
   const alphaGlow = 1 + 0.5 * state.glow + 0.55 * state.dotGlow;
-  const arrival = 0.35 + 0.65 * state.assemble;
 
   // The zone and the cursor arrive in viewport coordinates and are compared
   // against canvas ones, so both are converted here rather than per point.
@@ -254,24 +291,18 @@ function projectRange(
   const pointerY = state.pointerY - view.originY;
   const drift = state.elapsed * SCATTER_DRIFT_RATE;
 
-  // Once the sphere has settled the blend below is the identity, so the whole
-  // branch drops out for the rest of the globe's life.
-  const settling = state.assemble < 1;
-  const settled = state.assemble;
+  // Hoisted so the per-point branch below reads one array each rather than one
+  // object property each, and so a settled globe pays a single null check.
+  const now = state.now;
+  const driftScale = view.radius;
+  const opacityRange = 1 - ENTRANCE.opacityFloor;
+  const colourRange = 1 - ENTRANCE.colourHold;
 
   for (let index = from; index < to; index += 1) {
     const offset = index * COMPONENTS_PER_POINT;
-    let ax = positions[offset];
-    let ay = positions[offset + 1];
-    let az = positions[offset + 2];
-
-    if (settling) {
-      // A linear blend from the scattered position to the sphere, on the eased
-      // value, so the deceleration is carried by the easing rather than here.
-      ax = scatter[offset] + (ax - scatter[offset]) * settled;
-      ay = scatter[offset + 1] + (ay - scatter[offset + 1]) * settled;
-      az = scatter[offset + 2] + (az - scatter[offset + 2]) * settled;
-    }
+    const ax = positions[offset];
+    const ay = positions[offset + 1];
+    const az = positions[offset + 2];
 
     const z = ax * cosTilt * cosYaw + ay * cosTilt * sinYaw + az * sinTilt;
 
@@ -281,17 +312,55 @@ function projectRange(
 
     const depth = z < -1 ? 0 : z > 1 ? 1 : (z + 1) / 2;
 
+    // How far through its own settle this point is: 0 before it starts, 1 once
+    // it has resolved, and 1 for every point once the sequence is over.
+    let settle = 1;
+    let eased = 1;
+    let appear = 1;
+    let driftX = 0;
+    let driftY = 0;
+
+    if (entrance !== null) {
+      const t = (now - entrance.start[index]) * entrance.rate[index];
+      settle = t <= 0 ? 0 : t >= 1 ? 1 : t;
+
+      if (settle < 1) {
+        eased = entranceEase(settle);
+        appear =
+          settle >= ENTRANCE.appearSpan ? 1 : settle / ENTRANCE.appearSpan;
+
+        // Scaled from the motif radius every frame rather than stored in
+        // pixels, so a window resized part way through the sequence rescales
+        // the grain instead of leaving it sized for the old stage.
+        const remaining = (1 - eased) * driftScale;
+        driftX = entrance.driftX[index] * remaining;
+        driftY = entrance.driftY[index] * remaining;
+      }
+    }
+
     let alpha =
-      (0.17 + 0.83 * depth ** 1.6) *
-      arrival *
-      state.dim *
-      alphaGlow *
-      alphaScale;
+      (0.17 + 0.83 * depth ** 1.6) * state.dim * alphaGlow * alphaScale;
+
+    // Two ramps, not one: `appear` keeps a point from being switched on between
+    // one frame and the next, and the eased term carries it the rest of the way
+    // to full brightness.
+    if (settle < 1) {
+      alpha *= appear * (ENTRANCE.opacityFloor + opacityRange * eased);
+    }
 
     let x = view.centreX + (-ax * sinYaw + ay * cosYaw) * radius;
     let y =
       view.centreY -
       (-ax * sinTilt * cosYaw - ay * sinTilt * sinYaw + az * cosTilt) * radius;
+
+    // Added to the position the point holds *this frame*, not to a frozen one.
+    // The point is offset from where it belongs in the rotating frame, so the
+    // grain turns with the sphere rather than sitting still on the glass while
+    // the globe moves underneath it.
+    if (settle < 1) {
+      x += driftX;
+      y += driftY;
+    }
 
     if (scattering) {
       const dx = x - pointerX;
@@ -332,6 +401,28 @@ function projectRange(
 
     const size = Math.max(0.7, (0.55 + 1.15 * depth) * sizeGlow) * sizeScale;
     const bucket = Math.min(BUCKET_COUNT - 1, Math.floor(alpha * BUCKET_COUNT));
+
+    if (settle < 1) {
+      // An unresolved point is slightly too large as well as slightly out of
+      // place, and sheds the excess exactly as it settles. Drawn faint at a
+      // couple of pixels across, that is what reads as out of focus — and it is
+      // gone by the frame the point hands over to the settled pass, so there is
+      // no step at the handover.
+      const radius =
+        (size / 2 + ENTRANCE.bloomRadius * (1 - eased)) * Math.sqrt(appear);
+
+      // The colour is held and then crossed over on raw settle progress: an
+      // early or linear crossfade and the continents are legible from the first
+      // frame, which is the one thing there is to watch.
+      const mix = (settle - ENTRANCE.colourHold) / colourRange;
+      const step = Math.round(
+        entranceEase(mix < 0 ? 0 : mix) * (FORMING_COLOUR_STEPS - 1),
+      );
+
+      forming[step * BUCKET_COUNT + bucket].push(x, y, radius);
+      continue;
+    }
+
     const half = size / 2;
 
     // Stored as the top left corner, so the drawing half has no maths to do.

@@ -143,17 +143,24 @@ export function Starfield() {
        Sized like the motif canvas, and for the same reasons: the large viewport
        height, so a mobile browser retracting its address bar does not resize it
        part way through a scroll, and an explicit width, because a canvas is a
-       replaced element whose `auto` width resolves to its own backing store. */
+       replaced element whose `auto` width resolves to its own backing store.
+
+       Both fade up over the first 400ms of the page, together, as one layer:
+       the ambient light is the space the stars are in, and a field arriving
+       before the space it sits in reads as two things rather than one. That
+       fade is the first phase of the page's entrance — see the Entrance section
+       of `docs/design/globe.md`, which owns the whole sequence. Under reduced
+       motion there is no fade and the field is simply there. */
     <>
       <canvas
         ref={ambientRef}
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 h-lvh w-full"
+        className="pointer-events-none fixed top-0 left-0 h-lvh w-full animate-stars-in motion-reduce:animate-none"
       />
       <canvas
         ref={starsRef}
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 h-lvh w-full"
+        className="pointer-events-none fixed top-0 left-0 h-lvh w-full animate-stars-in motion-reduce:animate-none"
       />
     </>
   );
