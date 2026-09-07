@@ -342,7 +342,7 @@ export function advance(state: GlobeState, delta: number, now: number): void {
   state.tilt = ease(state.tilt, TILT, TILT_RATE, step);
 
   // Held at zero until the ramp opens, so the sphere is barely turning while it
-  // assembles and is at its steady rate as the last points land.
+  // resolves and is at its steady rate as the last points settle.
   state.yaw += state.spin * state.rotationRamp * step;
 
   // Wrapped so the angle stays small over a long session; the projection only
