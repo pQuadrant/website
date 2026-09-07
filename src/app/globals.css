@@ -92,9 +92,9 @@
 
   /* The entrance, for the two layers CSS can carry on its own.
 
-     The page opens on empty space and assembles over 2.8 seconds: the starfield
+     The page opens on empty space and resolves over 1.4 seconds: the starfield
      fades up first, the four corner clusters follow it in with a 60ms stagger
-     and are settled by 900ms, and the globe forms into the frame they leave.
+     and are settled by 900ms, and the globe resolves into the frame they leave.
      The globe's own share is drawn on its canvas and timed in
      `src/lib/globe/entrance.ts` — see the Entrance section of
      `docs/design/globe.md` for the whole sequence.

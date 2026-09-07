@@ -153,8 +153,8 @@ export interface GlobeFrame {
    * Entrance only: the points still travelling, as filled circles.
    *
    * Bucketed by colour step and then by opacity, `step x BUCKET_COUNT +
-   * bucket`. Step 0 is the starfield white both classes hold until 65% of the
-   * journey; the last step is the point's own land or ocean colour.
+   * bucket`. Step 0 is the starfield white both classes hold until 55% of the
+   * settle; the last step is the point's own land or ocean colour.
    *
    * Held as centre x, centre y, radius, because an arc is drawn from its centre
    * where a rectangle is drawn from its corner.
@@ -429,8 +429,10 @@ function projectRange(
     buckets[bucket].push(x - half, y - half, size);
 
     // The white core, for the points near enough the front to be lit. Carried
-    // on the point's own alpha, so it dims behind the panel, fades in with the
-    // assemble and brightens under the cursor along with everything else.
+    // on the point's own alpha, so it dims behind the panel and brightens under
+    // the cursor along with everything else. It is not drawn during the
+    // entrance: an unresolved point has no core, and gains one on the frame it
+    // rejoins this pass.
     if (depth <= HIGHLIGHT_DEPTH) continue;
 
     const strength =

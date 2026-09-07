@@ -92,7 +92,7 @@ export function resolveColours(
  * The white-to-class ramp, sampled at `FORMING_COLOUR_STEPS` points.
  *
  * Step 0 is the starfield's cool white exactly, which is what a point wears
- * until 65% of its journey; the last step is the class colour itself, which is
+ * until 55% of its settle; the last step is the class colour itself, which is
  * what it hands over to the normal point pass wearing.
  */
 function colourRamp(colour: string | CanvasGradient | CanvasPattern): string[] {
