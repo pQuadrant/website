@@ -56,15 +56,32 @@ darker cast onto a lighter ground. The stage fill is the black point — see
 this page is invisible by construction. On a dark surface the equivalent tool is the
 inverse: the element's own colour bleeding into the space around it.
 
-| Role   | Applies to                       | Colour    | Glow             |
-| ------ | -------------------------------- | --------- | ---------------- |
-| `fg-0` | `SIGN IN`, and every hover state | `#EAEDF4` | 0.28 alpha, 12px |
-| `fg-1` | Product names, `p_Q`             | `#8B94A2` | 0.22 alpha, 10px |
-| `fg-2` | The toggle's label, panel open   | `#59626E` | 0.21 alpha, 9px  |
-| `fg-3` | Telemetry, server line, clock    | `#414A56` | 0.20 alpha, 8px  |
+Each halo is a **tight core plus a wide bleed**, not a single blur.
+
+| Role   | Applies to                       | Colour    | Core        | Bleed        |
+| ------ | -------------------------------- | --------- | ----------- | ------------ |
+| `fg-0` | `SIGN IN`, and every hover state | `#EAEDF4` | 4px at 0.70 | 16px at 0.34 |
+| `fg-1` | Product names, `p_Q`             | `#8B94A2` | 3px at 0.60 | 14px at 0.28 |
+| `fg-2` | The toggle's label, panel open   | `#59626E` | 3px at 0.58 | 13px at 0.26 |
+| `fg-3` | Telemetry, server line, clock    | `#414A56` | 3px at 0.55 | 12px at 0.25 |
 
 The values are held as tokens in `globals.css`, `--text-shadow-glow-0` through
 `--text-shadow-glow-3`, and never as literals in a component.
+
+**The core is not a refinement of the bleed; without it there is no visible effect.**
+This type is 10px, so its strokes are about a pixel across. Blur a one-pixel stroke over
+a ten-pixel radius and its light spreads across roughly twenty pixels, so the peak
+brightness falls by about that factor — a stop at 0.22 alpha arrives on screen as
+roughly **one level**. That is measurable and invisible, and it is exactly what the
+first attempt at this shipped: the halos were confirmed present by measurement, and
+could be seen only by flipping between builds. The core concentrates the same light
+rather than smearing it, and it is what carries the effect. The bleed alone is a number
+in a report.
+
+**Do not raise the core further.** Past roughly 0.7 on `fg-0` the halo stops reading as
+light around the glyph and starts thickening the glyph itself. That is a heavier
+typeface reached by another route, and it is the one thing this treatment must not be:
+raising presence is not licence to raise prominence.
 
 **The proportionality is the point, not a detail of the tuning.** Alpha and radius scale
 with each string's own luminance. A uniform halo would close the gap between the loudest
@@ -89,16 +106,23 @@ switched off:
 
 | Cluster                    | Before  | After   |
 | -------------------------- | ------- | ------- |
-| Product names              | 6.58:1  | 6.54:1  |
+| Product names              | 6.58:1  | 6.50:1  |
 | Server line                | 2.24:1  | 2.24:1  |
 | Core version and transport | 2.24:1  | 2.23:1  |
-| City and clock             | 2.24:1  | 2.23:1  |
-| `p_Q`                      | 6.61:1  | 6.61:1  |
+| City and clock             | 2.24:1  | 2.22:1  |
+| `p_Q`                      | 6.61:1  | 6.58:1  |
 | `SIGN IN`, on its own fill | 16.23:1 | 16.11:1 |
 
 The largest loss is 0.12 of a contrast point, on the string with sixteen of them to
 spare. The telemetry — the weakest value on the page, and the one to watch if these
-numbers are ever retuned — loses 0.012.
+numbers are ever retuned — loses 0.022.
+
+**This cost is nearly flat in the glow's strength, which is worth knowing before anyone
+retunes it.** Tripling the core alpha moved the telemetry by about a hundredth of a
+contrast point. The halo brightens a thin ring immediately around each glyph and leaves
+the rest of the surround alone, so the median ground barely moves however hard the core
+is driven. Contrast is not the constraint on this treatment. The constraint is that the
+glyphs must not thicken.
 
 **No halo boundary.** The falloff reaches zero within about 4px of each string's box,
 with no step and no slope break anywhere in the tail. A glow still descending when it

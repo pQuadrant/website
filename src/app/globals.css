@@ -46,11 +46,29 @@
 
      Named `glow-*` rather than `fg-*` on purpose: `--text-shadow-fg-1` would
      collide with the `text-shadow-<color>` utility that `--color-fg-1` already
-     generates, and the colour would win. See `docs/design/chrome.md`. */
-  --text-shadow-glow-0: 0 0 12px rgba(234, 237, 244, 0.28);
-  --text-shadow-glow-1: 0 0 10px rgba(139, 148, 162, 0.22);
-  --text-shadow-glow-2: 0 0 9px rgba(89, 98, 110, 0.21);
-  --text-shadow-glow-3: 0 0 8px rgba(65, 74, 86, 0.2);
+     generates, and the colour would win. See `docs/design/chrome.md`.
+
+     Each is a tight core plus a wide bleed, and the core is what makes the
+     effect visible at all. This type is 10px, so its strokes are about a pixel
+     across; blurred over a 10px radius a stroke's light spreads across roughly
+     twenty pixels and its peak falls by about that factor. A single wide stop
+     at these alphas therefore lands around one level on screen — present in a
+     measurement, invisible on the page, which is exactly what the first attempt
+     at this shipped. The core concentrates the same light instead of smearing
+     it.
+
+     Do not raise the core past these values. Above roughly 0.7 on `fg-0` it
+     stops reading as light around the glyph and starts thickening the glyph
+     itself, which is a heavier typeface by another route and is the one thing
+     this treatment is not allowed to be. */
+  --text-shadow-glow-0:
+    0 0 4px rgba(234, 237, 244, 0.7), 0 0 16px rgba(234, 237, 244, 0.34);
+  --text-shadow-glow-1:
+    0 0 3px rgba(139, 148, 162, 0.6), 0 0 14px rgba(139, 148, 162, 0.28);
+  --text-shadow-glow-2:
+    0 0 3px rgba(89, 98, 110, 0.58), 0 0 13px rgba(89, 98, 110, 0.26);
+  --text-shadow-glow-3:
+    0 0 3px rgba(65, 74, 86, 0.55), 0 0 12px rgba(65, 74, 86, 0.25);
 
   /* The sign-in toggle's body. A faint white lift that gives the only action on
      the page something to be, rather than two floating words.
