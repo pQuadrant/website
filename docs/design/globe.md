@@ -363,6 +363,34 @@ The canvas backing store is capped at **1.5×** the layout size, even on display
 higher ratio. At these point sizes the difference is not visible, and the cost of a full
 3× or 4× buffer is not worth paying for a field of 1-pixel squares.
 
+### Density on a narrow window
+
+The radius scales with the window, from `docs/design/home.md`, but **the point count and
+the point size do not**. Neither `size` nor the count carries a radius term. The globe
+therefore gets denser as the window narrows, not smaller-but-identical:
+
+| Window     | Radius  | Disc area vs desktop | Points | Dots per square pixel |
+| ---------- | ------- | -------------------- | ------ | --------------------- |
+| 1440 × 900 | 396px   | —                    | 15,000 | ×1                    |
+| 390 × 844  | 171.6px | 19%                  | 15,000 | **×5.3**              |
+
+**This is intentional. Do not "fix" it.** On a phone the same fifteen thousand points fall
+into a fifth of the area, the gaps between them close, and the globe reads as a denser and
+more luminous object than it does on a desktop. That is wanted. The continents read at
+least as clearly as they do at full size — the land and ocean masses gain contrast against
+each other as they fill in — so the motif's content survives the density rather than being
+lost to it.
+
+Each individual point is unchanged. Nothing is brighter on a phone; there is simply more of
+it per unit of screen. A report that the phone globe "glows more" is this, and is correct
+behaviour.
+
+**The one thing that could overturn this is frame cost, which is not yet measured.** See
+_Not yet specified_. If it ever has to give, reach for the point **size** before the point
+count: scaling `size` with the radius thins the density without removing a single island,
+where cutting the count re-rolls the whole sphere and loses islands permanently — see
+_What the point count does and does not buy_.
+
 ---
 
 ## Motion and states
@@ -599,15 +627,18 @@ Do not invent behaviour for any of the following. Stop and ask.
   supported by the approach, but nothing about marker appearance or behaviour is decided.
 - **Region focus.** Zooming to a country is planned and not designed.
 - **Hit testing.** Nothing on the globe is clickable yet.
-- **Whether the point count is reduced on a phone.** Still open, and deliberately so.
-  15,000 points costs 4–5ms of JavaScript per frame on the development machine, which
-  leaves no headroom on a CPU three to five times slower — but that is an inference, not
-  a measurement. Measure on real hardware before changing the count. A guessed reduction
-  is a worse globe for a saving nobody has confirmed exists.
+- **What 15,000 points cost on a phone.** Open, and narrower than it used to be. 15,000
+  points costs 4–5ms of JavaScript per frame on the development machine, which leaves no
+  headroom on a CPU three to five times slower — but that is an inference, not a
+  measurement, and it has never been taken on real hardware. Measure frame time and
+  battery on a mid-range Android, which is the risk case; an iPhone 13 Pro renders it
+  comfortably and is not the test.
 
-  Everything else about the motif on a narrow window is decided: the radius formula in
-  `docs/design/home.md` already scales it, and the canvas sizing rule is in that file
-  too.
+  **How the globe should look on a phone is no longer open.** The density that the
+  unchanged point count produces in a smaller disc is decided and wanted — see _Density on
+  a narrow window_, which also says what to reach for first if this measurement ever forces
+  a change. Only the cost is in question here, not the appearance. A guessed reduction is
+  a worse globe for a saving nobody has confirmed exists.
 
 ---
 
