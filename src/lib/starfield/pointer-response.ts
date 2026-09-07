@@ -1,26 +1,30 @@
 /**
  * The starfield's response to the pointer: the one piece of motion on the page.
  *
- * The cursor brushes past a star, the star gives a little in the direction the
- * cursor was travelling, and then over the next several seconds it drifts back
- * to exactly where it was. Specified under _Pointer response_ in
- * `docs/design/starfield.md`.
+ * The cursor sweeps through the field and the stars it passes are carried along
+ * with it, then coast to a stop and drift back to where they were. Specified
+ * under _Pointer response_ in `docs/design/starfield.md`.
  *
- * Three things it is deliberately not, each of which it has been at some point
- * in its history: stars orbiting the cursor, stars shoved out of its way like a
- * repulsion field, and stars trailing smears behind them. The effect is small,
- * local, and sharp — a point of light nudged, not a region of sky disturbed.
+ * **A star is kicked by the line the cursor swept this frame, not by where the
+ * cursor ended up.** That is the whole difference between a swipe and a
+ * pointer-follower. Measuring from a point means a fast cursor only disturbs
+ * the small disc it happened to stop in, so the field reacts in blobs wherever
+ * the mouse slowed down; measuring from the segment it travelled disturbs
+ * everything it actually crossed, evenly, at any speed.
  *
- * This module contains no React and touches no DOM beyond the canvas it is
- * handed, the pointer, and two media queries. It owns the animation frame loop
- * and nothing else owns one on this layer.
+ * The model is taken from the reference the design is measured against — see
+ * _Pointer response_ in the specification, which records where it came from and
+ * the numbers it uses. Two earlier attempts at this file guessed instead: one
+ * pulled stars home with a spring, which wobbles like jelly, and one pushed
+ * them radially away from the cursor, which is a repulsion field and reads as a
+ * force rather than as a hand. Neither is what the reference does.
  *
  * **The loop is cancelled, not idled.** A page nobody is touching runs nothing:
- * no frame is requested until the pointer moves, and once the pointer has been
- * still for a moment and every star is home again the loop is cancelled and the
- * field repainted at rest. A running-but-doing-nothing loop is the most likely
- * way this layer ends up costing someone battery, and it would not show up in
- * review because the page looks identical either way.
+ * no frame is requested until the pointer moves, and once every star is home
+ * again the loop is cancelled and the field drawn once at rest. A running-but-
+ * doing-nothing loop is the most likely way this layer ends up costing someone
+ * battery, and it would not show up in review because the page looks identical
+ * either way.
  */
 
 import { drawStars } from "@/lib/starfield/draw";
@@ -29,76 +33,70 @@ import type { Star } from "@/lib/starfield/starfield-points";
 /**
  * Every number the response is tuned by.
  *
- * The first group is the model itself; the rest decide when the loop may stop.
- * Tuned by eye on screen, so `docs/design/starfield.md` and these values must
- * be changed together.
+ * The rates are per second, applied as the closed-form solution over whatever
+ * the frame's timestep actually was, so the motion is identical at 60Hz and
+ * 120Hz and a dropped frame changes nothing.
+ *
+ * `impulseCeiling` and `speedCeiling` are in half-stage-heights rather than
+ * pixels, because the reference expresses them in clip space, where 1 is half
+ * the viewport. They scale with the window; everything else is in CSS pixels.
  */
 export const POINTER = {
-  /**
-   * How far from the pointer a star is affected at all, in CSS pixels.
-   *
-   * Small enough that the response reads as the cursor brushing past the few
-   * stars it actually passes. A wide reach makes a whole region of the sky
-   * heave when the cursor crosses it, which looks like a field effect rather
-   * than like a cursor.
-   */
-  influenceRadius: 175,
-
-  /** The share of the pointer's velocity a star at the very centre takes on. */
-  dragStrength: 0.21,
+  /** How far from the cursor's path a star is carried at all, in CSS pixels. */
+  sweepRadius: 88,
 
   /**
-   * Per-frame decay of the shove the pointer gave a star.
+   * Impulse per unit of cursor movement, per second.
    *
-   * This is what ends the swipe: within a few frames of the cursor passing, the
-   * star has stopped travelling and is left where it was pushed to.
+   * How hard the sweep hits. This and `speedCeiling` are the two knobs that
+   * decide whether the field is brushed or thrown.
    */
-  damping: 0.88,
+  impulseGain: 5.4,
+
+  /** Ceiling on one frame's cursor movement, in half stage heights. */
+  impulseCeiling: 0.18,
+
+  /** Ceiling on a star's speed, in half stage heights per second. */
+  speedCeiling: 0.32,
 
   /**
-   * The share of the remaining distance home a star closes each frame.
-   *
-   * **A rate, not a spring, and that is the whole character of the effect.** A
-   * spring pulls on velocity, so a star overshoots home, comes back, overshoots
-   * again — the field wobbles like jelly after every sweep. This moves the
-   * position itself a fraction of the way home, which cannot overshoot at any
-   * strength: a star eases back and stops. Small, because the return should be
-   * a slow drift long after the cursor has gone, not a snap back.
-   *
-   * At 60fps this closes half the distance in about a second, and a fully
-   * displaced star is home in roughly eight.
+   * Drag on a star of unit mass, per second. Divided by the square root of the
+   * star's own mass, so a heavy star coasts further before it stops.
    */
-  returnRate: 0.012,
+  drag: 2.3,
 
   /**
-   * Ceiling on how far a star may be thrown from home, in CSS pixels.
+   * Rate at which a star's displacement decays back to nothing, per second.
    *
-   * Not optional, and small. Without any ceiling a fast diagonal flick throws
-   * stars hundreds of pixels and the field tears apart; with a generous one the
-   * cursor reads as shoving stars out of its way, which is a different effect
-   * and not this one. A star gives a little where the cursor passes and stays
-   * recognisably where it belongs.
+   * A rate on the displacement itself, not a force on its velocity. That is
+   * what makes the return a drift that slows as it arrives rather than a spring
+   * that overshoots home and comes back — there is no spring anywhere in this
+   * model, and the reference's own source says so in as many words.
    */
-  maxDisplacement: 18,
+  returnRate: 1,
 
   /**
-   * How much of each frame's raw pointer delta is taken into the smoothed
-   * velocity, as an exponential average over roughly the last three frames.
+   * Mass runs from the first of these to the second, by magnitude.
    *
-   * Raw frame-to-frame deltas are noisy — a real hand and a real mouse produce
-   * a jittery, twitchy drag rather than a fluid one. This is what makes the
-   * motion read as stirring rather than as flicking.
+   * The faint majority is light and flicks easily; the few bright stars are
+   * heavy, take less from the same sweep and carry it further. Without the
+   * spread every star moves identically and the field reads as one sheet being
+   * dragged rather than as many objects being disturbed.
    */
-  velocitySmoothing: 0.35,
+  massMin: 0.65,
+  massMax: 2.4,
 
   /** How long the pointer must hold still before the loop may stop, in ms. */
   stillnessMs: 140,
 
-  /** A star is home when it is within this many pixels of it... */
-  restDistance: 0.1,
+  /** A star is home when it is within this many pixels of home... */
+  restDistance: 0.05,
 
-  /** ...and slower than this, in pixels per frame. */
-  restVelocity: 0.01,
+  /** ...and slower than this, in pixels per second. */
+  restSpeed: 0.5,
+
+  /** Ceiling on a frame's timestep, in seconds. */
+  maxTimestep: 1 / 20,
 } as const;
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
@@ -119,7 +117,7 @@ export interface PointerResponseHandle {
    *
    * Called after every generation — mount and each resize. The positions the
    * stars arrive with are taken as their homes, so this must be called with a
-   * field that has just been generated, never with one mid-drag.
+   * field that has just been generated, never with one mid-response.
    */
   setField(stars: readonly Star[], width: number, height: number): void;
   /** Cancel the loop and release everything. Safe to call more than once. */
@@ -139,14 +137,18 @@ export function createPointerResponse(
   let stars: readonly Star[] = NO_STARS;
 
   // Parallel arrays rather than fields on the stars themselves: home is the
-  // generator's business and current position is this module's, and keeping
-  // them apart is what makes "every star returns to exactly where it started"
-  // a snap back to a number nothing has touched rather than an accumulation of
+  // generator's business and the offset from it is this module's. Keeping them
+  // apart is what makes "every star returns to exactly where it started" a snap
+  // back to a number nothing has touched, rather than an accumulation of
   // floating-point drift that happens to look settled.
   let homeX = NO_VALUES;
   let homeY = NO_VALUES;
+  let offsetX = NO_VALUES;
+  let offsetY = NO_VALUES;
   let velocityX = NO_VALUES;
   let velocityY = NO_VALUES;
+  /** Per-star mass. Heavier stars take less from a sweep and coast further. */
+  let mass = NO_VALUES;
 
   let width = 0;
   let height = 0;
@@ -154,20 +156,15 @@ export function createPointerResponse(
   let originX = 0;
   let originY = 0;
 
+  /** Where the pointer is now, and where it was when the last frame ran. */
   let pointerX = 0;
   let pointerY = 0;
-  let pointerInside = false;
-  /** Whether there is a previous sample to measure this move against. */
-  let sampled = false;
-  let sampleX = 0;
-  let sampleY = 0;
-  /** Raw movement banked since the last frame read it. */
-  let pendingX = 0;
-  let pendingY = 0;
-  /** The smoothed pointer velocity the drag is actually driven by. */
-  let velocitySampleX = 0;
-  let velocitySampleY = 0;
+  let previousX = 0;
+  let previousY = 0;
+  /** Whether a previous cursor position exists to sweep a segment from. */
+  let tracking = false;
   let lastMoveTime = 0;
+  let lastFrameTime = 0;
 
   let animationFrame = 0;
   let running = false;
@@ -175,117 +172,156 @@ export function createPointerResponse(
   let destroyed = false;
 
   /**
-   * Advances every star one frame, and reports whether the field is at rest.
+   * Half the stage's height, in CSS pixels.
    *
-   * Two movements, and they are deliberately different in kind. The swipe is a
-   * velocity: the cursor shoves a star, the shove decays, the star coasts to a
-   * stop. The return is a rate: whatever distance is left between the star and
-   * its home, a small fraction of it closes each frame, which is a drift that
-   * slows as it arrives and can never overshoot.
-   *
-   * Keeping them separate is what stops the field behaving like jelly. Pull a
-   * star home with a spring instead — a force on its velocity — and it arrives
-   * carrying speed, sails past, and comes back; the whole field wobbles after
-   * every sweep of the cursor.
+   * The unit the two ceilings below are expressed in, so they scale with the
+   * window rather than being pixel values tuned at one size.
    */
-  function advance(): boolean {
-    const radiusSquared = POINTER.influenceRadius * POINTER.influenceRadius;
-    const maxSquared = POINTER.maxDisplacement * POINTER.maxDisplacement;
-    const restSquared = POINTER.restDistance * POINTER.restDistance;
-    const restVelocitySquared = POINTER.restVelocity * POINTER.restVelocity;
+  let halfStageHeight = 1;
 
-    // A pointer resting on the stage drags nothing: it is movement that stirs
-    // the field, not presence.
-    const dragging =
-      pointerInside && (velocitySampleX !== 0 || velocitySampleY !== 0);
+  /**
+   * Carries every star the cursor's path crossed this frame.
+   *
+   * The cursor swept a line segment since the last frame. A star's share of
+   * that sweep is set by how far it sits from the segment — not from either
+   * end of it — so a fast movement disturbs everything along its length rather
+   * than only the disc it stopped in.
+   */
+  function sweep(): void {
+    const segmentX = pointerX - previousX;
+    const segmentY = pointerY - previousY;
+    const lengthSquared = segmentX * segmentX + segmentY * segmentY;
+    if (lengthSquared === 0) return;
 
-    let settled = true;
+    // The impulse is the movement itself, capped: one enormous jump — a cursor
+    // warping across the window, a frame lost to something else — must not hit
+    // harder than a fast hand does.
+    const ceiling = POINTER.impulseCeiling * halfStageHeight;
+    const length = Math.sqrt(lengthSquared);
+    const scale = length > ceiling ? ceiling / length : 1;
+    const impulseX = segmentX * scale * POINTER.impulseGain;
+    const impulseY = segmentY * scale * POINTER.impulseGain;
+
+    const speedCeiling = POINTER.speedCeiling * halfStageHeight;
 
     for (let index = 0; index < stars.length; index += 1) {
       const star = stars[index];
-      let velocityOfX = velocityX[index];
-      let velocityOfY = velocityY[index];
 
-      if (dragging) {
-        const towardX = pointerX - star.x;
-        const towardY = pointerY - star.y;
-        const distanceSquared = towardX * towardX + towardY * towardY;
+      // Distance to the segment, by projecting the star onto it and clamping
+      // to its ends, so the influence is a capsule around the cursor's path.
+      const alongX = star.x - previousX;
+      const alongY = star.y - previousY;
+      const t = Math.min(
+        Math.max((alongX * segmentX + alongY * segmentY) / lengthSquared, 0),
+        1,
+      );
+      const offX = alongX - segmentX * t;
+      const offY = alongY - segmentY * t;
+      const distance = Math.hypot(offX, offY);
+      if (distance >= POINTER.sweepRadius) continue;
 
-        if (distanceSquared < radiusSquared) {
-          // Squared falloff, so the effect concentrates near the pointer and
-          // arrives at zero — not at a small value — on the influence radius.
-          // A linear one leaves a visible circular edge where it stops.
-          const nearness =
-            1 - Math.sqrt(distanceSquared) / POINTER.influenceRadius;
-          const share = nearness * nearness * POINTER.dragStrength;
-          velocityOfX += velocitySampleX * share;
-          velocityOfY += velocitySampleY * share;
-        }
+      // Squared smoothstep: the falloff reaches zero at the radius with no
+      // slope left in it, so there is no circular edge where the sweep stops.
+      const near = 1 - distance / POINTER.sweepRadius;
+      const eased = near * near * (3 - 2 * near);
+      const weight = eased * eased;
+
+      const share = weight / mass[index];
+      let nextX = velocityX[index] + impulseX * share;
+      let nextY = velocityY[index] + impulseY * share;
+
+      const speed = Math.hypot(nextX, nextY);
+      if (speed > speedCeiling) {
+        const held = speedCeiling / speed;
+        nextX *= held;
+        nextY *= held;
       }
 
-      velocityOfX *= POINTER.damping;
-      velocityOfY *= POINTER.damping;
+      velocityX[index] = nextX;
+      velocityY[index] = nextY;
+    }
+  }
 
-      // The swipe, then the drift back. The drift acts on the position rather
-      // than on the velocity, so it has no momentum to overshoot with.
-      let x = star.x + velocityOfX;
-      let y = star.y + velocityOfY;
-      x += (homeX[index] - x) * POINTER.returnRate;
-      y += (homeY[index] - y) * POINTER.returnRate;
+  /**
+   * Lets every star coast and drift home, and reports whether all of them are.
+   *
+   * Two decays, solved rather than stepped. A star's velocity decays at its own
+   * drag, and its displacement decays toward zero at `returnRate` while that
+   * velocity drives it — which is a pair of linear equations with a closed
+   * form, so this is exact at any timestep instead of an integration that
+   * wanders if a frame runs long.
+   */
+  function coast(seconds: number): boolean {
+    const restSquared = POINTER.restDistance * POINTER.restDistance;
+    const restSpeedSquared = POINTER.restSpeed * POINTER.restSpeed;
+    const returnDecay = Math.exp(-POINTER.returnRate * seconds);
 
-      const displacedX = x - homeX[index];
-      const displacedY = y - homeY[index];
-      const displacedSquared =
-        displacedX * displacedX + displacedY * displacedY;
+    let home = true;
 
-      if (displacedSquared > maxSquared) {
-        const pullBack = POINTER.maxDisplacement / Math.sqrt(displacedSquared);
-        x = homeX[index] + displacedX * pullBack;
-        y = homeY[index] + displacedY * pullBack;
-      }
+    for (let index = 0; index < stars.length; index += 1) {
+      const drag = POINTER.drag / Math.sqrt(mass[index]);
+      const velocityDecay = Math.exp(-drag * seconds);
+      // The carried term, from integrating a decaying velocity against a
+      // decaying displacement. The two rates cannot meet across the mass range,
+      // so the denominator cannot vanish.
+      const carried =
+        (returnDecay - velocityDecay) / (drag - POINTER.returnRate);
 
-      star.x = x;
-      star.y = y;
-      velocityX[index] = velocityOfX;
-      velocityY[index] = velocityOfY;
+      const nextX = offsetX[index] * returnDecay + velocityX[index] * carried;
+      const nextY = offsetY[index] * returnDecay + velocityY[index] * carried;
+
+      offsetX[index] = nextX;
+      offsetY[index] = nextY;
+      velocityX[index] *= velocityDecay;
+      velocityY[index] *= velocityDecay;
+
+      stars[index].x = homeX[index] + nextX;
+      stars[index].y = homeY[index] + nextY;
 
       if (
-        settled &&
-        (displacedSquared > restSquared ||
-          velocityOfX * velocityOfX + velocityOfY * velocityOfY >
-            restVelocitySquared)
+        home &&
+        (nextX * nextX + nextY * nextY > restSquared ||
+          velocityX[index] * velocityX[index] +
+            velocityY[index] * velocityY[index] >
+            restSpeedSquared)
       ) {
-        settled = false;
+        home = false;
       }
     }
 
-    return settled;
+    return home;
   }
 
   function loop(time: number): void {
     animationFrame = requestAnimationFrame(loop);
 
-    // An exponential average over the last few frames, refilled by whatever the
-    // pointer banked since the previous one. With the pointer still it decays
-    // toward zero on its own, so the drag eases off rather than cutting out.
-    velocitySampleX += (pendingX - velocitySampleX) * POINTER.velocitySmoothing;
-    velocitySampleY += (pendingY - velocitySampleY) * POINTER.velocitySmoothing;
-    pendingX = 0;
-    pendingY = 0;
+    // Clamped, so a backgrounded tab returning after a second does not apply
+    // that second in one step.
+    const seconds =
+      lastFrameTime === 0
+        ? 1 / 60
+        : Math.min((time - lastFrameTime) / 1000, POINTER.maxTimestep);
+    lastFrameTime = time;
 
-    const settled = advance();
+    if (tracking) sweep();
+    // The segment this frame swept is consumed; the next one starts here.
+    previousX = pointerX;
+    previousY = pointerY;
+
+    const home = coast(seconds);
     drawStars(context, stars, width, height);
 
-    // Both halves are required. Stars still moving under a still pointer have
-    // not finished, and a pointer still moving will disturb them again.
-    if (settled && time - lastMoveTime >= POINTER.stillnessMs) {
-      rest();
+    // Both halves are required. Stars still moving under a still cursor have
+    // not finished, and a cursor still moving will disturb them again.
+    if (home && time - lastMoveTime >= POINTER.stillnessMs) {
+      settle();
     }
   }
 
   function startLoop(): void {
     if (running || destroyed || stars.length === 0) return;
     running = true;
+    lastFrameTime = 0;
     animationFrame = requestAnimationFrame(loop);
   }
 
@@ -296,28 +332,25 @@ export function createPointerResponse(
   }
 
   /**
-   * Puts the field back exactly where it started and stops.
+   * Puts every star back exactly where it started, and stops.
    *
-   * The stars are snapped to their homes rather than left where the drift got
-   * them: within 0.1px is close enough to stop animating, and not close enough
-   * to leave on screen. Every frame already clears its canvas, so this last
-   * draw has nothing to clean up — it exists to make the final positions the
-   * generator's own numbers rather than a float that arrived near them.
+   * Snapped to the generator's own numbers rather than left on the float that
+   * arrived within a twentieth of a pixel of them: that much offset is
+   * invisible as a position, and is not invisible on the anti-aliased edge of a
+   * one-pixel core.
    */
-  function rest(): void {
+  function settle(): void {
     stopLoop();
+    tracking = false;
 
     for (let index = 0; index < stars.length; index += 1) {
-      stars[index].x = homeX[index];
-      stars[index].y = homeY[index];
+      offsetX[index] = 0;
+      offsetY[index] = 0;
       velocityX[index] = 0;
       velocityY[index] = 0;
+      stars[index].x = homeX[index];
+      stars[index].y = homeY[index];
     }
-
-    velocitySampleX = 0;
-    velocitySampleY = 0;
-    pendingX = 0;
-    pendingY = 0;
 
     if (stars.length > 0) {
       drawStars(context, stars, width, height);
@@ -327,20 +360,18 @@ export function createPointerResponse(
   function onPointerMove(event: PointerEvent): void {
     if (stars.length === 0) return;
 
-    const x = event.clientX - originX;
-    const y = event.clientY - originY;
+    pointerX = event.clientX - originX;
+    pointerY = event.clientY - originY;
 
-    if (sampled) {
-      pendingX += x - sampleX;
-      pendingY += y - sampleY;
+    // The first sample after arriving sweeps nothing: it starts a segment
+    // rather than closing one, so re-entering the window on the far side does
+    // not drag a line across everything in between.
+    if (!tracking) {
+      tracking = true;
+      previousX = pointerX;
+      previousY = pointerY;
     }
 
-    sampled = true;
-    sampleX = x;
-    sampleY = y;
-    pointerX = x;
-    pointerY = y;
-    pointerInside = true;
     lastMoveTime = performance.now();
 
     startLoop();
@@ -349,17 +380,13 @@ export function createPointerResponse(
   /**
    * The pointer has left the window.
    *
-   * The drag stops and the loop does not: stars in mid-air settle the way they
-   * would have anyway, rather than freezing where the cursor abandoned them.
-   * The next move starts a fresh sample, so re-entering the window on the far
-   * side does not read as one enormous sweep across it.
+   * Only the segment is dropped. Stars already moving carry on coasting and
+   * drifting home rather than freezing where the cursor abandoned them, and the
+   * next arrival starts a fresh sweep from wherever it comes in.
    */
   function onPointerOut(event: PointerEvent): void {
     if (event.relatedTarget !== null) return;
-    pointerInside = false;
-    sampled = false;
-    pendingX = 0;
-    pendingY = 0;
+    tracking = false;
   }
 
   function attach(): void {
@@ -377,9 +404,7 @@ export function createPointerResponse(
     attached = false;
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerout", onPointerOut);
-    pointerInside = false;
-    sampled = false;
-    rest();
+    settle();
   }
 
   /**
@@ -416,19 +441,33 @@ export function createPointerResponse(
       if (homeX.length !== stars.length) {
         homeX = new Float64Array(stars.length);
         homeY = new Float64Array(stars.length);
+        offsetX = new Float64Array(stars.length);
+        offsetY = new Float64Array(stars.length);
         velocityX = new Float64Array(stars.length);
         velocityY = new Float64Array(stars.length);
+        mass = new Float64Array(stars.length);
       }
 
       for (let index = 0; index < stars.length; index += 1) {
-        homeX[index] = stars[index].x;
-        homeY[index] = stars[index].y;
+        const star = stars[index];
+        homeX[index] = star.x;
+        homeY[index] = star.y;
+        offsetX[index] = 0;
+        offsetY[index] = 0;
         velocityX[index] = 0;
         velocityY[index] = 0;
+        // By magnitude, smoothstepped: the faint majority is light and the few
+        // bright ones are heavy, the same way the reference takes its mass from
+        // particle size.
+        const eased =
+          star.magnitude * star.magnitude * (3 - 2 * star.magnitude);
+        mass[index] =
+          POINTER.massMin + (POINTER.massMax - POINTER.massMin) * eased;
       }
 
       width = nextWidth;
       height = nextHeight;
+      halfStageHeight = nextHeight / 2;
 
       // Read once here rather than on every pointer event, which would be a
       // layout read per mouse move.
@@ -436,14 +475,9 @@ export function createPointerResponse(
       originX = bounds.left;
       originY = bounds.top;
 
-      // A resize invalidates the pointer's trail along with the field: the next
-      // move measures from where the pointer is, not from where it was on a
-      // stage that no longer exists.
-      sampled = false;
-      pendingX = 0;
-      pendingY = 0;
-      velocitySampleX = 0;
-      velocitySampleY = 0;
+      // A resize invalidates where the cursor was as well as the field: the
+      // next move starts a fresh segment on a stage that now exists.
+      tracking = false;
     },
 
     destroy() {

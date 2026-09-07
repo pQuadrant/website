@@ -331,97 +331,113 @@ animation of any kind. Motion happens only in response to the pointer.
 
 ### The behaviour
 
-The cursor brushes past a star, the star gives a little in the direction the cursor was
-travelling, and then over the next several seconds it drifts back to exactly where it
-was. The effect is small, local and sharp: a few points of light nudged as the cursor
-passes them, not a region of sky disturbed.
+The cursor sweeps through the field, the stars along the line it crossed are carried with
+it, and they coast to a stop and drift back to where they were over the next couple of
+seconds.
 
 Three things it is not, each of which it has been at some point and each of which was
-wrong on screen:
+rejected on sight:
 
-- **Stars orbiting or chasing the cursor.** It is not a pointer-follower.
-- **Stars shoved out of the cursor's way.** A generous displacement reads as a repulsion
-  field ploughing through the sky. The push is deliberately small enough that a star stays
-  recognisably where it belongs.
-- **Stars trailing smears behind them.** See _Why there is no smear_ below.
+- **A spring back to home.** A pull toward home added to a star's velocity makes it arrive
+  carrying speed, overshoot, and come back. The field wobbles like jelly after every sweep.
+- **A repulsion field.** Pushing stars radially away from where the cursor _is_ reads as a
+  force ploughing through the sky rather than as a hand passing over it.
+- **A smear.** See _Why there is no smear_ below.
 
 ### The model
 
-Every star has a fixed **home position** — where the generator put it. It also has a
-current position and a velocity. Home never changes until the field is regenerated.
+This is the one part of this specification that was not designed here. It is transcribed
+from the reference the rest of the design is measured against, whose implementation is
+readable in the saved copy of that page, and the values below are that page's own. Three
+attempts at inventing it produced the three rejects above, so if this behaviour is ever
+revisited, start by re-reading the reference rather than by re-deriving it.
 
-Each frame, for every star currently displaced or within the influence radius:
+Every star has a fixed **home position** — where the generator put it. It also has an
+offset from home, a velocity, and a mass.
 
-1. **Drag.** If the star is within the influence radius of the pointer, add a fraction
-   of the pointer's velocity to the star's velocity, scaled by how close it is.
-2. **Damping.** Multiply the velocity by a damping factor so it decays. This is what ends
-   the nudge: a few frames after the cursor has passed, the star has stopped travelling.
-3. **Integrate.** Add velocity to position.
-4. **Return.** Move the position itself a small fraction of the way toward home.
-5. **Clamp.** If the star is further than the maximum displacement from home, pull it
-   back to that distance.
+Each frame:
 
-**Steps 2 and 4 are different kinds of thing, and that is the whole character of the
-effect.** The nudge is a velocity that decays; the return is a rate applied to the
-position. A rate cannot overshoot at any strength — a star closes a percentage of the
-remaining gap each frame, so it moves quickly when it is far from home, slows as it
-arrives, and stops.
+1. **Sweep.** The cursor travelled a line segment since the last frame. For every star,
+   take the distance to that **segment** — the perpendicular distance to the line, clamped
+   to its ends — and from it a weight of `smoothstep(1 − dist / sweepRadius)²`. Add the
+   cursor's own movement, times that weight, times the gain, divided by the star's mass,
+   to the star's velocity.
+2. **Coast.** Velocity decays at `drag / √mass` per second, and the offset decays toward
+   zero at `returnRate` per second while that velocity drives it.
 
-The obvious alternative is a spring: a pull toward home added to the velocity, which is
-what this specification asked for originally. Do not go back to it. A spring accelerates
-a star homeward, so it arrives carrying speed, sails past, and comes back — every sweep
-of the cursor leaves the field wobbling like jelly for a second afterwards. It was built
-that way first and that is exactly how it read.
+**Measuring from the segment rather than from the cursor's position is what makes this a
+swipe.** A star's distance to a point disturbs only the small disc the cursor happened to
+stop in, so the field reacts in blobs wherever the hand slowed down and a fast movement
+crosses stars without touching them. The distance to the swept segment disturbs everything
+the cursor actually crossed, evenly, at any speed.
+
+**There is no spring and no force pulling a star home.** The return is a decay applied to
+the displacement itself, so a star eases back and stops rather than overshooting. The two
+decays together have a closed form, which is what the code uses:
+
+```
+drag          = POINTER.drag / sqrt(mass)
+velocityDecay = exp(-drag × dt)
+returnDecay   = exp(-returnRate × dt)
+offset   = offset × returnDecay + velocity × (returnDecay − velocityDecay) / (drag − returnRate)
+velocity = velocity × velocityDecay
+```
+
+Solving it rather than integrating it means the motion is exact at any timestep: identical
+at 60Hz and 120Hz, and unchanged by a dropped frame.
 
 Values:
 
-| Parameter        | Value                  | What it does                                          |
-| ---------------- | ---------------------- | ----------------------------------------------------- |
-| Influence radius | 175px                  | How far from the pointer stars are affected           |
-| Distance falloff | `(1 − dist / radius)²` | Squared, so the effect concentrates near the pointer  |
-| Drag strength    | 0.21                   | Fraction of pointer velocity transferred to a star    |
-| Damping          | 0.88                   | Per-frame decay of that nudge                         |
-| Return rate      | 0.012                  | Share of the remaining distance home closed per frame |
-| Max displacement | 18px                   | Ceiling on how far any movement can throw a star      |
+| Parameter       | Value       | What it does                                                 |
+| --------------- | ----------- | ------------------------------------------------------------ |
+| Sweep radius    | 88px        | How far from the cursor's path a star is carried at all      |
+| Falloff         | smoothstep² | Reaches zero at the radius, so there is no circular edge     |
+| Impulse gain    | 5.4         | How hard the sweep hits                                      |
+| Impulse ceiling | 0.18        | Cap on one frame's cursor movement, in half stage heights    |
+| Speed ceiling   | 0.32        | Cap on a star's speed, in half stage heights per second      |
+| Drag            | 2.3         | Velocity decay per second, for a star of unit mass           |
+| Return rate     | 1.0         | Decay of the displacement itself, per second                 |
+| Mass            | 0.65–2.4    | By magnitude: the faint majority light, the bright few heavy |
 
-Tuned by eye on screen at 1440 x 900, and held as named constants in one object. The
-influence radius and the maximum displacement are the two that decide whether this reads
-as a cursor or as a force field; the return rate decides how long the field takes to
-forget. At 0.012 a fully displaced star is halfway home in about a second and all the way
-in around eight, which is the intended slow settle rather than a snap back.
+The two ceilings are in half stage heights because the reference expresses them in clip
+space, where 1 is half the viewport; they scale with the window. Everything else is in CSS
+pixels.
 
-The max displacement clamp is not optional. Without it a fast diagonal flick across the
-whole window throws stars hundreds of pixels and the field visibly tears apart. Measured
-at 1440 x 900 under the most violent pointer movement available, no star exceeds the
-ceiling: the furthest any star is drawn from its home is 18.00px.
+**Mass is not decoration.** Without a spread, every star takes the same impulse and the
+field moves as one sheet being dragged. With it, the faint majority flicks easily and
+settles quickly while the few bright stars take less from the same sweep and carry it
+further, which is what reads as many objects rather than one surface. The reference derives
+it from particle size; this derives it from magnitude, which is the same thing here.
 
-**Pointer velocity** is the difference between the current and previous pointer
-positions, smoothed across roughly three frames as an exponential average. Raw
-frame-to-frame deltas are noisy and produce a jittery, twitchy drag.
+The ceilings are not optional. The impulse ceiling stops a cursor warping across the window
+— or a frame lost to something else — from hitting harder than a fast hand does, and the
+speed ceiling bounds how far any star can be carried. Measured at 1440 × 900 under the most
+violent pointer movement available, the furthest a star travels from home is 54.9px, and it
+is back within 0.1px inside three seconds.
 
 ### Why there is no smear
 
-This specification previously called for one: a trail behind each displaced star,
-achieved by erasing a fraction of the canvas's alpha each frame with `destination-out`
-rather than clearing it, so what a star left behind decayed over the following frames.
+This specification previously called for one: a trail behind each displaced star, achieved
+by erasing a fraction of the canvas's alpha each frame with `destination-out` rather than
+clearing it, so what a star left behind decayed over the following frames.
 
-**It was built, and it is wrong here.** A partial erase does not leave the star behind —
-it leaves the entire previous frame behind, at 65% strength, and on a field of small
-points over near-black what that reads as is a haze settling over the space whenever the
-cursor moves. It looks like a blur on the background rather than like motion.
+**It was built, and it is wrong here.** A partial erase does not leave the star behind — it
+leaves the entire previous frame behind, at 65% strength, and on a field of small points
+over near-black what that reads as is a haze settling over the space whenever the cursor
+moves. It looks like a blur on the background rather than like motion. The reference has no
+such trail on its stars either.
 
 Every frame therefore clears its canvas completely and repaints the field. A frame during
-the drag and a frame at rest are the same call with the stars in different places, which
+the sweep and a frame at rest are the same call with the stars in different places, which
 also makes two of the acceptance criteria true by construction rather than by cleanup:
-there is never any residue to remove, and the settled field is pixel-identical to the
-field before the pointer touched it. Measured, after a heavy disturbance: zero pixels
-differ.
+there is never any residue to remove, and the settled field is pixel-identical to the field
+before the pointer touched it. Measured, after a heavy disturbance: zero pixels differ.
 
 A star is a point of light. It stays one.
 
 ### Stopping
 
-When the pointer has not moved for a moment **and** every star has settled within 0.1px
+When the pointer has not moved for a moment **and** every star has come back within 0.05px
 of its home position with near-zero velocity, snap every star to its home, redraw the
 field once at rest, and **cancel the animation frame loop entirely**.
 
@@ -430,10 +446,9 @@ leave on screen. Snapping makes the final positions the generator's own numbers 
 than floats that arrived near them, which is what "every star returns to exactly where it
 started" means.
 
-Because the return is a slow drift, the loop goes on running for several seconds after
-the cursor has stopped — around eight at 60fps after a full-strength displacement. That is
-the cost of the settle being slow, it is bounded, and it ends in a cancelled loop rather
-than an idling one.
+The loop goes on running for a couple of seconds after the cursor has stopped, while the
+last stars drift the final fraction of a pixel home. That is bounded, and it ends in a
+cancelled loop rather than an idling one.
 
 Restart it on the next pointer movement over the stage.
 
@@ -462,14 +477,13 @@ one near the centre of the stage.
 
 **Checked, and it does.** At 1440 x 900 the globe scatters points within 117px of the
 cursor, pushes them up to about 40px, and brightens them by up to 2.5x as it does. The
-starfield reaches 175px, moves a star at most 18px, and changes no star's brightness at
-all. Where the two overlap — the ring just outside the disc, since the density falloff
-leaves no stars inside it — the globe moves its points more than twice as far, on a far
-denser population, and is the only one of the two that lights up. There is no competition
-to resolve.
+starfield carries a star only where the cursor's path passes within 88px of it, and changes
+no star's brightness at all. Where the two overlap — the ring just outside the disc, since
+the density falloff leaves no stars inside it — the globe acts on a far denser population
+and is the only one of the two that lights up, so it stays the dominant response.
 
-The overlap is also smaller than it was: the influence radius came down from 260px to
-175px during tuning, for reasons that had nothing to do with the globe.
+The overlap is also smaller than the 260px this file once proposed: the sweep radius is
+88px, for reasons that had nothing to do with the globe.
 
 **The sign-in panel.** When the panel is open, the pointer is over a form. The starfield
 continues to respond normally in the area outside the panel. Do not suppress it, but do
@@ -502,22 +516,22 @@ Touch devices get the static field, which is the whole of this ticket's field an
 
 The window sizes from `home.md` apply here unchanged. In addition:
 
-| Check                      | What to look for                                                                                      |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                   |
-| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                |
-| Reload twice               | Identical field both times                                                                            |
-| Retina display             | Stars are crisp dots, not fuzzy squares                                                               |
-| Idle for 30 seconds        | No animation frames running, CPU at zero                                                              |
-| Slow pointer sweep         | Stars give where the cursor passes and drift back; no jitter, no wobble as they arrive                |
-| Fast diagonal flick        | No star thrown far, no trail or haze behind them, field recovers to its exact arrangement             |
-| Background during a sweep  | The dark space does not move at all. Anything shimmering on it is a bug, not an effect                |
-| Reduced motion on          | Field renders, nothing moves, no loop starts                                                          |
-| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                           |
-| Click chrome and sign-in   | Canvas does not block any pointer target                                                              |
-| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere       |
-| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                     |
-| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits |
+| Check                      | What to look for                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                     |
+| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                  |
+| Reload twice               | Identical field both times                                                                              |
+| Retina display             | Stars are crisp dots, not fuzzy squares                                                                 |
+| Idle for 30 seconds        | No animation frames running, CPU at zero                                                                |
+| Slow pointer sweep         | Stars are carried along the line the cursor crossed and drift back; no jitter, no wobble as they arrive |
+| Fast diagonal flick        | No star thrown far, no trail or haze behind them, field recovers to its exact arrangement               |
+| Background during a sweep  | The dark space does not move at all. Anything shimmering on it is a bug, not an effect                  |
+| Reduced motion on          | Field renders, nothing moves, no loop starts                                                            |
+| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                             |
+| Click chrome and sign-in   | Canvas does not block any pointer target                                                                |
+| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere         |
+| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                       |
+| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits   |
 
 ---
 
