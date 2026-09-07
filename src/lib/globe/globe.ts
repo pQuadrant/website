@@ -18,6 +18,11 @@ import {
   paint,
   resolveColours,
 } from "@/lib/globe/draw";
+import {
+  ENTRANCE,
+  type GlobeEntranceField,
+  createEntranceField,
+} from "@/lib/globe/entrance";
 import { createGlobePointSet } from "@/lib/globe/point-set";
 import {
   type GlobeView,
@@ -107,6 +112,20 @@ export function createGlobe(
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
   const finePointer = window.matchMedia(FINE_POINTER);
 
+  /**
+   * The entrance, or nothing at all.
+   *
+   * Under reduced motion there is no sequence: no field is drawn and the globe
+   * paints its settled frame directly. The second condition covers a page that
+   * took longer to reach this line than the sequence takes to run — a slow
+   * hydration, or a development fast refresh — where the honest answer is that
+   * the entrance has already been and gone.
+   */
+  const entrance: GlobeEntranceField | null =
+    !reducedMotion.matches && performance.now() < ENTRANCE.endMs
+      ? createEntranceField(points.count)
+      : null;
+
   let animationFrame = 0;
   let running = false;
   let lastFrameTime = 0;
@@ -138,7 +157,7 @@ export function createGlobe(
   }
 
   function render(): void {
-    project(points, field, state, view, frame);
+    project(points, field, entrance, state, view, frame);
     paint(context, frame, colours, view, state);
   }
 
@@ -149,7 +168,11 @@ export function createGlobe(
     const delta = lastFrameTime === 0 ? 0 : (time - lastFrameTime) / 1000;
     lastFrameTime = time;
 
-    advance(state, delta);
+    // `time` is milliseconds since the page's time origin, which is the clock
+    // the entrance is written against and the same one the starfield's and the
+    // chrome's CSS fades run on. Passed through rather than accumulated: three
+    // layers on one timeline, with nothing handing a start time around.
+    advance(state, delta, time);
     render();
   }
 

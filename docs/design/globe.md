@@ -46,8 +46,8 @@ three-dimensional.
 **Clear zone** — a rectangle where points are dimmed so content on top stays legible.
 Currently the sign-in panel's footprint.
 
-**Assemble** — the opening animation: points fly in from scattered positions and settle
-into the sphere.
+**Entrance** — the opening sequence: points gather in from scattered positions across the
+window and resolve into the sphere. Covers the whole page, not only the motif.
 
 ---
 
@@ -246,12 +246,13 @@ significant saving for no visible difference.
 ```
 depth = clamp((Z + 1) / 2, 0, 1)
 size  = max(0.7, (0.55 + 1.15 × depth) × (1 + 0.3 × glow + 0.22 × dotGlow))
-alpha = (0.17 + 0.83 × depth^1.6) × (0.35 + 0.65 × e) × dim
+alpha = (0.17 + 0.83 × depth^1.6) × dim
         × (1 + 0.5 × glow + 0.55 × dotGlow)
 ```
 
-`e` is the assemble easing value, so points fade in as they arrive. `glow`, `dotGlow`
-and `dim` come from the state table below.
+`glow`, `dotGlow` and `dim` come from the state table below. A point that has not yet
+arrived carries two further factors on its alpha and a different size and shape
+entirely — see _Entrance_.
 
 Then, in order:
 
@@ -397,20 +398,128 @@ _What the point count does and does not buy_.
 
 The globe has one continuous behaviour and three states layered on top of it.
 
-### Assemble
+### Entrance
 
-On first render, points begin at random positions in a cube spanning `[−2.7, 2.7]` on
-each axis, each scaled by a per-point jitter factor of `0.55 + random × 0.45`, and
-travel to their sphere positions over **1500ms**.
+The page opens on empty space. The stars come up, the corner chrome follows them in, and
+the globe resolves out of the dark. It runs on every load, in full — there is no
+shortened variant for a return visitor, no session flag, and no skip.
 
-Easing is `1 − (1 − t)³`. Position at any moment is a linear blend between the scattered
-and final positions using the eased value.
+| Phase          | Window       | What happens                                         |
+| -------------- | ------------ | ---------------------------------------------------- |
+| Stars in       | 0 → 400ms    | Both starfield canvases fade from 0 to full opacity  |
+| Chrome in      | 200 → 900ms  | Four corner clusters fade in, 60ms apart, 520ms each |
+| Globe resolves | 250 → 1400ms | Points settle, brighten and separate into colour     |
+| Rotation ramp  | 250 → 1400ms | Rotation eases from stationary to the idle rate      |
 
-Rotation is also damped during assembly by a factor of `0.6 + 0.4 × e`, so the sphere
-spins up as it forms rather than tumbling while scattered.
+**The globe is never assembled.** It is at its final geometry from the first frame it is
+drawn. What changes is how well it can be read: points begin scattered a few pixels off
+where they belong, dim and colourless, and the scatter settles out. Nothing travels
+across the window, nothing arrives from anywhere, and no point is ever further from its
+position than a few times the spacing between neighbours.
 
-The assemble runs exactly once, on first render. It does not replay on resize, on state
-change, or when the panel opens.
+**This is a deliberate rejection of the obvious version, which was built first.** Points
+flying in from the edges of the window and gathering into a sphere is among the most-used
+motion effects on the web. It reads as a trick performed on the motif rather than as the
+motif itself; there is no reason a globe's points would ever have been scattered across a
+viewport; and it took 2.8 seconds to say nothing on a page whose job is to let someone in.
+Adding curved paths and a swirl to it made it showier, not more serious — the axis was
+never cheap-to-expensive, it was showy-to-restrained.
+
+What survived is the part worth animating: **the continents separating out of an
+undifferentiated haze.** That is the motif's own content rather than a flourish attached
+to it, and it is what the sequence is for.
+
+**The first two phases are CSS, on the elements themselves**, and the globe's phase is
+drawn on its canvas. All three run on the page's own clock — the document timeline for
+the fades, `requestAnimationFrame`'s timestamp for the motif, which share an origin — so
+nothing hands a start time between layers, and a slow first paint shortens the sequence
+rather than pushing its end past 1.4 seconds.
+
+**Nothing blocks interaction at any point.** The corner regions are laid out and
+hit-testable from the first frame; only their opacity animates. The sign-in control
+answers a click half a second in whether or not it has finished appearing, and the
+sequence carries on underneath — it does not pause, jump to the end, or cancel.
+
+#### Per point
+
+Each point is given, from a seeded generator so the sequence is identical on every load:
+
+| Value  | Range                                           |
+| ------ | ----------------------------------------------- |
+| Drift  | `0.45 → 1.0` of `0.055 R`, at a uniform bearing |
+| Delay  | `0 → 200ms` after `startMs`                     |
+| Settle | `800 → 950ms`                                   |
+
+**No value is derived from where the point sits on the sphere.** Not by distance from the
+centre, not by latitude, not by anything geometric. A spatial pattern reads as a wipe or
+a sweep, and the sphere has to resolve evenly across its whole face at once. The point
+set's index order runs pole to pole, so deriving a delay from the index is the same
+mistake wearing a different hat.
+
+With `t` the point's own progress through its settle, `0` to `1`:
+
+```
+e       = 1 − (1 − t)³
+position = projected + drift × R × (1 − e)
+
+appear   = min(1, t / 0.12)
+alpha   ×= appear × (0.15 + 0.85 × e)
+radius   = (size/2 + 0.9 × (1 − e)) × √appear
+colour   = white → class colour over t ∈ [0.55, 1], eased
+```
+
+**The drift is the whole measure.** At 1440 × 900 the spread is 22px against roughly 7px
+between neighbouring land points, so a point starts about three neighbours out and the
+coastlines are genuinely unreadable rather than merely soft. Their becoming readable is
+the effect. Much beyond this and the sphere stops reading as a sphere, at which point the
+page is assembling a globe out of dots again.
+
+The drift is added to the position the point holds _this frame_, not to a frozen one, so
+the grain turns with the sphere rather than sitting still on the glass while the globe
+moves underneath it.
+
+**Nothing overshoots.** A single ease-out, no bounce, no back, no elastic. A point that
+travelled past its position and settled back would be a flourish, and this design has
+none.
+
+**Softness is carried by size and alpha, not by a blur.** An unresolved point is its
+settled radius plus 0.9px, drawn faint — at a couple of pixels across, that is a soft
+dot, and it costs a filled circle rather than a gradient. The excess melts away on the
+same curve as the drift, so a point resolves to small and crisp exactly as it stops
+moving and there is no step at the handover.
+
+An intermediate version drew each point from a pre-rendered soft-dot sprite at four times
+its settled size. Measured, that was fifteen thousand `drawImage` calls a frame and it
+did not hold frame rate — 50–83ms a frame against 16.7ms for the settled globe. Do not
+reach for it again.
+
+**The colour is held.** A point wears the starfield's cool white, `rgb(226, 234, 246)`,
+until 55% of its settle and only then crosses to its land green or ocean blue. The
+threshold is measured on raw settle progress, not on `e`: on `e` it would arrive a
+quarter of the way in, and the continents would be legible almost from the start.
+
+Unresolved points are drawn as **filled circles**, not the squares a settled point is. A
+square has an orientation and four corners, which is a lot of definition for something
+meant to read as not yet in focus. The square is the shape a point earns by settling, and
+handing it over on the frame the point stops moving is what makes resolving a change of
+state rather than a change of shape.
+
+A point that reaches `t = 1` rejoins the ordinary point pass that frame, highlight and
+all. Once the last one has, the entrance is over: the extra pass is skipped, and idle
+cost is what it was before any of this existed.
+
+#### Resize
+
+The drift is held in motif radii and scaled from the current radius every frame. A window
+resized part way through the sequence therefore rescales the grain with it: the sequence
+continues, nothing is stranded, and the final state is correct.
+
+#### Reduced motion
+
+There is no entrance at all. The starfield, the chrome and the fully resolved globe render
+immediately, in their final state. Nothing fades, nothing moves, no sequence timer or
+animation loop starts, and no per-point entrance field is built. This is a complete and
+correct experience, not a reduced one.
 
 ### Idle rotation
 

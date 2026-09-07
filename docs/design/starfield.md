@@ -310,6 +310,16 @@ display.
 **Compositing.** See _How they look_: the field is drawn additively, and the composite
 mode is set per drawing stage rather than once on the context.
 
+**Fade-in.** Both canvases fade from zero to full opacity over the **first 400ms of the
+page**, together, as one layer — the ambient light is the space the stars are in, and a
+field arriving before the space it sits in reads as two things rather than one. This is
+the opening phase of the page's entrance, which is specified in `globe.md`; the fade is
+CSS on the canvas elements, so it costs no frame of its own and nothing here is redrawn
+for it. Under reduced motion there is no fade and the field is simply there.
+
+The field itself is still generated and painted on mount, once. Only its opacity is
+animated, and only on the first paint.
+
 **At rest, nothing runs.** Once the field has been drawn and the pointer response has
 settled, there is no animation frame loop, no timer and no listener doing per-frame work.
 Idle CPU cost is zero. This is a hard requirement, not an optimisation — the page is
@@ -526,7 +536,8 @@ The window sizes from `home.md` apply here unchanged. In addition:
 | Slow pointer sweep         | Stars are carried along the line the cursor crossed and drift back; no jitter, no wobble as they arrive |
 | Fast diagonal flick        | No star thrown far, no trail or haze behind them, field recovers to its exact arrangement               |
 | Background during a sweep  | The dark space does not move at all. Anything shimmering on it is a bug, not an effect                  |
-| Reduced motion on          | Field renders, nothing moves, no loop starts                                                            |
+| Reduced motion on          | Field renders at full opacity immediately, nothing fades, nothing moves, no loop starts                 |
+| Hard reload                | The field fades up over the first 400ms rather than appearing at once                                   |
 | Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                             |
 | Click chrome and sign-in   | Canvas does not block any pointer target                                                                |
 | Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere         |

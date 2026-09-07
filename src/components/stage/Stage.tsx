@@ -97,17 +97,30 @@ export function Stage({
 
           The regions are inert, so anything they hold sits over the motif
           without taking its clicks. A cluster with something interactive in it
-          opts that element back in. */}
-      <div className="pointer-events-none absolute top-[62px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin">
+          opts that element back in.
+
+          They fade in one after another over the second phase of the page's
+          entrance, 200ms to 900ms, 60ms apart, in reading order. The chrome
+          finishes well before the globe does on purpose: the frame is ready and
+          waiting, and the motif arrives into it. The delay is written on the
+          region rather than in the animation because the stagger is a property
+          of which corner this is. See the Entrance section of
+          `docs/design/globe.md`.
+
+          The fade is opacity and nothing else — the regions are laid out and
+          hit-testable from the first frame, so the sign-in toggle answers a
+          click at one second in whether or not it has finished appearing, and
+          the sequence carries on underneath. */}
+      <div className="pointer-events-none absolute top-[62px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
         {topLeft}
       </div>
-      <div className="pointer-events-none absolute top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin">
+      <div className="pointer-events-none absolute top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
         {topRight}
       </div>
-      <div className="pointer-events-none absolute bottom-stage-margin left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin">
+      <div className="pointer-events-none absolute bottom-stage-margin left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">
         {bottomLeft}
       </div>
-      <div className="pointer-events-none absolute right-stage-margin-tight bottom-stage-margin pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] row:right-stage-margin-narrow stage:right-stage-margin">
+      <div className="pointer-events-none absolute right-stage-margin-tight bottom-stage-margin pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none">
         {bottomRight}
       </div>
     </main>
