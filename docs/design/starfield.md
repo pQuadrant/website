@@ -34,16 +34,18 @@ it is too strong.
 
 ## Position in the layer stack
 
-This canvas sits **directly above the stage fill**, and carries two things: the ambient
-light and the stars. The full stack, bottom to top:
+This layer sits **directly above the stage fill** and carries two things: the ambient
+light and the stars. They are on **two canvases, not one**, stacked in that order — see
+_Rendering_ for why. The full stack, bottom to top:
 
-| #   | Layer                                  |
-| --- | -------------------------------------- |
-| 1   | Stage fill                             |
-| 2   | **Starfield canvas** — ambient + stars |
-| 3   | Motif canvas                           |
-| 4   | Vignette                               |
-| 5   | Auth bloom                             |
+| #   | Layer                    |
+| --- | ------------------------ |
+| 1   | Stage fill               |
+| 2   | **Ambient light canvas** |
+| 3   | **Star canvas**          |
+| 4   | Motif canvas             |
+| 5   | Vignette                 |
+| 6   | Auth bloom               |
 
 There is no centre lift. One used to sit between this canvas and the motif, a faint cool
 wash on the reasoning that the globe should not sit on dead black. That reasoning was
@@ -140,9 +142,8 @@ two overlapping halos sum the way two real sources would. The canvas stays trans
 so it still composes correctly over the stage fill.
 
 The mode is set immediately before the stars are drawn and restored afterwards, never
-once for the lifetime of the context. The cursor response fades its trail with
-`destination-out` in the same frame, and either stage leaving its mode set would
-silently break the other.
+once for the lifetime of the context. It is not this function's to leave modified, and a
+mode left set outlives the frame that set it.
 
 **Core.** A hard-edged filled circle. No gradient, no soft edge — the only softness
 anywhere on a star is the halo around it.
@@ -279,10 +280,27 @@ boundary, which on a surface this dark is visible even though no value steps.
 
 ## Rendering
 
-The starfield is drawn on its own `<canvas>` element filling the stage. It does not
+The starfield is drawn on its own `<canvas>` elements filling the stage. It does not
 share the motif's canvas — the two have different lifecycles and different redraw
 triggers, and combining them would couple the globe's animation loop to a layer that is
 usually not animating at all.
+
+**Two canvases: the ambient light below, the stars above.** They are split on exactly the
+same reasoning, one level down. The stars move under the pointer and the ambient light
+never moves at all, so sharing a canvas would mean the frame loop erasing and repainting
+the whole background sixty times a second in order to move the points in front of it —
+work spent on something that cannot change, and a background exposed to every rounding
+error in the redraw. Built that way first, and what it produced was a faint shimmer over
+the entire stage whenever the cursor moved: the dark space appearing to move with the
+stars, which is the one thing this layer must not do. Kept apart, the background is drawn
+once per size and is then incapable of moving, which is verifiable rather than tuned — at
+1440 x 900, zero pixels of it change across a full sweep of the pointer.
+
+The cost of the split is that the stars now composite over the ambient light through the
+browser rather than being added to it inside one canvas. Where a star core is opaque it
+replaces the light beneath instead of summing with it, which at the ambient's peak alpha
+of 0.038 is at most a 3.5% difference on the very brightest cores and nothing at all on
+the faint majority. Stars still sum with each other, which is the part that matters.
 
 **Device pixel ratio.** The canvas backing store is scaled by `window.devicePixelRatio`,
 capped at **2**. Above 2 the extra pixels are not visible on a sub-pixel dot and the
@@ -292,10 +310,10 @@ display.
 **Compositing.** See _How they look_: the field is drawn additively, and the composite
 mode is set per drawing stage rather than once on the context.
 
-**At rest, nothing runs.** Once the field is drawn, there is no animation frame loop, no
-timer and no listener doing per-frame work. Idle CPU cost is zero. This is a hard
-requirement, not an optimisation — the page is expected to sit open on someone's second
-monitor for hours.
+**At rest, nothing runs.** Once the field has been drawn and the pointer response has
+settled, there is no animation frame loop, no timer and no listener doing per-frame work.
+Idle CPU cost is zero. This is a hard requirement, not an optimisation — the page is
+expected to sit open on someone's second monitor for hours.
 
 **Resize.** On window resize, wait for the resize to settle (debounce, ~150ms), then
 recompute the count, regenerate the field from the seed, and redraw. Do not stretch or
@@ -313,77 +331,124 @@ animation of any kind. Motion happens only in response to the pointer.
 
 ### The behaviour
 
-Moving the pointer across the stage drags nearby stars along with it. When the pointer
-moves away or stops, the displaced stars ease back to where they started. Moving fast
-displaces more stars, further, and leaves a brief smear behind them.
+The cursor sweeps through the field, the stars along the line it crossed are carried with
+it, and they coast to a stop and drift back to where they were over the next couple of
+seconds.
 
-The feeling to aim for is stirring a still liquid. Not a magnetic repulsion field, not
-stars orbiting the cursor, and not a "trail of particles follows your mouse" effect.
+Three things it is not, each of which it has been at some point and each of which was
+rejected on sight:
+
+- **A spring back to home.** A pull toward home added to a star's velocity makes it arrive
+  carrying speed, overshoot, and come back. The field wobbles like jelly after every sweep.
+- **A repulsion field.** Pushing stars radially away from where the cursor _is_ reads as a
+  force ploughing through the sky rather than as a hand passing over it.
+- **A smear.** See _Why there is no smear_ below.
 
 ### The model
 
-Every star has a fixed **home position** — where the generator put it. It also has a
-current position and a velocity. Home never changes until the field is regenerated.
+This is the one part of this specification that was not designed here. It is transcribed
+from the reference the rest of the design is measured against, whose implementation is
+readable in the saved copy of that page, and the values below are that page's own. Three
+attempts at inventing it produced the three rejects above, so if this behaviour is ever
+revisited, start by re-reading the reference rather than by re-deriving it.
 
-Each frame, for every star currently in motion or within the influence radius:
+Every star has a fixed **home position** — where the generator put it. It also has an
+offset from home, a velocity, and a mass.
 
-1. **Drag.** If the star is within the influence radius of the pointer, add a fraction
-   of the pointer's velocity to the star's velocity, scaled by how close it is.
-2. **Spring.** Add a pull back toward the home position, proportional to how far the
-   star has strayed from it.
-3. **Damping.** Multiply the velocity by a damping factor so it decays.
-4. **Integrate.** Add velocity to position.
-5. **Clamp.** If the star is further than the maximum displacement from home, pull it
-   back to that distance.
+Each frame:
 
-Starting values:
+1. **Sweep.** The cursor travelled a line segment since the last frame. For every star,
+   take the distance to that **segment** — the perpendicular distance to the line, clamped
+   to its ends — and from it a weight of `smoothstep(1 − dist / sweepRadius)²`. Add the
+   cursor's own movement, times that weight, times the gain, divided by the star's mass,
+   to the star's velocity.
+2. **Coast.** Velocity decays at `drag / √mass` per second, and the offset decays toward
+   zero at `returnRate` per second while that velocity drives it.
 
-| Parameter        | Value                  | What it does                                         |
-| ---------------- | ---------------------- | ---------------------------------------------------- |
-| Influence radius | 260px                  | How far from the pointer stars are affected          |
-| Distance falloff | `(1 − dist / radius)²` | Squared, so the effect concentrates near the pointer |
-| Drag strength    | 0.22                   | Fraction of pointer velocity transferred to a star   |
-| Spring stiffness | 0.035                  | How hard a star is pulled home                       |
-| Damping          | 0.86                   | Per-frame velocity decay                             |
-| Max displacement | 40px                   | Ceiling on how far a violent flick can throw a star  |
+**Measuring from the segment rather than from the cursor's position is what makes this a
+swipe.** A star's distance to a point disturbs only the small disc the cursor happened to
+stop in, so the field reacts in blobs wherever the hand slowed down and a fast movement
+crosses stars without touching them. The distance to the swept segment disturbs everything
+the cursor actually crossed, evenly, at any speed.
 
-These are a starting point and are expected to be tuned by eye. Keep them as named
-constants in one object.
-
-The max displacement clamp matters. Without it, a fast diagonal flick across the whole
-window throws stars hundreds of pixels and the field visibly tears apart.
-
-**Pointer velocity** is the difference between the current and previous pointer
-positions, smoothed across a few frames. Raw frame-to-frame deltas are noisy and produce
-a jittery drag.
-
-### The smear
-
-Fast pointer movement leaves a short trail behind each displaced star.
-
-This is achieved by **not fully clearing the canvas each frame**. Instead of
-`clearRect`, erase a fraction of the existing alpha each frame:
+**There is no spring and no force pulling a star home.** The return is a decay applied to
+the displacement itself, so a star eases back and stops rather than overshooting. The two
+decays together have a closed form, which is what the code uses:
 
 ```
-ctx.globalCompositeOperation = 'destination-out';
-ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-ctx.fillRect(0, 0, width, height);
-ctx.globalCompositeOperation = 'source-over';
-// then draw stars
+drag          = POINTER.drag / sqrt(mass)
+velocityDecay = exp(-drag × dt)
+returnDecay   = exp(-returnRate × dt)
+offset   = offset × returnDecay + velocity × (returnDecay − velocityDecay) / (drag − returnRate)
+velocity = velocity × velocityDecay
 ```
 
-`destination-out` is used rather than painting a translucent black rectangle because the
-canvas must stay transparent — the stage fill below it has to show through. Painting
-black would make this canvas opaque and would need to be kept in sync with the stage
-fill colour forever.
+Solving it rather than integrating it means the motion is exact at any timestep: identical
+at 60Hz and 120Hz, and unchanged by a dropped frame.
 
-0.35 gives a trail of roughly three frames. Higher fades faster and smears less.
+Values:
+
+| Parameter       | Value       | What it does                                                 |
+| --------------- | ----------- | ------------------------------------------------------------ |
+| Sweep radius    | 88px        | How far from the cursor's path a star is carried at all      |
+| Falloff         | smoothstep² | Reaches zero at the radius, so there is no circular edge     |
+| Impulse gain    | 5.4         | How hard the sweep hits                                      |
+| Impulse ceiling | 0.18        | Cap on one frame's cursor movement, in half stage heights    |
+| Speed ceiling   | 0.32        | Cap on a star's speed, in half stage heights per second      |
+| Drag            | 2.3         | Velocity decay per second, for a star of unit mass           |
+| Return rate     | 1.0         | Decay of the displacement itself, per second                 |
+| Mass            | 0.65–2.4    | By magnitude: the faint majority light, the bright few heavy |
+
+The two ceilings are in half stage heights because the reference expresses them in clip
+space, where 1 is half the viewport; they scale with the window. Everything else is in CSS
+pixels.
+
+**Mass is not decoration.** Without a spread, every star takes the same impulse and the
+field moves as one sheet being dragged. With it, the faint majority flicks easily and
+settles quickly while the few bright stars take less from the same sweep and carry it
+further, which is what reads as many objects rather than one surface. The reference derives
+it from particle size; this derives it from magnitude, which is the same thing here.
+
+The ceilings are not optional. The impulse ceiling stops a cursor warping across the window
+— or a frame lost to something else — from hitting harder than a fast hand does, and the
+speed ceiling bounds how far any star can be carried. Measured at 1440 × 900 under the most
+violent pointer movement available, the furthest a star travels from home is 54.9px, and it
+is back within 0.1px inside three seconds.
+
+### Why there is no smear
+
+This specification previously called for one: a trail behind each displaced star, achieved
+by erasing a fraction of the canvas's alpha each frame with `destination-out` rather than
+clearing it, so what a star left behind decayed over the following frames.
+
+**It was built, and it is wrong here.** A partial erase does not leave the star behind — it
+leaves the entire previous frame behind, at 65% strength, and on a field of small points
+over near-black what that reads as is a haze settling over the space whenever the cursor
+moves. It looks like a blur on the background rather than like motion. The reference has no
+such trail on its stars either.
+
+Every frame therefore clears its canvas completely and repaints the field. A frame during
+the sweep and a frame at rest are the same call with the stars in different places, which
+also makes two of the acceptance criteria true by construction rather than by cleanup:
+there is never any residue to remove, and the settled field is pixel-identical to the field
+before the pointer touched it. Measured, after a heavy disturbance: zero pixels differ.
+
+A star is a point of light. It stays one.
 
 ### Stopping
 
-When the pointer has not moved for a moment **and** every star has settled within 0.1px
-of its home position with near-zero velocity, do a final full `clearRect`, redraw the
+When the pointer has not moved for a moment **and** every star has come back within 0.05px
+of its home position with near-zero velocity, snap every star to its home, redraw the
 field once at rest, and **cancel the animation frame loop entirely**.
+
+The snap matters: within 0.1px is close enough to stop animating and not close enough to
+leave on screen. Snapping makes the final positions the generator's own numbers rather
+than floats that arrived near them, which is what "every star returns to exactly where it
+started" means.
+
+The loop goes on running for a couple of seconds after the cursor has stopped, while the
+last stars drift the final fraction of a pixel home. That is bounded, and it ends in a
+cancelled loop rather than an idling one.
 
 Restart it on the next pointer movement over the stage.
 
@@ -406,12 +471,19 @@ drag.
 
 ## Interaction with other surfaces
 
-**The globe.** `globe.md` specifies its own cursor behaviour. Both layers respond to the
-same pointer, and they must not fight: the globe's response should remain the dominant
-one near the centre of the stage. The density falloff helps here — there are no stars
-in the globe's region — but the influence radius reaches 260px beyond the pointer, so a
-pointer just outside the globe will be doing both things at once. Check this on screen
-before closing ticket 3.
+**The globe.** `globe.md` specifies its own cursor behaviour, and both layers respond to
+the same pointer, so they must not fight: the globe's response has to stay the dominant
+one near the centre of the stage.
+
+**Checked, and it does.** At 1440 x 900 the globe scatters points within 117px of the
+cursor, pushes them up to about 40px, and brightens them by up to 2.5x as it does. The
+starfield carries a star only where the cursor's path passes within 88px of it, and changes
+no star's brightness at all. Where the two overlap — the ring just outside the disc, since
+the density falloff leaves no stars inside it — the globe acts on a far denser population
+and is the only one of the two that lights up, so it stays the dominant response.
+
+The overlap is also smaller than the 260px this file once proposed: the sweep radius is
+88px, for reasons that had nothing to do with the globe.
 
 **The sign-in panel.** When the panel is open, the pointer is over a form. The starfield
 continues to respond normally in the area outside the panel. Do not suppress it, but do
@@ -444,21 +516,22 @@ Touch devices get the static field, which is the whole of this ticket's field an
 
 The window sizes from `home.md` apply here unchanged. In addition:
 
-| Check                      | What to look for                                                                                      |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                   |
-| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                |
-| Reload twice               | Identical field both times                                                                            |
-| Retina display             | Stars are crisp dots, not fuzzy squares                                                               |
-| Idle for 30 seconds        | No animation frames running, CPU at zero                                                              |
-| Slow pointer sweep         | Stars lean and return; no jitter                                                                      |
-| Fast diagonal flick        | Visible smear, no stars thrown off course, field recovers                                             |
-| Reduced motion on          | Field renders, nothing moves, no loop starts                                                          |
-| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                           |
-| Click chrome and sign-in   | Canvas does not block any pointer target                                                              |
-| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere       |
-| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                     |
-| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits |
+| Check                      | What to look for                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                     |
+| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                  |
+| Reload twice               | Identical field both times                                                                              |
+| Retina display             | Stars are crisp dots, not fuzzy squares                                                                 |
+| Idle for 30 seconds        | No animation frames running, CPU at zero                                                                |
+| Slow pointer sweep         | Stars are carried along the line the cursor crossed and drift back; no jitter, no wobble as they arrive |
+| Fast diagonal flick        | No star thrown far, no trail or haze behind them, field recovers to its exact arrangement               |
+| Background during a sweep  | The dark space does not move at all. Anything shimmering on it is a bug, not an effect                  |
+| Reduced motion on          | Field renders, nothing moves, no loop starts                                                            |
+| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                             |
+| Click chrome and sign-in   | Canvas does not block any pointer target                                                                |
+| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere         |
+| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                       |
+| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits   |
 
 ---
 
