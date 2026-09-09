@@ -60,10 +60,10 @@ Each halo is a **tight core plus a wide bleed**, not a single blur.
 
 | Role   | Applies to                       | Colour    | Core        | Bleed        |
 | ------ | -------------------------------- | --------- | ----------- | ------------ |
-| `fg-0` | `SIGN IN`, and every hover state | `#EAEDF4` | 4px at 0.70 | 16px at 0.34 |
-| `fg-1` | Product names, `p_Q`             | `#8B94A2` | 3px at 0.60 | 14px at 0.28 |
-| `fg-2` | The toggle's label, panel open   | `#59626E` | 3px at 0.58 | 13px at 0.26 |
-| `fg-3` | Telemetry, server line, clock    | `#414A56` | 3px at 0.55 | 12px at 0.25 |
+| `fg-0` | `SIGN IN`, and every hover state | `#EAEDF4` | 5px at 0.45 | 14px at 0.28 |
+| `fg-1` | Product names, `p_Q`             | `#8B94A2` | 4px at 0.38 | 12px at 0.22 |
+| `fg-2` | The toggle's label, panel open   | `#59626E` | 4px at 0.36 | 11px at 0.21 |
+| `fg-3` | Telemetry, server line, clock    | `#414A56` | 3px at 0.34 | 10px at 0.20 |
 
 The values are held as tokens in `globals.css`, `--text-shadow-glow-0` through
 `--text-shadow-glow-3`, and never as literals in a component.
@@ -78,10 +78,18 @@ could be seen only by flipping between builds. The core concentrates the same li
 rather than smearing it, and it is what carries the effect. The bleed alone is a number
 in a report.
 
-**Do not raise the core further.** Past roughly 0.7 on `fg-0` the halo stops reading as
-light around the glyph and starts thickening the glyph itself. That is a heavier
-typeface reached by another route, and it is the one thing this treatment must not be:
-raising presence is not licence to raise prominence.
+**There is a ceiling on the core, and it is not a contrast figure.** What breaks first
+is the glyph. Driven hard enough the core stops reading as light _around_ a letter and
+starts thickening the letter, which is a heavier typeface reached by another route and
+the one thing this treatment must not be — raising presence is not licence to raise
+prominence. That becomes visible by about 0.95 on `fg-0`.
+
+**The values above sit well below that ceiling deliberately.** The headroom is unspent
+because the telemetry is ambient framing and is meant to stay recessive. A stronger core
+lifts the quiet corners noticeably more than it lifts the loud one — the product names
+gain about a tenth more, the clock and the version line nearly half again — which closes
+the gap this file spends its first section arguing for. The chrome is lit just enough to
+sit on the page, not brought up level with the one control on it.
 
 **The proportionality is the point, not a detail of the tuning.** Alpha and radius scale
 with each string's own luminance. A uniform halo would close the gap between the loudest
@@ -106,19 +114,19 @@ switched off:
 
 | Cluster                    | Before  | After   |
 | -------------------------- | ------- | ------- |
-| Product names              | 6.58:1  | 6.50:1  |
-| Server line                | 2.24:1  | 2.24:1  |
+| Product names              | 6.61:1  | 6.52:1  |
+| Server line                | 2.26:1  | 2.26:1  |
 | Core version and transport | 2.24:1  | 2.23:1  |
-| City and clock             | 2.24:1  | 2.22:1  |
-| `p_Q`                      | 6.61:1  | 6.58:1  |
-| `SIGN IN`, on its own fill | 16.23:1 | 16.11:1 |
+| City and clock             | 2.24:1  | 2.23:1  |
+| `p_Q`                      | 6.63:1  | 6.60:1  |
+| `SIGN IN`, on its own fill | 16.51:1 | 16.46:1 |
 
-The largest loss is 0.12 of a contrast point, on the string with sixteen of them to
-spare. The telemetry — the weakest value on the page, and the one to watch if these
-numbers are ever retuned — loses 0.022.
+The largest loss is 0.09 of a contrast point, on a string with six to spare. The
+telemetry — the weakest value on the page, and the one to watch if these numbers are
+ever retuned — loses 0.010.
 
 **This cost is nearly flat in the glow's strength, which is worth knowing before anyone
-retunes it.** Tripling the core alpha moved the telemetry by about a hundredth of a
+retunes it.** Tripling the core moved the telemetry by about a hundredth of a
 contrast point. The halo brightens a thin ring immediately around each glyph and leaves
 the rest of the surround alone, so the median ground barely moves however hard the core
 is driven. Contrast is not the constraint on this treatment. The constraint is that the
