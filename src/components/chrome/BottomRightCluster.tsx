@@ -13,7 +13,7 @@ interface BottomRightClusterProps {
 
 export function BottomRightCluster({ content }: BottomRightClusterProps) {
   return (
-    <p className="font-mono text-meta text-fg-3">
+    <p className="font-mono text-meta text-fg-3 text-shadow-glow-3">
       {content.city} <Clock />
     </p>
   );

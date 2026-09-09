@@ -26,6 +26,84 @@
   --color-placeholder: #3f474c;
   --color-separator: #2b323d;
 
+  /* Chrome glow. Every string in the four corner clusters emits a halo of its
+     own colour, which is what makes it read as lit rather than printed on the
+     surface. A drop shadow is not the tool here and never was: a shadow is
+     something darker cast onto a lighter ground, and this ground is the black
+     point, so there is nothing darker to cast.
+
+     Alpha and radius scale with the string's own luminance, and that
+     proportionality is the point rather than a detail of the tuning. A uniform
+     halo would close the gap between the loudest element and the quietest,
+     which flattens the page's single point of focus — the opposite of what the
+     glow is for. Scaled, `SIGN IN` gains the most presence and the telemetry
+     stays recessive, so the existing hierarchy survives intact.
+
+     The `glow-*` names track the `fg-*` ramp they are drawn from. `glow-2` is
+     interpolated between its neighbours on luminance — fg-2 at 97.0 sits a
+     third of the way from fg-3's 73.0 to fg-1's 147.1 — because the ramp is a
+     ramp and a value on it should not be a special case.
+
+     Named `glow-*` rather than `fg-*` on purpose: `--text-shadow-fg-1` would
+     collide with the `text-shadow-<color>` utility that `--color-fg-1` already
+     generates, and the colour would win. See `docs/design/chrome.md`.
+
+     Each is a tight core plus a wide bleed, and the core is what makes the
+     effect visible at all. This type is 10px, so its strokes are about a pixel
+     across; blurred over a 10px radius a stroke's light spreads across roughly
+     twenty pixels and its peak falls by about that factor. A single wide stop
+     at these alphas therefore lands around one level on screen — present in a
+     measurement, invisible on the page, which is exactly what the first attempt
+     at this shipped. The core concentrates the same light instead of smearing
+     it.
+
+     There is a ceiling on the core and it is not a contrast figure. Tripling it
+     moves the telemetry by about a hundredth of a contrast point, because the
+     halo brightens a thin ring around each glyph and leaves the rest of the
+     surround alone. What breaks first is the glyph: driven hard enough the core
+     stops reading as light around a letter and starts thickening the letter,
+     which is a heavier typeface by another route and the one thing this
+     treatment must not be. That is visible by about 0.95 on `fg-0`.
+
+     These values sit well below it on purpose. The headroom is deliberately
+     unspent: the telemetry is ambient framing and is supposed to stay
+     recessive, so the quiet corners are lit just enough to sit on the page
+     rather than brought up level with the one control. */
+  --text-shadow-glow-0:
+    0 0 5px rgba(234, 237, 244, 0.45), 0 0 14px rgba(234, 237, 244, 0.28);
+  --text-shadow-glow-1:
+    0 0 4px rgba(139, 148, 162, 0.38), 0 0 12px rgba(139, 148, 162, 0.22);
+  --text-shadow-glow-2:
+    0 0 4px rgba(89, 98, 110, 0.36), 0 0 11px rgba(89, 98, 110, 0.21);
+  --text-shadow-glow-3:
+    0 0 3px rgba(65, 74, 86, 0.34), 0 0 10px rgba(65, 74, 86, 0.2);
+
+  /* The sign-in toggle's body. A faint white lift that gives the only action on
+     the page something to be, rather than two floating words.
+
+     This value is a ceiling, not a preference. The toggle's own label is
+     `#59626E` while the panel is open — an accepted contrast deviation recorded
+     in `docs/design/chrome.md` — and a fill underneath it lowers that number.
+     Measured against the ground actually under the button, luminance 9.0:
+
+       alpha   body luminance   `#59626E` on it
+       0.030             17.0   3.05:1
+       0.040             19.0   3.00:1   clears by 0.005 — no headroom
+       0.050             21.9   2.93:1   fails
+       0.080             28.0   2.76:1   fails
+
+     Raising this takes the open state below 3:1, and it will not be visible in
+     a screenshot. 0.03 is what leaves the constraint some room. */
+  --color-control-fill: rgba(255, 255, 255, 0.03);
+
+  /* The keyboard focus indicator for the two controls in the top-right cluster,
+     built from the fg-0 glow above rather than the browser's default outline so
+     the page keeps one visual language. The 1px ring carries the boundary and
+     the halo carries the emission; neither alone is both crisp and of a piece
+     with the rest of the chrome. */
+  --shadow-glow-focus:
+    0 0 0 1px var(--color-fg-0), 0 0 16px 2px rgba(234, 237, 244, 0.3);
+
   /* Accents */
   --color-accent: #a8c4f0;
   --color-accent-bright: #4e9bfb;

@@ -200,8 +200,20 @@ rubber-band. The same applies to the scrolling case described under _Short windo
 
 No curvature, no displacement or SVG filters, no scanline texture, no noise or grain,
 no backdrop blur, no frosted glass, no border radius anywhere, and no border on the
-stage itself. Borders elsewhere on the page are 1px only. The only box shadow on the
-entire page is the glow on the sign-in button while it is processing.
+stage itself. Borders elsewhere on the page are 1px only.
+
+**Glow is permitted, and only as emission.** A luminous element may bleed its own colour
+into the space around it: the halo each chrome string carries, the ring on a focused
+control, and the glow on the sign-in button while it is processing. That is the whole
+list. The reasoning is that this ground is the black point, so a shadow — something
+darker cast onto something lighter — has nothing to cast onto and is invisible here by
+construction. Emission is the only form the effect can take on this page, and it must
+always be the element's own colour, never a wash of some other one.
+
+This narrows the prohibition; it does not lift it. Nothing above changes: no curvature,
+no blur of the background, no frosted glass, no noise, no border radius. A glow that
+produces a visible boundary, a ring or a plate around an element is a card by another
+route and is prohibited with the rest of them.
 
 ---
 

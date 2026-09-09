@@ -41,32 +41,47 @@ export function TopRightCluster({
     <div className="flex h-[44px] items-stretch gap-[10px] font-mono text-label row:h-[34px] row:gap-[18px]">
       {/* Text only, so it reads as a word rather than a control until hovered.
           It is the entry point for a conversational surface that is not yet
-          designed, and does nothing until that surface exists. */}
+          designed, and does nothing until that surface exists.
+
+          Its active state is not a duplicate of its hover state. Tailwind emits
+          every `hover:` utility inside `@media (hover: hover)`, so on a touch
+          device the hover rules never apply, and without this the button would
+          acknowledge a tap with nothing at all. The toggle beside it has had
+          one for this reason since it was built; this one had not. */}
       <button
         type="button"
-        className="pointer-events-auto text-fg-1 transition-colors duration-hover ease-[ease] hover:text-fg-0"
+        className="pointer-events-auto text-fg-1 text-shadow-glow-1 transition-[color,text-shadow] duration-hover ease-[ease] hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0 active:text-shadow-glow-0"
       >
         {content.entryPoint.label}
       </button>
 
+      {/* Flat paint, and the one mark in the chrome that stays that way. It
+          divides two controls; a halo on it would make it compete with them. */}
       <span aria-hidden="true" className="w-px bg-line-chrome" />
 
       {/* Dimmer while the panel is open: with the panel on screen, the panel is
           the subject and this control recedes. The spec records that colour as
           an accepted contrast deviation — do not raise it.
 
-          The active state is not a duplicate of the hover state. Tailwind emits
-          every `hover:` utility inside `@media (hover: hover)`, so on a touch
-          device the hover rules never apply and this control would otherwise
-          acknowledge a tap with nothing at all. */}
+          The border is `fg-2` rather than `line-control`, and the body carries a
+          faint white lift, so the only action on the page reads as an object
+          rather than as two floating words. Both values, and the ceiling on the
+          fill, are in `docs/design/chrome.md`.
+
+          The focus ring is a `focus-visible:` treatment, so it appears for a
+          keyboard and not on a click or a tap. It is deliberately outside the
+          transition: a focus indicator that fades in is a focus indicator that
+          is briefly not there. */}
       <button
         type="button"
         aria-expanded={panelOpen}
         aria-controls={panelId}
         aria-label={toggle.accessibleLabel}
         onClick={onToggle}
-        className={`pointer-events-auto border border-line-control px-[16px] transition-colors duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 active:border-accent-bright active:text-fg-0 ${
-          panelOpen ? "text-fg-2" : "text-fg-0"
+        className={`pointer-events-auto border border-fg-2 bg-control-fill px-[16px] transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0 ${
+          panelOpen
+            ? "text-fg-2 text-shadow-glow-2"
+            : "text-fg-0 text-shadow-glow-0"
         }`}
       >
         {toggle.label}
