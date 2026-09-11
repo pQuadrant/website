@@ -100,23 +100,48 @@ most of the 1,419 polygons before the containment test runs.
 
 ### Land and ocean balance
 
-Natural Earth 50m land covers **28.748%** of the sphere, but the design wants **64% land
-points and 36% ocean points**, so the continents read clearly instead of being lost in a
-uniform fuzz.
+Natural Earth 50m land covers **28.748%** of the sphere, but the design wants far more
+land points than that, so the continents read clearly instead of being lost in a uniform
+fuzz. At `N` = 15,000 the shipped split is **9,789 land and 5,211 ocean — 65.3% / 34.7%**.
 
-This is achieved by generating more candidate points than are needed, classifying all of
-them, and then thinning each class to its target:
+This is achieved by generating more candidate points than are needed and classifying all
+of them. **Every land candidate is kept.** The ocean is thinned to whatever is left:
 
 ```
-landTarget  = round(N × 0.64)
-oceanTarget = N − landTarget
+landFloor   = round(N × 0.64)
 coverage    = area of the land geometry ÷ 4π
-total       = ceil((landTarget / coverage) × 1.02)
+total       = ceil((landFloor / coverage) × 1.02)
+
+landCount   = however many of the `total` candidates classify as land
+oceanTarget = N − landCount
 ```
 
-Every candidate is classified, and each class is then thinned by taking the `k`-th kept
-point from position `floor(k × available / target)` of that class, for `k` from `0` to
-`target − 1`.
+The ocean is thinned by taking the `k`-th kept point from position
+`floor(k × available / target)` of the ocean class, for `k` from `0` to `target − 1`.
+
+**0.64 is a floor, not a target.** It sizes the candidate pool and does nothing else. The
+share that actually ships floats above it, because the pool is deliberately larger than
+the minimum and all the land it yields is kept.
+
+**The land class is not thinned, because thinning it is visible.** It keeps 98% of its
+candidates, so it is a dense, regular lattice. Removing 189 points from a dense regular
+lattice leaves 189 single-dot holes scattered through the continents, which is exactly
+what shipped and read as holes punched in the land. The ocean keeps around a fifth of its
+candidates and reads as a sparse scatter whichever fifth survives, so its discards cannot
+be seen. The two classes are not symmetric and must not be treated as though they are.
+
+**Changing the ocean target re-draws the whole ocean sample, not just its size.** The
+stride in the thinning is a function of the target, so moving the target from 5,400 to
+5,211 changed which 5,211 of the 24,274 ocean candidates survive — only 1,157 of the
+previous points remain. That is harmless here, because a uniform sparse scatter re-drawn
+at a slightly lower density is still a uniform sparse scatter at every latitude, but it
+is not the same thing as dropping 189 points and should not be described as though it
+were.
+
+**`total` must not be solved for an exact land count.** Every point's position is a
+function of `total`, so changing it re-rolls the entire sphere and re-rolls which islands
+survive classification. Sizing the pool from the floor, and accepting whatever land count
+that yields, is what keeps `total` fixed at 34,063.
 
 Two properties of this are load-bearing:
 
@@ -236,6 +261,12 @@ screenY = centreY − Y × R
 Points with `Z < −0.05` are drawn only if their index is even. This halves the point
 count on the hidden hemisphere, where points are dim and overlapping anyway. It is a
 significant saving for no visible difference.
+
+The index is the point's slot in the built array, not its candidate index, so **which
+half of the hidden hemisphere is culled shifts whenever the land count changes** — every
+ocean point's slot moves with it. That is invisible on the page, because it only ever
+swaps one dim far-side point for another. It is not invisible in a pixel diff of two
+builds, which is worth knowing before reading a difference there as a defect.
 
 ---
 
