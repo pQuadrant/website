@@ -36,10 +36,7 @@ import {
   type GlobeStatus,
   advance,
   applyStatus,
-  clearPointer,
   createGlobeState,
-  createMotionField,
-  setPointer,
   snap,
 } from "@/lib/globe/state";
 
@@ -52,16 +49,6 @@ import {
 const MAX_PIXEL_RATIO = 1.5;
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-
-/**
- * The input the cursor scatter is written for.
- *
- * A touch screen reports pointer events too, so without this the scatter fires
- * on a finger drag and blips on every tap — an effect designed around a cursor
- * that hovers, driven by an input that cannot. There is no cursor to follow, so
- * there is nothing to draw.
- */
-const FINE_POINTER = "(hover: hover) and (pointer: fine)";
 
 export interface GlobeOptions {
   /** Point colours, read from the design tokens by whoever mounts the globe. */
@@ -95,7 +82,6 @@ export function createGlobe(
 
   // Allocated once, for the lifetime of the globe.
   const points = createGlobePointSet();
-  const field = createMotionField(points.count);
   const state = createGlobeState();
   const frame = createGlobeFrame();
   const colours: PaintColours = resolveColours(context, options.colours);
@@ -110,7 +96,6 @@ export function createGlobe(
   };
 
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
-  const finePointer = window.matchMedia(FINE_POINTER);
 
   /**
    * The entrance, or nothing at all.
@@ -130,15 +115,15 @@ export function createGlobe(
   let running = false;
   let lastFrameTime = 0;
   let errorTimer: ReturnType<typeof setTimeout> | undefined;
-  let pointerAttached = false;
   let destroyed = false;
 
   function measure(): void {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-    // Read once here rather than on every pointer event, which would be a
-    // layout read per mouse move.
+    // Where the canvas sits in the viewport, for the clear zone: the panel's
+    // footprint arrives in viewport coordinates and the projection converts it.
+    // Read here rather than per frame, which would be a layout read per frame.
     const bounds = canvas.getBoundingClientRect();
 
     view.width = width;
@@ -157,7 +142,7 @@ export function createGlobe(
   }
 
   function render(): void {
-    project(points, field, entrance, state, view, frame);
+    project(points, entrance, state, view, frame);
     paint(context, frame, colours, view, state);
   }
 
@@ -218,50 +203,6 @@ export function createGlobe(
     render();
   }
 
-  function onPointerMove(event: PointerEvent): void {
-    setPointer(state, event.clientX, event.clientY);
-  }
-
-  function onPointerLeave(): void {
-    clearPointer(state);
-  }
-
-  /**
-   * The cursor scatter's listener, attached only while motion is allowed.
-   *
-   * Under reduced motion there is no listener at all, rather than a listener
-   * feeding a disturbance that is never drawn.
-   */
-  function attachPointer(): void {
-    if (pointerAttached || destroyed) return;
-    pointerAttached = true;
-    canvas.addEventListener("pointermove", onPointerMove);
-    canvas.addEventListener("pointerleave", onPointerLeave);
-  }
-
-  function detachPointer(): void {
-    if (!pointerAttached) return;
-    pointerAttached = false;
-    canvas.removeEventListener("pointermove", onPointerMove);
-    canvas.removeEventListener("pointerleave", onPointerLeave);
-    clearPointer(state);
-  }
-
-  /**
-   * Attaches the scatter's listener only when both conditions for it hold.
-   *
-   * Two reasons to have no listener rather than one feeding a disturbance that
-   * is never drawn: reduced motion, and an input that does not hover. Either is
-   * enough on its own, so they are decided in one place.
-   */
-  function applyPointerPreference(): void {
-    if (finePointer.matches && !reducedMotion.matches) {
-      attachPointer();
-    } else {
-      detachPointer();
-    }
-  }
-
   /**
    * Switches between the running loop and a single static frame.
    *
@@ -271,19 +212,14 @@ export function createGlobe(
   function applyMotionPreference(): void {
     if (reducedMotion.matches) {
       stopLoop();
-      applyPointerPreference();
       settle();
     } else {
       clearErrorTimer();
-      applyPointerPreference();
       startLoop();
     }
   }
 
   reducedMotion.addEventListener("change", applyMotionPreference);
-  // A hybrid machine can change input without reloading: a tablet gains a
-  // trackpad, a laptop screen is touched.
-  finePointer.addEventListener("change", applyPointerPreference);
 
   measure();
   applyMotionPreference();
@@ -314,10 +250,8 @@ export function createGlobe(
       if (destroyed) return;
       destroyed = true;
       stopLoop();
-      detachPointer();
       clearErrorTimer();
       reducedMotion.removeEventListener("change", applyMotionPreference);
-      finePointer.removeEventListener("change", applyPointerPreference);
     },
   };
 }
