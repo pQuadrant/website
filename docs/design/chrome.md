@@ -157,7 +157,9 @@ They become independently clickable later.
 
 ## Top-left cluster
 
-Anchored **64px** from the left edge, **62px** from the top.
+Anchored at the margin from the left edge, and at the margin less a **2px** optical
+lift from the top — 64px and 62px at the widest tier. Both tier with the window; the
+table is in `docs/design/home.md`.
 
 A vertical stack, **7px** gap between the two rows.
 
@@ -192,7 +194,10 @@ resolves it.
 
 ## Top-right cluster
 
-Anchored **64px** from the right edge, **56px** from the top.
+Anchored at the margin from the right edge, and at the margin less an **8px** optical
+lift from the top — 64px and 56px at the widest tier. The lift is larger than the left
+cluster's because the bordered control sits lower inside its own box than bare type
+does. Both tier with the window; the table is in `docs/design/home.md`.
 
 A horizontal row **34px** tall, with items stretched to that full height and an **18px**
 gap between each. Three items, left to right.

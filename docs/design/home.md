@@ -219,28 +219,38 @@ route and is prohibited with the rest of them.
 
 ## Margins
 
-Chrome sits **64px** from the left and right window edges, and **64px** from the bottom
-edge.
+Chrome sits **64px** from the left, right and bottom window edges.
 
 The top edge is not uniform. The two top clusters are aligned optically rather than to
 a shared grid line, because they contain type at different sizes and one of them is a
-bordered control. Their exact offsets are given in the chrome specification. Do not
-normalise them to a single value.
+bordered control. Each sits at the margin less its own **optical lift** — 2px for the
+left cluster, 8px for the right — giving the 62px and 56px the chrome specification
+names. The lift is a property of what the cluster holds and does not change with width.
 
-The horizontal margin has three tiers, and only the horizontal margin moves — the
-bottom margin is **64px** at every width, because only the horizontal axis runs out of
-room.
+The margin has three tiers, and **both axes tier together**:
 
-| Window width     | Horizontal margin |
-| ---------------- | ----------------- |
-| 1100px and wider | 64px              |
-| 640px to 1100px  | 40px              |
-| Below 640px      | 24px              |
+| Window width     | Margin | Top-left | Top-right |
+| ---------------- | ------ | -------- | --------- |
+| 1100px and wider | 64px   | 62px     | 56px      |
+| 640px to 1100px  | 40px   | 38px     | 32px      |
+| Below 640px      | 24px   | 22px     | 16px      |
 
 Below 1100px the top-left and top-right clusters begin closing on each other and the
 widest margin runs them together. Below 640px the clusters stack — see the chrome
 specification — and 24px is what the stacked composition needs to clear 320px, the
 narrowest window supported.
+
+**Why the vertical tiers with the horizontal**, when only the horizontal axis is the one
+running out of room. Because the frame is one frame. This file previously held the
+bottom margin at 64px on the stated ground that the vertical axis has room to spare —
+which is true, and is an argument about necessity rather than about composition. The
+result on a phone was a stage framed 24px at its sides and 64px above and below: not the
+desktop composition tightened, but a different composition, and visibly so. The chrome
+sat hard against the left edge while hanging a long way off the bottom, and read as
+unresolved rather than as spacious.
+
+A margin is a relationship, not a distance. When one axis has to tighten, the other
+follows or the frame stops reading as a frame.
 
 **Safe areas.** The page declares `viewport-fit: cover`, so the stage reaches under a
 notch, a dynamic island and a home indicator rather than being letterboxed inside them.
