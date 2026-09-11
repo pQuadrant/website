@@ -4,9 +4,10 @@
  *   npm run generate:globe -- [--count 15000] [--chart path/to/chart.svg]
  *
  * Implements the "Geometry generation" section of `docs/design/globe.md`:
- * candidates are placed by the Fibonacci sphere method, classified as land or
- * ocean by testing their coordinate against Natural Earth 50m land geometry, and
- * thinned to the specified land/ocean balance by regular discards.
+ * candidates are placed by the Fibonacci sphere method and classified as land or
+ * ocean by testing their coordinate against Natural Earth 50m land geometry.
+ * Every land candidate is kept; the ocean is thinned by regular discards to
+ * whatever is left of the point count.
  *
  * The mapping libraries used here are development dependencies. Nothing from
  * them reaches the browser: the output is a list of surviving candidate indices,
@@ -32,8 +33,21 @@ import {
   writeSpherePoint,
 } from "../src/lib/globe/fibonacci-sphere.ts";
 
-/** Share of the kept points that must be land. From the spec. */
-const LAND_SHARE = 0.64;
+/**
+ * The smallest share of the kept points that may be land. From the spec.
+ *
+ * A floor, not a target. It sizes the candidate pool and nothing else: every
+ * land candidate the pool yields is kept, so the share that actually ships
+ * floats above this. At 15,000 points the pool yields 9,789 land candidates
+ * against a floor of 9,600, and the shipped share is 65.3%.
+ *
+ * The land class is not thinned because thinning it is visible. It keeps 98% of
+ * its candidates, so it is a dense, regular lattice, and discarding 189 points
+ * from a dense regular lattice leaves 189 single-dot holes scattered through the
+ * continents. The ocean keeps roughly a fifth of its candidates and reads as a
+ * sparse scatter either way, so its discards cannot be seen.
+ */
+const LAND_SHARE_FLOOR = 0.64;
 
 /**
  * How much larger than the bare minimum the candidate pool is made.
@@ -192,13 +206,17 @@ function thin(available: number[], target: number): number[] {
 }
 
 function buildPointSet(count: number): PointSet {
-  const landTarget = Math.round(count * LAND_SHARE);
-  const oceanTarget = count - landTarget;
+  const landFloor = Math.round(count * LAND_SHARE_FLOOR);
   const { polygons, coverage } = loadLandGeometry();
 
   console.log(`land coverage ${(coverage * 100).toFixed(3)}% of the sphere`);
 
-  let total = Math.ceil((landTarget / coverage) * POOL_MARGIN);
+  // Sized from the floor, which is what keeps `total` where it is. Solving the
+  // pool for an exact land count instead would change `total`, and every point's
+  // position is a function of `total` — so that re-rolls the whole sphere and
+  // permanently loses islands. The pool's job is to guarantee enough land, not
+  // an exact amount of it.
+  let total = Math.ceil((landFloor / coverage) * POOL_MARGIN);
 
   for (;;) {
     const [land, ocean] = classify(total, polygons);
@@ -206,19 +224,30 @@ function buildPointSet(count: number): PointSet {
       `candidates    ${total} -> ${land.length} land, ${ocean.length} ocean`,
     );
 
-    if (land.length >= landTarget && ocean.length >= oceanTarget) {
-      console.log(`kept          ${landTarget} land, ${oceanTarget} ocean`);
+    // Land is kept whole and the ocean makes up the remainder, so the ocean
+    // target is whatever is left rather than a share of its own.
+    const oceanTarget = count - land.length;
+
+    if (
+      land.length >= landFloor &&
+      oceanTarget >= 0 &&
+      ocean.length >= oceanTarget
+    ) {
+      const share = ((land.length / count) * 100).toFixed(1);
+      console.log(
+        `kept          ${land.length} land (all of them, ${share}%), ${oceanTarget} ocean`,
+      );
       return {
         total,
-        landIndices: thin(land, landTarget),
+        landIndices: land,
         oceanIndices: thin(ocean, oceanTarget),
       };
     }
 
     console.log(`              short of target, growing the pool`);
     const shortfall = Math.max(
-      landTarget / land.length,
-      oceanTarget / ocean.length,
+      landFloor / land.length,
+      oceanTarget > 0 ? oceanTarget / ocean.length : 1,
     );
     total = Math.ceil(total * shortfall * POOL_MARGIN);
   }
