@@ -96,19 +96,22 @@ export function Stage({
           in them is the chrome's business. The two top offsets are optical and
           differ from each other by design — do not normalise them.
 
-          Both margins have the same three tiers, tightening twice as the window
-          narrows. They tier together because the frame is one frame: a stage
-          with 24px at its sides and 64px above and below is not a tightened
-          composition, it is a different one, and on a phone the difference is
-          plainly visible — the chrome sits hard against the left edge while
-          hanging a long way off the bottom.
+          The horizontal and bottom margins share three tiers, tightening twice
+          as the window narrows. The top offsets do not tier: they hold 62px and
+          56px at every width.
 
-          The two top clusters are each their tier's margin less an optical
-          lift — 2px for the left, 8px for the right, whose bordered control
-          sits lower inside its own box than bare type does. The lift is a
-          property of what the cluster holds, so it is constant; the margin is
-          what tiers. At the widest tier that is the 62px and 56px the chrome
-          specification names.
+          That is a deliberate asymmetry rather than an oversight, and it is
+          what the two edges are carrying. The top holds the identity and the
+          only controls on the page — foreground, and the half a visitor aims
+          at. The bottom holds telemetry, which is ambient by design and reads
+          better settled into the frame's edge than floating off it. Giving both
+          the same inset made the controls read as crammed into the corner on a
+          phone at the same moment it stopped the telemetry floating; they are
+          different problems and they do not share an answer.
+
+          The two top offsets differ from each other by an optical lift — the
+          right cluster's bordered control sits lower inside its own box than
+          bare type does. Do not normalise them.
 
           The safe-area padding is added to the margin rather than substituted
           for it, and that does not change with the tiers. The margins are
@@ -137,10 +140,10 @@ export function Stage({
           hit-testable from the first frame, so the sign-in toggle answers a
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
-      <div className="pointer-events-none absolute top-[22px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[38px] row:left-stage-margin-narrow stage:top-[62px] stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
+      <div className="pointer-events-none absolute top-[62px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
         {topLeft}
       </div>
-      <div className="pointer-events-none absolute top-[16px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:top-[32px] row:right-stage-margin-narrow stage:top-[56px] stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
+      <div className="pointer-events-none absolute top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
         {topRight}
       </div>
       <div className="pointer-events-none absolute bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:bottom-stage-margin-narrow row:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">

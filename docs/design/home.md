@@ -223,34 +223,41 @@ Chrome sits **64px** from the left, right and bottom window edges.
 
 The top edge is not uniform. The two top clusters are aligned optically rather than to
 a shared grid line, because they contain type at different sizes and one of them is a
-bordered control. Each sits at the margin less its own **optical lift** — 2px for the
-left cluster, 8px for the right — giving the 62px and 56px the chrome specification
-names. The lift is a property of what the cluster holds and does not change with width.
+bordered control: **62px** for the left cluster and **56px** for the right. Do not
+normalise them to a single value.
 
-The margin has three tiers, and **both axes tier together**:
+The horizontal and bottom margins have three tiers. **The top offsets do not tier** —
+they hold at every width:
 
-| Window width     | Margin | Top-left | Top-right |
-| ---------------- | ------ | -------- | --------- |
-| 1100px and wider | 64px   | 62px     | 56px      |
-| 640px to 1100px  | 40px   | 38px     | 32px      |
-| Below 640px      | 24px   | 22px     | 16px      |
+| Window width     | Left / right / bottom | Top-left | Top-right |
+| ---------------- | --------------------- | -------- | --------- |
+| 1100px and wider | 64px                  | 62px     | 56px      |
+| 640px to 1100px  | 40px                  | 62px     | 56px      |
+| Below 640px      | 24px                  | 62px     | 56px      |
 
 Below 1100px the top-left and top-right clusters begin closing on each other and the
 widest margin runs them together. Below 640px the clusters stack — see the chrome
 specification — and 24px is what the stacked composition needs to clear 320px, the
 narrowest window supported.
 
-**Why the vertical tiers with the horizontal**, when only the horizontal axis is the one
-running out of room. Because the frame is one frame. This file previously held the
-bottom margin at 64px on the stated ground that the vertical axis has room to spare —
-which is true, and is an argument about necessity rather than about composition. The
-result on a phone was a stage framed 24px at its sides and 64px above and below: not the
-desktop composition tightened, but a different composition, and visibly so. The chrome
-sat hard against the left edge while hanging a long way off the bottom, and read as
-unresolved rather than as spacious.
+**Why the bottom tiers and the top does not.** This file once held the bottom margin at
+64px at every width, on the ground that only the horizontal axis runs out of room. That
+is true, and it is an argument about necessity rather than about composition: on a phone
+it produced a stage framed 24px at its sides and 64px below, which is not the desktop
+composition tightened but a different one. The telemetry hung off the bottom edge and
+read as unresolved rather than as spacious. So the bottom tiers.
 
-A margin is a relationship, not a distance. When one axis has to tighten, the other
-follows or the frame stops reading as a frame.
+The top was then tiered with it, and that was wrong. It put the two top clusters at 22px
+and 16px on a phone, which crams the only controls on the page into the corner and
+against the browser's own chrome. **The two edges are not carrying the same thing.** The
+top holds the identity and the controls — foreground, and the half a visitor aims at.
+The bottom holds telemetry, which is ambient by design and reads better settled into the
+frame's edge than floating off it.
+
+The rule that survives both corrections: a margin expresses what sits inside it. Where
+two edges carry the same class of content they hold the same inset and tier together;
+where they carry different classes, the difference between them is the point. Left and
+right carry the same thing as each other and always match.
 
 **Safe areas.** The page declares `viewport-fit: cover`, so the stage reaches under a
 notch, a dynamic island and a home indicator rather than being letterboxed inside them.
