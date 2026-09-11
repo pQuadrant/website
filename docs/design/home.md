@@ -378,9 +378,53 @@ remains fixed behind the scrolling content.
 content below the fold on this page, so a scroll with nothing on screen that needs it is
 revealing empty room reserved for something that is not there. This matters most on a
 phone, where every window is shorter than the panel and the reservation would otherwise
-apply always. It is also what keeps the corner chrome in place: the chrome is positioned
-in the document and the motif is fixed, so any scroll slides the frame across the
-instrument.
+apply always. It once also kept the corner chrome in place, because the chrome was positioned in the
+document while the motif was fixed, so any scroll slid the frame across the instrument.
+That is no longer a reason: the chrome is pinned to the window too — see _Touch edges_
+below — and a scroll now moves the panel alone. The rule above stands on its own
+argument.
+
+**Touch edges.** A touch screen lets a visitor drag the page past its own end whether or
+not there is anything there — iOS rubber-bands indefinitely on a page with no scrollable
+content at all. **Rubber-banding is not scrolling**, and having nothing below the fold
+does not prevent it.
+
+The chrome used to be positioned in the document while the canvases were fixed, so a
+bounce moved the chrome and not the motif, and the corner telemetry travelled across the
+middle of the globe.
+
+**Everything except the panel is now pinned to the window.** The four corner clusters are
+fixed, as the two canvases already were. Nothing moves relative to anything else, so the
+gesture has nothing left to break: a bounce drags the document behind a composition that
+stays where it is, and what it exposes is the stage fill, which is the colour already
+under everything.
+
+The gesture itself is left alone. Pull-to-refresh keeps working, and so does the elastic
+bounce on a trackpad — they are the platform's, they are what a visitor expects of a
+page, and there is no longer any reason to take them away.
+
+Do not answer this by moving the canvases with the pull so the whole scene travels
+together, and do not un-fix them so the composition scrolls as one. The first fights the
+platform gesture and cannot track it smoothly enough — the bounce does not emit events at
+frame rate, so the canvases lag — and it puts per-frame transform work on two full-screen
+canvases at the page's busiest moment. The second breaks the scrolling case below: the
+motif has to stay behind the panel while the panel scrolls, which is the whole reason the
+canvases are fixed.
+
+**What the chrome does while the page scrolls.** It stays pinned. The chrome is the
+frame of the instrument and it belongs to the window, not to the document; the panel is
+the content, and the content is what moves. This is the same rule the motif already
+follows, and applying it to the chrome is what makes the page consistent: before, a
+scroll slid the frame across the instrument, which this file cited as a reason the page
+must not scroll. The frame no longer slides, so that is no longer a reason.
+
+The accepted consequence is that on a window short enough to scroll, the chrome sits over
+the panel for the whole of the scroll rather than travelling out of the way. It already
+overlapped it at the top of the scroll, so this is more of an existing condition rather
+than a new one, and the corner regions take no pointer events, so nothing in the form
+becomes unreachable. **Whether the chrome should recede while the panel is open is a
+question for the panel's own specification**, not for this file, and it is not decided
+here.
 
 **The clearance is the padding.** The stage does not compute a minimum height from the
 panel's height. It reserves 64px above and below its content and lets the content decide
