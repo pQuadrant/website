@@ -219,28 +219,45 @@ route and is prohibited with the rest of them.
 
 ## Margins
 
-Chrome sits **64px** from the left and right window edges, and **64px** from the bottom
-edge.
+Chrome sits **64px** from the left, right and bottom window edges.
 
 The top edge is not uniform. The two top clusters are aligned optically rather than to
 a shared grid line, because they contain type at different sizes and one of them is a
-bordered control. Their exact offsets are given in the chrome specification. Do not
+bordered control: **62px** for the left cluster and **56px** for the right. Do not
 normalise them to a single value.
 
-The horizontal margin has three tiers, and only the horizontal margin moves — the
-bottom margin is **64px** at every width, because only the horizontal axis runs out of
-room.
+The horizontal and bottom margins have three tiers. **The top offsets do not tier** —
+they hold at every width:
 
-| Window width     | Horizontal margin |
-| ---------------- | ----------------- |
-| 1100px and wider | 64px              |
-| 640px to 1100px  | 40px              |
-| Below 640px      | 24px              |
+| Window width     | Left / right / bottom | Top-left | Top-right |
+| ---------------- | --------------------- | -------- | --------- |
+| 1100px and wider | 64px                  | 62px     | 56px      |
+| 640px to 1100px  | 40px                  | 62px     | 56px      |
+| Below 640px      | 24px                  | 62px     | 56px      |
 
 Below 1100px the top-left and top-right clusters begin closing on each other and the
 widest margin runs them together. Below 640px the clusters stack — see the chrome
 specification — and 24px is what the stacked composition needs to clear 320px, the
 narrowest window supported.
+
+**Why the bottom tiers and the top does not.** This file once held the bottom margin at
+64px at every width, on the ground that only the horizontal axis runs out of room. That
+is true, and it is an argument about necessity rather than about composition: on a phone
+it produced a stage framed 24px at its sides and 64px below, which is not the desktop
+composition tightened but a different one. The telemetry hung off the bottom edge and
+read as unresolved rather than as spacious. So the bottom tiers.
+
+The top was then tiered with it, and that was wrong. It put the two top clusters at 22px
+and 16px on a phone, which crams the only controls on the page into the corner and
+against the browser's own chrome. **The two edges are not carrying the same thing.** The
+top holds the identity and the controls — foreground, and the half a visitor aims at.
+The bottom holds telemetry, which is ambient by design and reads better settled into the
+frame's edge than floating off it.
+
+The rule that survives both corrections: a margin expresses what sits inside it. Where
+two edges carry the same class of content they hold the same inset and tier together;
+where they carry different classes, the difference between them is the point. Left and
+right carry the same thing as each other and always match.
 
 **Safe areas.** The page declares `viewport-fit: cover`, so the stage reaches under a
 notch, a dynamic island and a home indicator rather than being letterboxed inside them.
@@ -272,9 +289,68 @@ describes.
 
 ---
 
+## Motif centring
+
+Everything the stage centres — the motif, the starfield's density falloff, the
+starfield's ambient light, and the panel — centres on **half the small viewport
+height**:
+
+```
+centre = 50svh
+```
+
+Not half the canvas. The canvases are `lvh` tall and that does not change (see
+_Background layers_), but `lvh` is the viewport with the browser's retractable UI
+**retracted**, which is the tallest it ever gets. Taking the centre from the same number
+puts the motif at `lvh / 2` while the visitor can only see about `svh`, so the globe
+sits below the middle of the visible area by roughly half the height of the browser
+chrome. On an iPhone that is tens of pixels and plainly visible.
+
+**The canvas size and the drawing centre are two different questions.** The `lvh`
+sizing rule answers the first and is still correct. This rule answers the second.
+
+**Why `svh` and not a compromise.** `svh` is exactly right while the toolbar is showing
+and slightly high once it retracts. On this page the retracted state is close to
+unreachable: with the panel closed the page does not scroll at any window size — see
+_Window size behaviour_ — and with no scroll the toolbar does not retract. The only
+route to it is the one scrolling case, a panel open on a window too short to hold it.
+A midpoint of `svh` and `lvh` hedges against a state this page barely has, at the cost
+of being a little wrong in the state it is always in.
+
+**The accepted cost:** with the toolbar retracted, the motif sits high of centre by half
+the toolbar's height. That is the trade, and it is the right way round.
+
+**It must not track the viewport live.** The visual viewport changes as the toolbar
+moves, and a centre read from it slides the globe mid-scroll. That is the same
+re-measure the `lvh` sizing rule exists to prevent, arrived at from the other direction.
+For a given window the centre is a fixed number.
+
+**One definition, not four.** The centre is declared once, as a registered custom
+property in `globals.css`, and every layer reads that one resolved value — the three
+canvas layers in script, and the panel region as `calc(centre x 2)` for its own height,
+so that its middle is the same number rather than a second way of saying it. It was
+previously derived independently in three places — the motif, the density falloff and
+the ambient light — plus a fourth height for the panel, which centred on `dvh` while the
+canvases centred on `lvh`. Those disagreed on a phone, so the panel was not concentric
+with the globe and the clear zone sat off-centre over it.
+
+The starfield's ambient light and density falloff are anchored to the motif radius so
+they track the globe at every window size. If the globe's centre moves and theirs does
+not, the ambient hole no longer sits over the sphere and its ramp lands on the rim as a
+halo. They move together or the rule is broken.
+
+Not part of this: `pointer-response.ts` scales the drag's impulse and speed ceilings by
+half the stage height. That is a magnitude, not a position, and it is not a fourth copy
+of this rule.
+
+On desktop `svh`, `lvh` and `dvh` are the same number and nothing about this is visible.
+
+---
+
 ## Panel placement
 
-The panel is **400px** wide, centred horizontally and vertically on the stage.
+The panel is **400px** wide, centred horizontally and vertically on the stage, on the
+height given in _Motif centring_ — so the panel and the motif are concentric.
 
 Where 400px plus its clearance does not fit, the panel narrows to the window rather than
 holding 400px: its width is 400px or the window width less twice the narrow margin,

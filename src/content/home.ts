@@ -28,10 +28,6 @@ export const homeContent: HomeContent = {
       // independently clickable later.
       productOne: "CONSTELLATION",
       productTwo: "NORTHSTAR",
-
-      // STATIC DISPLAY VALUE — not live system state. This identifier does not
-      // correspond to infrastructure and nothing resolves it.
-      server: "SERVER EG-CAI-1",
     },
 
     topRight: {
@@ -61,6 +57,10 @@ export const homeContent: HomeContent = {
     },
 
     bottomRight: {
+      // STATIC DISPLAY VALUE — not live system state. This identifier does not
+      // correspond to infrastructure and nothing resolves it.
+      server: "SERVER EG-CAI-1",
+
       // The clock's time is resolved at runtime through the `Africa/Cairo`
       // zone. Only the city name is content.
       city: "CAIRO",

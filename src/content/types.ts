@@ -12,11 +12,10 @@ export interface LabelledControl {
   accessibleLabel: string;
 }
 
-/** Top-left cluster: the product line and the server line. */
+/** Top-left cluster: the product line. */
 export interface ChromeTopLeftContent {
   productOne: string;
   productTwo: string;
-  server: string;
 }
 
 /** Top-right cluster: the entry point button and the sign-in toggle. */
@@ -35,10 +34,11 @@ export interface ChromeBottomLeftContent {
 }
 
 /**
- * Bottom-right cluster: the city the clock reports. The time itself is
- * generated at runtime and is not content.
+ * Bottom-right cluster: the server line, then the city the clock reports. The
+ * time itself is generated at runtime and is not content.
  */
 export interface ChromeBottomRightContent {
+  server: string;
   city: string;
 }
 

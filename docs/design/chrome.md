@@ -157,11 +157,14 @@ They become independently clickable later.
 
 ## Top-left cluster
 
-Anchored **64px** from the left edge, **62px** from the top.
+Anchored at the margin from the left edge and **62px** from the top. The horizontal
+margin tiers with the window and the top offset does not; the table is in
+`docs/design/home.md`.
 
-A vertical stack, **7px** gap between the two rows.
+One row. The server line that used to sit beneath it has moved to the bottom-right
+cluster — see below.
 
-**Row 1 — product line**
+**Product line**
 
 Three items on a baseline-aligned horizontal row with a **14px** gap between each.
 
@@ -177,22 +180,15 @@ The separator is markedly dimmer than the names on either side. It is a divider,
 character in a sentence. The three items align on their baselines, not their box
 centres.
 
-**Row 2 — server line**
-
-| Value             | Colour    |
-| ----------------- | --------- |
-| `SERVER EG-CAI-1` | `#414A56` |
-
-IBM Plex Mono, 10px, letter-spacing `0.16em`.
-
-Static display value. The identifier does not correspond to infrastructure and nothing
-resolves it.
-
 ---
 
 ## Top-right cluster
 
-Anchored **64px** from the right edge, **56px** from the top.
+Anchored at the margin from the right edge and **56px** from the top. The 6px
+difference from the left cluster's 62px is optical: the bordered control sits lower
+inside its own box than bare type does. Do not normalise them. The horizontal margin
+tiers with the window and the top offset does not; the table is in
+`docs/design/home.md`.
 
 A horizontal row **34px** tall, with items stretched to that full height and an **18px**
 gap between each. Three items, left to right.
@@ -359,15 +355,37 @@ non-interactive telemetry only and does not extend to controls or form content.
 
 ## Bottom-right cluster
 
-Anchored **64px** from the right edge, **64px** from the bottom.
+Anchored at the margin from the right edge and the same margin from the bottom. Both
+tier with the window; the table is in `docs/design/home.md`.
 
-| Value                                                                         | Example          |
-| ----------------------------------------------------------------------------- | ---------------- |
-| City name, then the current time in Cairo, 24-hour, zero-padded to two digits | `CAIRO 16:50:21` |
+Two items, laid out exactly as the bottom-left cluster is: a horizontal row with a
+**40px** gap above the breakpoint, a column with a **7px** gap below it. The two ends of
+the bottom edge carry the same class of information and are arranged the same way, so
+the edge reads as one line of telemetry rather than as two arrangements that happen to
+share a colour.
+
+Right-aligned. Stacked against the right margin, a ragged right edge would leave the
+shorter line floating off the frame.
+
+| Item        | Value                                              | Example           |
+| ----------- | -------------------------------------------------- | ----------------- |
+| Server line | Static identifier                                  | `SERVER EG-CAI-1` |
+| Clock       | City, then the time in Cairo, 24-hour, zero-padded | `CAIRO 16:50:21`  |
 
 IBM Plex Mono, 10px, letter-spacing `0.14em`, colour `#414A56`.
 
-**This is the only live value in the chrome.** It updates once per second.
+**The server line was in the top-left cluster.** It is a static display value: the
+identifier does not correspond to infrastructure and nothing resolves it. It already
+wore `#414A56` — telemetry's colour, and the colour of every other value along this
+edge — while sitting beneath product names at `#8B94A2`. That cluster was carrying two
+classes of information at once, and this one is where its class already lives. Moving it
+also leaves the top edge holding only the identity and the controls.
+
+Its letter-spacing comes with the move, from `0.16em` to the `0.14em` the rest of this
+cluster uses. Two adjacent lines of the same size and colour at different tracking read
+as a mistake rather than as a distinction.
+
+**The clock is the only live value in the chrome.** It updates once per second.
 
 **Timezone.** The time is Cairo local time, resolved through the `Africa/Cairo` zone
 rather than a fixed offset. Egypt observes daylight saving time, so its offset from UTC
@@ -411,7 +429,7 @@ the direction a cluster runs in.
 | Top-left     | Product line as a row, 14px gaps | Product names stacked, 7px gaps |
 | Top-right    | Row, 34px tall, 18px gap         | Row, 44px tall, 10px gap        |
 | Bottom-left  | Row, 40px gap                    | Stacked, 7px gap                |
-| Bottom-right | One line                         | Unchanged — already one line    |
+| Bottom-right | Row, 40px gap                    | Stacked, 7px gap                |
 
 The stacked gap is **7px** throughout, which is the gap the top-left cluster already
 uses between its two rows. Stacking does not introduce a second vertical rhythm.

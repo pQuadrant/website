@@ -75,8 +75,20 @@ export function Stage({
 
           The region spans the stage, so it is inert for the same reason the
           corner regions are: were it not, it would take every click meant for
-          the motif. The panel opts back in. */}
-      <div className="pointer-events-none relative flex min-h-dvh items-center justify-center py-stage-margin">
+          the motif. The panel opts back in.
+
+          The height is twice the shared centre, so the panel's middle lands on
+          exactly the number the motif draws on — see the Motif centring section
+          of `docs/design/home.md`. Written that way rather than as `min-h-svh`,
+          which would be the same rule expressed a second time and free to drift
+          from it; the declaration is the one in `globals.css`.
+
+          Not `dvh`, which is what this was. `dvh` is the *current* viewport, so
+          it tracks a mobile browser's toolbar: the panel sat correctly while the
+          toolbar showed, then slid to a new centre as it retracted while the
+          motif stayed put — two layers centring on two heights, one of which
+          moves. */}
+      <div className="pointer-events-none relative flex min-h-[calc(var(--stage-centre-y)*2)] items-center justify-center py-stage-margin">
         {children}
       </div>
 
@@ -84,16 +96,33 @@ export function Stage({
           in them is the chrome's business. The two top offsets are optical and
           differ from each other by design — do not normalise them.
 
-          The horizontal margin has three tiers, tightening twice as the window
-          narrows. The bottom margin has one: only the horizontal margin moves,
-          because only the horizontal axis runs out of room.
+          The horizontal and bottom margins share three tiers, tightening twice
+          as the window narrows. The top offsets do not tier: they hold 62px and
+          56px at every width.
+
+          That is a deliberate asymmetry rather than an oversight, and it is
+          what the two edges are carrying. The top holds the identity and the
+          only controls on the page — foreground, and the half a visitor aims
+          at. The bottom holds telemetry, which is ambient by design and reads
+          better settled into the frame's edge than floating off it. Giving both
+          the same inset made the controls read as crammed into the corner on a
+          phone at the same moment it stopped the telemetry floating; they are
+          different problems and they do not share an answer.
+
+          The two top offsets differ from each other by an optical lift — the
+          right cluster's bordered control sits lower inside its own box than
+          bare type does. Do not normalise them.
 
           The safe-area padding is added to the margin rather than substituted
-          for it. The margins are measured from the edge of the usable display,
-          and on a notched phone the notch and the home indicator move that edge
-          inward — so the design's 62px is 62px clear of the island, not 62px
-          from a point underneath it. On every display without an inset the
-          padding is zero and nothing moves.
+          for it, and that does not change with the tiers. The margins are
+          measured from the edge of the usable display, and on a notched phone
+          the notch and the home indicator move that edge inward — so the
+          design's offset is that far clear of the island, not that far from a
+          point underneath it. Substituting `max()` for the addition would put
+          the chrome its margin from the *physical* edge and only the remainder
+          clear of the indicator, which is the failure the inset exists to
+          prevent. On every display without an inset the padding is zero and
+          nothing moves.
 
           The regions are inert, so anything they hold sits over the motif
           without taking its clicks. A cluster with something interactive in it
@@ -117,10 +146,10 @@ export function Stage({
       <div className="pointer-events-none absolute top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
         {topRight}
       </div>
-      <div className="pointer-events-none absolute bottom-stage-margin left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">
+      <div className="pointer-events-none absolute bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:bottom-stage-margin-narrow row:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">
         {bottomLeft}
       </div>
-      <div className="pointer-events-none absolute right-stage-margin-tight bottom-stage-margin pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none">
+      <div className="pointer-events-none absolute right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] row:bottom-stage-margin-narrow row:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none">
         {bottomRight}
       </div>
     </main>

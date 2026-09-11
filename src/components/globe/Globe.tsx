@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { attachStateKeys } from "@/components/globe/state-keys";
 import { type GlobeHandle, createGlobe } from "@/lib/globe/globe";
 import type { ClearZone } from "@/lib/globe/state";
+import { stageCentreY } from "@/lib/stage/centre";
 
 /**
  * Owns the canvas the motif is drawn on, and nothing else.
@@ -43,6 +44,10 @@ export function Globe({ clearZone = null }: GlobeProps) {
         ocean: styles.getPropertyValue("--color-ocean").trim(),
         highlight: styles.getPropertyValue("--color-highlight").trim(),
       },
+      // Resolved per measure rather than captured here: the value is a viewport
+      // unit, so it changes with the window and a number read once at mount
+      // would be stale after the first rotation.
+      centreY: (stageHeight) => stageCentreY(canvas, stageHeight),
     });
 
     globeRef.current = globe;
