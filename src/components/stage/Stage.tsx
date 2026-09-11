@@ -75,8 +75,20 @@ export function Stage({
 
           The region spans the stage, so it is inert for the same reason the
           corner regions are: were it not, it would take every click meant for
-          the motif. The panel opts back in. */}
-      <div className="pointer-events-none relative flex min-h-dvh items-center justify-center py-stage-margin">
+          the motif. The panel opts back in.
+
+          The height is twice the shared centre, so the panel's middle lands on
+          exactly the number the motif draws on — see the Motif centring section
+          of `docs/design/home.md`. Written that way rather than as `min-h-svh`,
+          which would be the same rule expressed a second time and free to drift
+          from it; the declaration is the one in `globals.css`.
+
+          Not `dvh`, which is what this was. `dvh` is the *current* viewport, so
+          it tracks a mobile browser's toolbar: the panel sat correctly while the
+          toolbar showed, then slid to a new centre as it retracted while the
+          motif stayed put — two layers centring on two heights, one of which
+          moves. */}
+      <div className="pointer-events-none relative flex min-h-[calc(var(--stage-centre-y)*2)] items-center justify-center py-stage-margin">
         {children}
       </div>
 

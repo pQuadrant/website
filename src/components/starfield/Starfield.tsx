@@ -6,6 +6,7 @@ import { motifRadius } from "@/lib/globe/projection";
 import { drawAmbient, drawStars } from "@/lib/starfield/draw";
 import { createPointerResponse } from "@/lib/starfield/pointer-response";
 import { createStarfield } from "@/lib/starfield/starfield-points";
+import { stageCentreY } from "@/lib/stage/centre";
 
 /**
  * Owns the canvas the starfield is drawn on, and nothing else.
@@ -98,9 +99,14 @@ export function Starfield() {
       // The falloff is defined against the motif radius, so it is read from the
       // motif's own module rather than a second copy of the formula living here.
       const radius = motifRadius(width, height);
-      const stars = createStarfield(width, height, radius);
+      // The same centre the motif draws on, from the same declaration. If these
+      // two ever diverge the ambient hole stops sitting over the sphere and its
+      // ramp lands on the rim as a halo — see the Motif centring section of
+      // `docs/design/home.md`.
+      const centreY = stageCentreY(starsCanvas, height);
+      const stars = createStarfield(width, height, radius, centreY);
 
-      drawAmbient(ambient, width, height, radius);
+      drawAmbient(ambient, width, height, radius, centreY);
       drawStars(field, stars, width, height);
 
       // Handed the field as generated, which is to say at rest: these positions

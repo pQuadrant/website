@@ -53,6 +53,16 @@ const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 export interface GlobeOptions {
   /** Point colours, read from the design tokens by whoever mounts the globe. */
   colours: GlobeColours;
+  /**
+   * The stage's vertical centre, in CSS pixels, given the canvas height.
+   *
+   * A function rather than a number because it is re-read on every resize, and
+   * it arrives from outside rather than being computed here for the same reason
+   * the colours do: the answer lives in CSS, and this module reads nothing from
+   * the DOM but its own canvas. It is not `height / 2` — see the Motif centring
+   * section of `docs/design/home.md`.
+   */
+  centreY: (stageHeight: number) => number;
 }
 
 export interface GlobeHandle {
@@ -131,7 +141,10 @@ export function createGlobe(
     view.originX = bounds.left;
     view.originY = bounds.top;
     view.centreX = width / 2;
-    view.centreY = height / 2;
+    // Not `height / 2`: the canvas is the large viewport and the visitor sees
+    // less than that. The panel, the density falloff and the ambient light all
+    // centre on this same number.
+    view.centreY = options.centreY(height);
     view.radius = motifRadius(width, height);
 
     canvas.width = Math.round(width * ratio);

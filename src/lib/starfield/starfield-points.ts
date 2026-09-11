@@ -194,12 +194,12 @@ export function createStarfield(
   width: number,
   height: number,
   radius: number,
+  centreY: number,
 ): Star[] {
   if (width <= 0 || height <= 0 || radius <= 0) return [];
 
   const random = mulberry32(STARFIELD.seed);
   const centreX = width / 2;
-  const centreY = height / 2;
 
   const count = clamp(
     Math.round((width * height) / STARFIELD.countDivisor),

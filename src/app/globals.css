@@ -203,3 +203,28 @@
   --transition-duration-bloom: 520ms;
   --transition-duration-panel: 700ms;
 }
+
+/* Where the stage centres what it draws: the motif, the starfield's density
+   falloff, the starfield's ambient light, and the panel.
+
+   Half the *small* viewport height, not half the canvas. The canvases are `lvh`
+   tall — the viewport with the browser's retractable UI retracted, the tallest
+   it ever gets — and centring on that number puts the motif below the middle of
+   what the visitor can actually see, by half the height of the browser chrome.
+   See the Motif centring section of `docs/design/home.md`.
+
+   Registered rather than a plain variable so that its computed value resolves to
+   pixels. An unregistered custom property holding `50svh` is handed to script as
+   the string "50svh"; registering it with a `<length>` syntax is what makes
+   `getComputedStyle` return a number the canvases can draw with. The
+   initial-value has to be a fixed length — viewport units are not allowed there —
+   which is why the real value is a separate declaration below. */
+@property --stage-centre-y {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+:root {
+  --stage-centre-y: 50svh;
+}

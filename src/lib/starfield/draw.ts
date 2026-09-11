@@ -71,14 +71,17 @@ export function drawAmbient(
   width: number,
   height: number,
   motifRadius: number,
+  centreY: number,
 ): void {
   context.clearRect(0, 0, width, height);
 
   if (motifRadius <= 0) return;
 
   const centreX = width / 2;
-  const centreY = height / 2;
-  const corner = Math.hypot(centreX, centreY);
+  // The furthest corner from the centre, which is not `hypot(centreX, centreY)`
+  // once the centre is off the canvas's own middle: the longer of the two
+  // vertical reaches is what the ramp has to cover.
+  const corner = Math.hypot(centreX, Math.max(centreY, height - centreY));
   const inner = AMBIENT.hole * motifRadius;
   if (corner <= inner) return;
 
