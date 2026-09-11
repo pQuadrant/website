@@ -22,8 +22,8 @@ Earth geometry, not decoration.
 
 It is the visual centre of the page and it responds to what the visitor does: it
 brightens when a field is focused, spins up while a sign-in is processing, flinches
-when credentials are rejected, scatters where the cursor passes, and dims behind the
-sign-in panel so the form stays readable.
+when credentials are rejected, and dims behind the sign-in panel so the form stays
+readable.
 
 **It is not part of the sign-in surface.** The globe outlives this page's current
 purpose. It is planned to become directly manipulable, to carry markers at real
@@ -258,7 +258,6 @@ Then, in order:
 
 - Ocean points: `alpha × 0.95`
 - Inside the clear zone: `alpha × 0.13`
-- Disturbed by the cursor: `alpha × (1 + disturbance × 1.5)`, capped at 1
 - Points with `alpha ≤ 0.02` are dropped entirely
 
 ### Colour and shape
@@ -285,7 +284,7 @@ coreSize  = max(1, size × 0.6)
 
 `alpha` and `size` are the point's own, from _Depth, size and opacity_ above, so the core
 inherits everything they carry — it dims to 13% inside the clear zone, fades in with the
-assemble, brightens under the cursor, and scales with `dim` and the glows.
+assemble, and scales with `dim` and the glows.
 
 **Why the motif needs a second colour at all.** Land is luminance 186 and ocean 146, and
 the top opacity bucket is 0.95, so the brightest pixel the motif could produce was
@@ -545,15 +544,14 @@ Every value above eases toward its target exponentially, at a rate expressed per
 and multiplied by the frame's delta time, clamped to 1. Rates differ by direction and by
 state, and the differences carry the character of each transition.
 
-| Value            | Rate                            |
-| ---------------- | ------------------------------- |
-| Spin             | 6 while processing, 3 otherwise |
-| Contract         | 30 on error, 6 otherwise        |
-| Dim              | 8                               |
-| Glow             | 5 rising, 2.6 falling           |
-| dotGlow          | 6 rising, 3 falling             |
-| Cursor influence | 7 rising, 3.4 falling           |
-| Tilt             | 3.2                             |
+| Value    | Rate                            |
+| -------- | ------------------------------- |
+| Spin     | 6 while processing, 3 otherwise |
+| Contract | 30 on error, 6 otherwise        |
+| Dim      | 8                               |
+| Glow     | 5 rising, 2.6 falling           |
+| dotGlow  | 6 rising, 3 falling             |
+| Tilt     | 3.2                             |
 
 The error contract rate of 30 is what makes the failure read as a flinch rather than a
 fade. It is deliberately an order of magnitude faster than every other transition.
@@ -572,53 +570,6 @@ and fades to transparent at the outer stop, drawn at `0.4 × glow` opacity.
 Delta time is clamped to a maximum of 0.05 seconds per frame. Without the clamp, a tab
 returning from the background produces one enormous delta and every eased value snaps
 instantly.
-
----
-
-## Cursor interaction
-
-Where the pointer passes over the canvas, nearby points are pushed away and brightened.
-
-```
-scatterRadius = max(70, min(width, height) × 0.13)
-```
-
-For each point within that radius of the pointer, at distance `d`:
-
-```
-falloff = (1 − d / scatterRadius)^1.7 × influence
-push    = falloff × scatterRadius × 0.34
-angle   = jitter × 6.283 + elapsed × 0.0016 + index × 0.7
-
-screenX += (dx / d) × push + cos(angle) × falloff × 9
-screenY += (dy / d) × push + sin(angle) × falloff × 9
-```
-
-`jitter` is the same per-point value used in the assemble. The rotary term adds a slow
-individual drift so the disturbed region shimmers rather than moving as a rigid blob.
-
-Displaced points are also brightened: `alpha × (1 + falloff × 1.5)`.
-
-**Influence** eases between 0 and 1. It targets 0 when the pointer is inside the clear
-zone, and 0 when the pointer leaves the canvas entirely. The globe does not react to the
-cursor while the visitor is filling in the form.
-
-The scatter is suppressed entirely, with no pointer listener attached at all, in two
-cases: under reduced motion, and on an input that cannot hover.
-
-**Coarse pointers.** This effect is written for a cursor that passes over the canvas
-without touching it. A touch screen reports pointer events too, so left unguarded the
-scatter fires on a finger drag and blips on every tap — an effect designed around
-hovering, driven by an input that cannot hover. There is no cursor to follow, so there is
-nothing to draw. The condition is a fine pointer that supports hover.
-
-Do not set `touch-action` on the canvas to compensate. The canvas cancels no default
-behaviour, so with no listener attached there is nothing for a touch drag to fight, and
-a restrictive `touch-action` would break scrolling on the short windows where the page is
-specified to scroll.
-
-Both conditions are re-evaluated if they change while the page is open. A machine can
-change input without reloading: a tablet gains a trackpad, a laptop screen is touched.
 
 ---
 
@@ -645,8 +596,6 @@ When the visitor has requested reduced motion:
 - The globe paints a single static frame in its fully assembled state. No assemble
   animation.
 - No rotation. No animation frame loop runs at all.
-- No cursor scatter, and no pointer listener is attached. The same is true on a coarse
-  pointer, for its own reasons — see _Cursor interaction_.
 - State changes still apply their visual values — contract, dim, glow — but are painted
   immediately rather than eased.
 
@@ -698,7 +647,9 @@ that may reach the globe.
 The prototype contains code that does nothing. Reproducing it wastes effort and creates
 the impression of features that do not exist.
 
-- An unused window-level mouse position tracker, separate from the working scatter input
+- An unused window-level mouse position tracker. The globe attaches no pointer listener
+  of any kind now, so there is nothing for it to be a duplicate of — it was dead code in
+  the prototype and it would be dead code here
 - A `pulse` value that decays every frame and drives a draw pass whose point arrays are
   never populated
 - Elliptical radii computed for the clear zone and never read

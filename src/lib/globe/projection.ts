@@ -14,7 +14,7 @@ import {
 } from "@/lib/globe/entrance";
 import { COMPONENTS_PER_POINT } from "@/lib/globe/fibonacci-sphere";
 import type { GlobePointSet } from "@/lib/globe/point-set";
-import type { GlobeMotionField, GlobeState } from "@/lib/globe/state";
+import type { GlobeState } from "@/lib/globe/state";
 
 /** Opacity buckets per pass. Ten is enough that the banding is invisible. */
 export const BUCKET_COUNT = 10;
@@ -82,37 +82,6 @@ const CLEAR_ZONE_ALPHA = 0.13;
 const LAND_SIZE = 1.1;
 const OCEAN_SIZE = 0.85;
 
-/** Cursor scatter: `max(70, min(width, height) x 0.13)`. */
-const SCATTER_RADIUS_FLOOR = 70;
-const SCATTER_RADIUS_FACTOR = 0.13;
-
-/** How the disturbance falls away from the cursor, and how hard it pushes. */
-const SCATTER_FALLOFF = 1.7;
-const SCATTER_PUSH = 0.34;
-
-/**
- * The rotary drift: a slow individual wander, at `angle`, so the disturbed
- * region shimmers rather than moving as a rigid blob.
- *
- * The turn is the specification's own rounding of a full circle. It is a phase
- * spread over points that share a jitter value, not a rotation, so the fourth
- * decimal buys nothing.
- */
-const SCATTER_DRIFT = 9;
-const SCATTER_DRIFT_RATE = 0.0016;
-const SCATTER_JITTER_TURN = 6.283;
-const SCATTER_INDEX_PHASE = 0.7;
-
-/** Displaced points are brightened by this much of their falloff. */
-const SCATTER_BRIGHTNESS = 1.5;
-
-/**
- * Below this influence the furthest a point could move is a fiftieth of a
- * pixel, so the whole pass is skipped and a settled globe pays one comparison a
- * frame for it.
- */
-const INFLUENCE_FLOOR = 0.0005;
-
 /** The canvas as the projection sees it, in CSS pixels. */
 export interface GlobeView {
   width: number;
@@ -123,9 +92,9 @@ export interface GlobeView {
   /**
    * Where the canvas's top left corner sits in the viewport.
    *
-   * The cursor and the clear zone both arrive in viewport coordinates, because
-   * that is what the page outside can measure. This is what converts them, and
-   * it is the only reason the module knows where its canvas is.
+   * The clear zone arrives in viewport coordinates, because that is what the
+   * page outside can measure. This is what converts it, and it is the only
+   * reason the module knows where its canvas is.
    */
   originX: number;
   originY: number;
@@ -188,7 +157,6 @@ export function motifRadius(width: number, height: number): number {
  */
 export function project(
   points: GlobePointSet,
-  field: GlobeMotionField,
   entrance: GlobeEntranceField | null,
   state: GlobeState,
   view: GlobeView,
@@ -211,7 +179,6 @@ export function project(
 
   projectRange(
     points,
-    field,
     forming,
     0,
     points.landCount,
@@ -225,7 +192,6 @@ export function project(
   );
   projectRange(
     points,
-    field,
     forming,
     points.landCount,
     points.count,
@@ -247,7 +213,6 @@ function clear(buckets: number[][]): void {
 
 function projectRange(
   points: GlobePointSet,
-  field: GlobeMotionField,
   entrance: GlobeEntranceField | null,
   from: number,
   to: number,
@@ -260,7 +225,6 @@ function projectRange(
   forming: number[][],
 ): void {
   const { positions } = points;
-  const { jitter } = field;
 
   const cosYaw = Math.cos(state.yaw);
   const sinYaw = Math.sin(state.yaw);
@@ -271,25 +235,13 @@ function projectRange(
   const sizeGlow = 1 + 0.3 * state.glow + 0.22 * state.dotGlow;
   const alphaGlow = 1 + 0.5 * state.glow + 0.55 * state.dotGlow;
 
-  // The zone and the cursor arrive in viewport coordinates and are compared
-  // against canvas ones, so both are converted here rather than per point.
+  // The zone arrives in viewport coordinates and is compared against canvas
+  // ones, so it is converted here rather than per point.
   const zone = state.clearZone;
   const zoneLeft = zone === null ? 0 : zone.x - view.originX;
   const zoneTop = zone === null ? 0 : zone.y - view.originY;
   const zoneRight = zoneLeft + (zone === null ? 0 : zone.width);
   const zoneBottom = zoneTop + (zone === null ? 0 : zone.height);
-
-  const scattering = state.influence > INFLUENCE_FLOOR;
-  const scatterRadius = Math.max(
-    SCATTER_RADIUS_FLOOR,
-    Math.min(view.width, view.height) * SCATTER_RADIUS_FACTOR,
-  );
-  // Compared against the squared distance, so the square root is taken only for
-  // the few hundred points that are actually within reach.
-  const scatterReach = scatterRadius * scatterRadius;
-  const pointerX = state.pointerX - view.originX;
-  const pointerY = state.pointerY - view.originY;
-  const drift = state.elapsed * SCATTER_DRIFT_RATE;
 
   // Hoisted so the per-point branch below reads one array each rather than one
   // object property each, and so a settled globe pays a single null check.
@@ -362,31 +314,6 @@ function projectRange(
       y += driftY;
     }
 
-    if (scattering) {
-      const dx = x - pointerX;
-      const dy = y - pointerY;
-      const reach = dx * dx + dy * dy;
-
-      // The point sitting exactly under the cursor has no direction to be
-      // pushed in, and dividing by its distance would produce one.
-      if (reach < scatterReach && reach > 0) {
-        const distance = Math.sqrt(reach);
-        const falloff =
-          (1 - distance / scatterRadius) ** SCATTER_FALLOFF * state.influence;
-        const push = falloff * scatterRadius * SCATTER_PUSH;
-        const angle =
-          jitter[index] * SCATTER_JITTER_TURN +
-          drift +
-          index * SCATTER_INDEX_PHASE;
-
-        x += (dx / distance) * push + Math.cos(angle) * falloff * SCATTER_DRIFT;
-        y += (dy / distance) * push + Math.sin(angle) * falloff * SCATTER_DRIFT;
-        alpha *= 1 + falloff * SCATTER_BRIGHTNESS;
-      }
-    }
-
-    // Tested where the point is drawn rather than where it started, so one
-    // pushed across the boundary dims with the rest of the rectangle.
     if (
       zone !== null &&
       x >= zoneLeft &&
@@ -429,10 +356,10 @@ function projectRange(
     buckets[bucket].push(x - half, y - half, size);
 
     // The white core, for the points near enough the front to be lit. Carried
-    // on the point's own alpha, so it dims behind the panel and brightens under
-    // the cursor along with everything else. It is not drawn during the
-    // entrance: an unresolved point has no core, and gains one on the frame it
-    // rejoins this pass.
+    // on the point's own alpha, so it dims behind the panel and scales with the
+    // glows along with everything else. It is not drawn during the entrance: an
+    // unresolved point has no core, and gains one on the frame it rejoins this
+    // pass.
     if (depth <= HIGHLIGHT_DEPTH) continue;
 
     const strength =

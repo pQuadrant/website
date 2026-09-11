@@ -481,19 +481,19 @@ drag.
 
 ## Interaction with other surfaces
 
-**The globe.** `globe.md` specifies its own cursor behaviour, and both layers respond to
-the same pointer, so they must not fight: the globe's response has to stay the dominant
-one near the centre of the stage.
+**The globe.** It had a cursor scatter of its own, and this section used to argue that
+the globe's response stayed the dominant one wherever the two overlapped. The scatter has
+since been removed, so there is nothing left to be dominant over: **the drag is the only
+pointer response on the page.**
 
-**Checked, and it does.** At 1440 x 900 the globe scatters points within 117px of the
-cursor, pushes them up to about 40px, and brightens them by up to 2.5x as it does. The
-starfield carries a star only where the cursor's path passes within 88px of it, and changes
-no star's brightness at all. Where the two overlap — the ring just outside the disc, since
-the density falloff leaves no stars inside it — the globe acts on a far denser population
-and is the only one of the two that lights up, so it stays the dominant response.
+The consequence is worth stating rather than discovering. The density falloff leaves no
+stars inside the motif, so the disc at the centre of the stage does not respond to the
+cursor at all — neither layer has anything there to move. Stars are carried everywhere
+around it and nothing moves within it.
 
-The overlap is also smaller than the 260px this file once proposed: the sweep radius is
-88px, for reasons that had nothing to do with the globe.
+The sweep radius is 88px, down from the 260px this file once proposed, for reasons that
+had nothing to do with the globe. That is still true and removing the scatter is not a
+reason to revisit it.
 
 **The sign-in panel.** When the panel is open, the pointer is over a form. The starfield
 continues to respond normally in the area outside the panel. Do not suppress it, but do

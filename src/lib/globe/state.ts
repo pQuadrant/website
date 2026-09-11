@@ -27,10 +27,6 @@ export const TILT = 0.16;
  */
 const MAX_DELTA = 0.05;
 
-/** Per-point jitter factor: `JITTER_FLOOR + random × JITTER_RANGE`. */
-const JITTER_FLOOR = 0.55;
-const JITTER_RANGE = 0.45;
-
 /** How long the error state holds before returning to idle on its own. */
 export const ERROR_HOLD_SECONDS = 0.9;
 
@@ -76,27 +72,6 @@ export function expandToClearZone(rect: {
   };
 }
 
-/**
- * Whether a viewport point falls inside the zone.
- *
- * Used once a frame, for the cursor. The projection tests the same rectangle
- * against fifteen thousand points and hoists its edges into locals rather than
- * calling this.
- */
-function insideClearZone(
-  zone: ClearZone | null,
-  x: number,
-  y: number,
-): boolean {
-  return (
-    zone !== null &&
-    x >= zone.x &&
-    x <= zone.x + zone.width &&
-    y >= zone.y &&
-    y <= zone.y + zone.height
-  );
-}
-
 /** What each status eases toward. `dotGlow` is not here; it follows focus. */
 interface StatusTargets {
   /** Radians per second. */
@@ -132,8 +107,6 @@ const GLOW_RATE_RISING = 5;
 const GLOW_RATE_FALLING = 2.6;
 const DOT_GLOW_RATE_RISING = 6;
 const DOT_GLOW_RATE_FALLING = 3;
-const INFLUENCE_RATE_RISING = 7;
-const INFLUENCE_RATE_FALLING = 3.4;
 const TILT_RATE = 3.2;
 
 /** Everything that varies between frames. */
@@ -166,22 +139,6 @@ export interface GlobeState {
   rotationRamp: number;
   /** Seconds left on the error state's self-clearing hold. */
   errorHold: number;
-  /**
-   * Milliseconds the globe has been running, accumulated from clamped frame
-   * deltas rather than read from the clock.
-   *
-   * It drives the cursor scatter's rotary drift and nothing else, so a tab that
-   * spent ten minutes in the background resuming ten minutes behind the wall
-   * clock is not a defect: what matters is that the phase advances smoothly.
-   */
-  elapsed: number;
-  /** Cursor position, in viewport CSS pixels. Meaningless while inactive. */
-  pointerX: number;
-  pointerY: number;
-  /** Whether the cursor is over the canvas at all. */
-  pointerActive: boolean;
-  /** How strongly the cursor disturbs the points, 0 to 1. Eases. */
-  influence: number;
   clearZone: ClearZone | null;
   status: GlobeStatus;
   focused: boolean;
@@ -202,36 +159,10 @@ export function createGlobeState(): GlobeState {
     entranceRunning: true,
     rotationRamp: 0,
     errorHold: 0,
-    elapsed: 0,
-    pointerX: 0,
-    pointerY: 0,
-    pointerActive: false,
-    influence: 0,
     clearZone: null,
     status: "idle",
     focused: false,
   };
-}
-
-/**
- * The per-point randomness the cursor scatter runs on.
- *
- * Allocated once, for the lifetime of the globe. Where a point *starts* is not
- * here: the entrance owns its own field, seeded, in `entrance.ts`.
- */
-export interface GlobeMotionField {
-  /** Per-point jitter factor, in `[0.55, 1]`. */
-  jitter: Float32Array;
-}
-
-export function createMotionField(count: number): GlobeMotionField {
-  const jitter = new Float32Array(count);
-
-  for (let index = 0; index < count; index += 1) {
-    jitter[index] = JITTER_FLOOR + Math.random() * JITTER_RANGE;
-  }
-
-  return { jitter };
 }
 
 /**
@@ -243,30 +174,6 @@ export function createMotionField(count: number): GlobeMotionField {
 export function applyStatus(state: GlobeState, status: GlobeStatus): void {
   state.status = status;
   state.errorHold = status === "error" ? ERROR_HOLD_SECONDS : 0;
-}
-
-/** Records where the cursor is. The listener is `globe.ts`'s business. */
-export function setPointer(state: GlobeState, x: number, y: number): void {
-  state.pointerX = x;
-  state.pointerY = y;
-  state.pointerActive = true;
-}
-
-/** The cursor has left the canvas; the disturbance eases away rather than cutting. */
-export function clearPointer(state: GlobeState): void {
-  state.pointerActive = false;
-}
-
-/**
- * The cursor disturbs the points only while it is over the canvas and outside
- * the zone. The globe does not react to the cursor while the visitor is filling
- * in the form.
- */
-function influenceTarget(state: GlobeState): number {
-  const reacting =
-    state.pointerActive &&
-    !insideClearZone(state.clearZone, state.pointerX, state.pointerY);
-  return reacting ? 1 : 0;
 }
 
 /** Point bloom follows focus, and is suppressed while processing. */
@@ -299,12 +206,9 @@ export function advance(state: GlobeState, delta: number, now: number): void {
     if (state.errorHold <= 0) applyStatus(state, "idle");
   }
 
-  state.elapsed += step * 1000;
-
   const target = TARGETS[state.status];
   const processing = state.status === "loading";
   const dotGlow = dotGlowTarget(state);
-  const influence = influenceTarget(state);
 
   state.spin = ease(
     state.spin,
@@ -329,14 +233,6 @@ export function advance(state: GlobeState, delta: number, now: number): void {
     state.dotGlow,
     dotGlow,
     dotGlow > state.dotGlow ? DOT_GLOW_RATE_RISING : DOT_GLOW_RATE_FALLING,
-    step,
-  );
-  state.influence = ease(
-    state.influence,
-    influence,
-    influence > state.influence
-      ? INFLUENCE_RATE_RISING
-      : INFLUENCE_RATE_FALLING,
     step,
   );
   state.tilt = ease(state.tilt, TILT, TILT_RATE, step);
@@ -378,6 +274,4 @@ export function snap(state: GlobeState): void {
   state.dim = target.dim;
   state.glow = target.glow;
   state.dotGlow = dotGlowTarget(state);
-  // Reduced motion has no scatter to settle: there is no pointer listener.
-  state.influence = 0;
 }
