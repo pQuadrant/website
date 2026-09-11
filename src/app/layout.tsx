@@ -45,9 +45,22 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    /* `overscroll-none` stops the rubber-band drag past the document's own
+       edges, which is what kept the chrome sliding across the motif on a touch
+       screen: the corner clusters are positioned in the document and the two
+       canvases are fixed, so a bounce moves one and not the other.
+
+       It has to be on the root element. `overscroll-behavior` set there is
+       propagated to the viewport; set on `<body>` it is not, which is the
+       opposite of how `overflow` behaves and the usual way this is got wrong.
+
+       It does not prevent scrolling, only the affordance past the end, so the
+       one case this page is specified to scroll in — the panel open on a window
+       too short to hold it — is untouched. See _Touch edges_ in
+       `docs/design/home.md`. */
     <html
       lang="en"
-      className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full scheme-dark bg-stage antialiased`}
+      className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} h-full overscroll-none scheme-dark bg-stage antialiased`}
     >
       <body className="min-h-full font-sans">{children}</body>
     </html>

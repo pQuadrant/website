@@ -380,7 +380,33 @@ revealing empty room reserved for something that is not there. This matters most
 phone, where every window is shorter than the panel and the reservation would otherwise
 apply always. It is also what keeps the corner chrome in place: the chrome is positioned
 in the document and the motif is fixed, so any scroll slides the frame across the
-instrument.
+instrument. That is about scrolling only — the same mismatch at the document's _edges_
+is handled separately, under _Touch edges_ below.
+
+**Touch edges.** A touch screen lets a visitor drag the page past its own end whether or
+not there is anything there — iOS rubber-bands indefinitely on a page with no scrollable
+content at all. **Rubber-banding is not scrolling**, and having nothing below the fold
+does not prevent it. Because the chrome is positioned in the document and the canvases
+are fixed, a bounce moved the chrome and not the motif, and the corner telemetry
+travelled across the middle of the globe.
+
+The document therefore sets `overscroll-behavior: none`. It goes on the **root element**:
+set there it is propagated to the viewport, and set on `<body>` it is not — the opposite
+of how `overflow` behaves, and the usual way this is got wrong.
+
+It removes the affordance past the end, not the ability to scroll, so the one case below
+is untouched.
+
+**This disables pull-to-refresh on Android Chrome.** That is accepted rather than worked
+around. The page has nothing to refresh to: no feed, no content that changes, and a
+reload gains a visitor nothing they cannot get from the browser's own control.
+
+Do not answer this by moving the canvases with the pull so the whole scene travels
+together. It is the intuitive fix and it is wrong: it fights the platform gesture instead
+of resolving it, the bounce does not emit events smoothly enough to track without the
+canvases lagging by a frame, it puts per-frame transform work on two full-screen canvases
+at the page's busiest moment, and it leaves the visitor able to drag the composition
+off-centre anyway.
 
 **The clearance is the padding.** The stage does not compute a minimum height from the
 panel's height. It reserves 64px above and below its content and lets the content decide
