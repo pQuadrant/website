@@ -158,15 +158,23 @@
      `docs/design/home.md`. Below it the motif is min(width, height) x 0.88. */
   --spacing-motif-max: 792px;
 
-  /* The width below which the horizontal margin tightens. */
-  --breakpoint-stage: 1100px;
+  /* The two width breakpoints, and they drive the margin tiers only.
 
-  /* The width below which the chrome runs as columns rather than rows, and the
-     margin tightens a second time. A cluster laid out as a horizontal row above
-     this width becomes a vertical stack below it; see `docs/design/chrome.md`.
-     There are two breakpoints and there is no third: the page has one
+     `stage:` is the width at or above which the horizontal margin is at its
+     widest. `stage-narrow:` is the width at or above which it holds the middle
+     tier; below it the margin tightens a second time.
+
+     Both are width alone, deliberately. The margin tightens because the window
+     has run out of *horizontal* room, and that is a different question from
+     whether a cluster has room to run as a row — see `row` below, and the
+     Margins section of `docs/design/home.md`. The two used to be the same
+     breakpoint because until landscape was specified there was only one way for
+     a window to be short of room.
+
+     There are two width breakpoints and there is no third: the page has one
      composition and one reflow of it, not a ladder of device sizes. */
-  --breakpoint-row: 640px;
+  --breakpoint-stage: 1100px;
+  --breakpoint-stage-narrow: 640px;
 
   /* The entrance, for the two layers CSS can carry on its own.
 
@@ -203,6 +211,38 @@
   --transition-duration-bloom: 520ms;
   --transition-duration-panel: 700ms;
 }
+
+/* `row:` — the window has room to run the chrome as rows.
+
+   Two ways to run out of room, and either one triggers the same reflow: a
+   window is tight when it is narrower than 640px *or* shorter than 500px. One
+   composition, one reflow of it, reachable from two directions. See
+   `docs/design/chrome.md`, _Narrow windows, and short ones_.
+
+   The height half exists because a phone in landscape is not narrow, it is
+   short. An iPhone 15 Pro Max on its side is about 930px wide, well clear of
+   640px, and a rule written against width alone hands it the desktop
+   composition with 330px of height to put it in. The bottom-left cluster is the
+   widest thing in any corner and overlapped the motif by 12px at 844 x 390
+   before this existed.
+
+   500px is the gap between the tallest phone in landscape, 480px, and the
+   shortest tablet in landscape, 744px. The phone bound is the tight side, at
+   20px, and it is the number to re-derive if this is ever retuned.
+
+   `width` and `height` in a media query are the layout viewport, not the visual
+   one, so this does not fire when a virtual keyboard opens and does not chase a
+   retracting browser toolbar. That is required rather than incidental: focusing
+   a field must not reflow the chrome underneath the visitor.
+
+   The 640px here is deliberately a literal and duplicates
+   `--breakpoint-stage-narrow`. A media query condition cannot read a custom
+   property. If one moves, move the other.
+
+   Written as a custom variant rather than a `--breakpoint-*` token because a
+   token generates a width-only `min-width` query and this is a condition on
+   both axes. */
+@custom-variant row (@media (width >= 640px) and (height >= 500px));
 
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff, the starfield's ambient light, and the panel.

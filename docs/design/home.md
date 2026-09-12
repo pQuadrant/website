@@ -226,15 +226,28 @@ a shared grid line, because they contain type at different sizes and one of them
 bordered control: **62px** for the left cluster and **56px** for the right. Do not
 normalise them to a single value.
 
-The horizontal and bottom margins have three tiers. **The top offsets do not tier with
-them**, and the one value that changes below 640px does so for a different reason
-entirely — see _The top-left offset below 640px_ below:
+The horizontal and bottom margins have three tiers, and **all three are driven by width
+alone**. The top offsets do not tier with them, and the one value that changes does so
+for a different reason entirely — see _The top-left offset in a tight window_ below:
 
-| Window width     | Left / right / bottom | Top-left | Top-right |
-| ---------------- | --------------------- | -------- | --------- |
-| 1100px and wider | 64px                  | 62px     | 56px      |
-| 640px to 1100px  | 40px                  | 62px     | 56px      |
-| Below 640px      | 24px                  | 34px     | 56px      |
+| Window width     | Left / right / bottom |
+| ---------------- | --------------------- |
+| 1100px and wider | 64px                  |
+| 640px to 1100px  | 40px                  |
+| Below 640px      | 24px                  |
+
+The top offsets are not on that table because they are not on that axis. The top-right
+cluster holds **56px** at every size. The top-left cluster holds **62px** in a roomy
+window and **34px** in a tight one, where tight means narrower than 640px _or_ shorter
+than 500px — see the chrome specification.
+
+**The margin tier does not follow the reflow, and this is the distinction to hold on
+to.** Both used to be driven by the same 640px breakpoint, because until the short
+trigger existed there was only one way for a window to be short of room. They are
+different things. A margin tightens because the window has run out of _horizontal_ room.
+A cluster reflows because it has run out of room in either direction. A phone in
+landscape has 930px of width and 330px of height: it needs the reflow and it does not
+need the tier, and at 932 x 330 the margins stay at 40px while every cluster stacks.
 
 Below 1100px the top-left and top-right clusters begin closing on each other and the
 widest margin runs them together. Below 640px the clusters stack — see the chrome
@@ -260,8 +273,8 @@ two edges carry the same class of content they hold the same inset and tier toge
 where they carry different classes, the difference between them is the point. Left and
 right carry the same thing as each other and always match.
 
-**The top-left offset below 640px.** 62px becomes 34px, and this is not the tiering the
-paragraph above rules out. Tiering tightens a margin because the window has run out of
+**The top-left offset in a tight window.** 62px becomes 34px, and this is not the tiering
+the paragraph above rules out. Tiering tightens a margin because the window has run out of
 room, and it moves a cluster _toward_ the edge it is pinned to. This does neither. The
 top-left cluster is 88px tall below the breakpoint — two 44px touch targets, one above
 the other — where the top-right row is 44px. Held at 62px the taller block hangs 28px
@@ -465,36 +478,76 @@ corners stay corners. The full rule, including which cluster stays a row, is in 
 chrome specification; the stage's part of it is the 24px margin tier and the panel width
 above.
 
-**320px is the narrowest window supported.** Below that the composition is not defined
-and is not verified.
+**Short windows, which is landscape.** Below **500px tall** the page does the same thing,
+for the same reason, and it is the same reflow rather than a second one. A phone on its
+side is not narrow — an iPhone 15 Pro Max in landscape is about 930px wide, well clear of
+the 640px trigger — it is short, with roughly 330px of height once Safari's toolbar is
+showing. Served the desktop composition it puts every cluster on one long row and the
+bottom-left cluster, the widest thing in any corner at 306px, reaches far enough toward
+the centre to run into the motif. Measured before this rule existed: 11px of clearance at
+932 x 430 and a 12px **overlap** at 844 x 390.
+
+**The margin tier does not come with it.** See _Margins_ above. The reflow crosses over;
+the 24px tier does not, because a landscape phone has horizontal room to spare.
+
+**320px is the narrowest window supported**, and below that the composition is not
+defined and is not verified. There is no matching floor on height, because height is not
+the axis that runs out first: what a very short window does is stack clusters that are
+already stacked. The two top clusters and the two bottom ones meet at about **190px** of
+height, which is far below any viewport a browser reports on real hardware, and it is not
+a supported size so much as the point at which the composition stops being defined.
 
 There is no tablet composition. Between 640px and 1100px the page uses the desktop
-composition at the 40px margin, and that is all a tablet gets. Two breakpoints exist and
-a third should not be added: the page has one composition and one reflow of it, not a
-ladder of device sizes.
+composition at the 40px margin, and that is all a tablet gets. **Two _width_ breakpoints
+exist and a third should not be added:** the page has one composition and one reflow of
+it, not a ladder of device sizes.
+
+**The 500px height trigger is not that third breakpoint, and the next person to read the
+rule above will need telling why.** That rule is about accumulating device tiers along
+one axis — phone, then large phone, then small tablet, then tablet — and it is about
+width. This adds no tier and no composition. It is the first breakpoint on the _other_
+axis, and it fires the one reflow that already exists rather than introducing a second
+one. After it, the page still has one composition and one reflow of it. What changed is
+that there are now two ways to run out of room instead of one, which was always true of
+the page and was only ever expressed about width.
+
+**Where 500px comes from** is derived in the chrome specification, from the tallest phone
+in landscape (480px) and the shortest tablet in landscape (744px). Both bounds were
+measured rather than assumed, and the phone bound is the tight one.
 
 **Verify at these window sizes:**
 
-| Size                        | Why                                                       |
-| --------------------------- | --------------------------------------------------------- |
-| 320 × 568                   | The narrowest window supported; the tightest gutter       |
-| 360 × 640                   | Common small Android                                      |
-| 390 × 844                   | Common iPhone, the size the mobile problem was found at   |
-| 430 × 932                   | Large iPhone                                              |
-| 768 × 1024                  | Tablet portrait, on the desktop composition               |
-| 844 × 390                   | Phone in landscape: short and wide at once                |
-| 1512 × 855                  | 14-inch MacBook Pro, the primary development machine      |
-| 1440 × 900                  | The size the design was composed at                       |
-| 1920 × 1080                 | Common external monitor                                   |
-| 2560 × 1440                 | Confirms the motif cap holds and the composition survives |
-| Any window under 700px tall | Confirms the page scrolls rather than clipping            |
+| Size                        | Why                                                         |
+| --------------------------- | ----------------------------------------------------------- |
+| 320 × 568                   | The narrowest window supported; the tightest gutter         |
+| 360 × 640                   | Common small Android                                        |
+| 390 × 844                   | Common iPhone, the size the mobile problem was found at     |
+| 430 × 932                   | Large iPhone                                                |
+| 768 × 1024                  | Tablet portrait, on the desktop composition                 |
+| 932 × 430                   | Phone in landscape, browser chrome hidden                   |
+| 932 × 330                   | The same phone with Safari's toolbar showing — the real one |
+| 896 × 414                   | Phone in landscape, the tightest clearance measured         |
+| 844 × 390                   | Phone in landscape: short and wide at once                  |
+| 1060 × 480                  | Tallest phone in landscape; just inside the 500px trigger   |
+| 1133 × 744                  | iPad mini in landscape; must NOT take the tight composition |
+| 1512 × 855                  | 14-inch MacBook Pro, the primary development machine        |
+| 1440 × 900                  | The size the design was composed at                         |
+| 1920 × 1080                 | Common external monitor                                     |
+| 2560 × 1440                 | Confirms the motif cap holds and the composition survives   |
+| Any window under 700px tall | Confirms the page scrolls rather than clipping              |
 
 Verify with a coarse pointer as well as a fine one. They are different compositions and
 different behaviour, not the same page at two sizes.
 
-At every width, the check is that no two chrome clusters overlap **and** that every
-string is still on screen. A string that has gone missing is a failure, not a pass — the
-rule is that nothing is hidden.
+**A phone's landscape viewport is shorter than its screen.** The rows above are browser
+viewports, not device dimensions: the browser's own chrome takes a slice off the top, so
+a 932 x 430 screen reports about 330px to the page while the toolbar is showing and about
+430px once it retracts. Both states have to be checked, and an emulator reproduces
+neither — it will pass while the bug is still there.
+
+At every size, the check is that no two chrome clusters overlap, that no cluster touches
+the motif, **and** that every string is still on screen. A string that has gone missing is
+a failure, not a pass — the rule is that nothing is hidden.
 
 ---
 

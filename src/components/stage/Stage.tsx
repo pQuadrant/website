@@ -97,13 +97,21 @@ export function Stage({
           differ from each other by design — do not normalise them.
 
           The horizontal and bottom margins share three tiers, tightening twice
-          as the window narrows. The top offsets do not tier with them. The
-          right one holds 56px at every width; the left one falls to 34px below
-          the breakpoint, and that is not tightening — it is where a block 88px
+          as the window narrows, and all three are driven by width alone —
+          `stage-narrow:` and `stage:`. The top offsets do not tier with them.
+          The right one holds 56px at every size; the left one falls to 34px in
+          a tight window, and that is not tightening — it is where a block 88px
           tall has to start to be centred on the 44px row opposite, whose centre
           line is 78px. The top-right offset is the one that governs, and the
           number to re-derive if either cluster's height ever changes is this
           one. See the Margins section of `docs/design/home.md`.
+
+          The margin tier and the reflow are deliberately on different
+          triggers. `row:` is both axes — at least 640px wide and at least
+          500px tall — because a cluster runs out of room in either direction.
+          The margin tightens only because the window has run out of
+          *horizontal* room, and a phone in landscape has 930px of it. At
+          932 x 330 every cluster stacks and these margins stay at 40px.
 
           That is a deliberate asymmetry rather than an oversight, and it is
           what the two edges are carrying. The top holds the identity and the
@@ -154,16 +162,16 @@ export function Stage({
           hit-testable from the first frame, so the sign-in toggle answers a
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
-      <div className="pointer-events-none fixed top-[34px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[62px] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
+      <div className="pointer-events-none fixed top-[34px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[62px] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
         {topLeft}
       </div>
-      <div className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
+      <div className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
         {topRight}
       </div>
-      <div className="pointer-events-none fixed bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] row:bottom-stage-margin-narrow row:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">
+      <div className="pointer-events-none fixed bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] stage-narrow:bottom-stage-margin-narrow stage-narrow:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">
         {bottomLeft}
       </div>
-      <div className="pointer-events-none fixed right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] row:bottom-stage-margin-narrow row:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none">
+      <div className="pointer-events-none fixed right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] stage-narrow:bottom-stage-margin-narrow stage-narrow:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none">
         {bottomRight}
       </div>
     </main>
