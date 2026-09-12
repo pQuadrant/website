@@ -226,14 +226,15 @@ a shared grid line, because they contain type at different sizes and one of them
 bordered control: **62px** for the left cluster and **56px** for the right. Do not
 normalise them to a single value.
 
-The horizontal and bottom margins have three tiers. **The top offsets do not tier** —
-they hold at every width:
+The horizontal and bottom margins have three tiers. **The top offsets do not tier with
+them**, and the one value that changes below 640px does so for a different reason
+entirely — see _The top-left offset below 640px_ below:
 
 | Window width     | Left / right / bottom | Top-left | Top-right |
 | ---------------- | --------------------- | -------- | --------- |
 | 1100px and wider | 64px                  | 62px     | 56px      |
 | 640px to 1100px  | 40px                  | 62px     | 56px      |
-| Below 640px      | 24px                  | 62px     | 56px      |
+| Below 640px      | 24px                  | 34px     | 56px      |
 
 Below 1100px the top-left and top-right clusters begin closing on each other and the
 widest margin runs them together. Below 640px the clusters stack — see the chrome
@@ -259,11 +260,33 @@ two edges carry the same class of content they hold the same inset and tier toge
 where they carry different classes, the difference between them is the point. Left and
 right carry the same thing as each other and always match.
 
+**The top-left offset below 640px.** 62px becomes 34px, and this is not the tiering the
+paragraph above rules out. Tiering tightens a margin because the window has run out of
+room, and it moves a cluster _toward_ the edge it is pinned to. This does neither. The
+top-left cluster is 88px tall below the breakpoint — two 44px touch targets, one above
+the other — where the top-right row is 44px. Held at 62px the taller block hangs 28px
+below the shorter one and the top edge reads as two rows at two different heights rather
+than as one.
+
+So the two top clusters are centred on each other instead, and 34px is what that
+produces rather than a value chosen for its own sake: the top-right row runs 56px to
+100px, its centre line is 78px, and a block 88px tall centred there starts at 34px. The
+whole of the change is the 28px of that arithmetic.
+
+**The offset that governs is still the top-right cluster's 56px**, which does not move at
+any width. The two top clusters hold one centre line and the left one is placed to meet
+it, so if either cluster's height ever changes the number to re-derive is this one and
+not that one. Nothing here licenses tightening the top edge: the controls are further
+from the browser's own chrome than the 22px and 16px the correction above threw out, and
+the visible type starts 48px down rather than 34px, because 17px of each 44px target is
+the padding that makes it a target.
+
 **Safe areas.** The page declares `viewport-fit: cover`, so the stage reaches under a
 notch, a dynamic island and a home indicator rather than being letterboxed inside them.
 The margins above are then measured from the edge of the _usable_ display: the device's
-safe-area inset is added to the margin, not substituted for it. The design's 62px top
-offset means 62px clear of the island, not 62px from a point underneath it. On a display
+safe-area inset is added to the margin, not substituted for it. The design's top offset
+means that far clear of the island, not that far from a point underneath it. Both top
+clusters take the same inset, so the centre line they share survives it. On a display
 with no inset the addition is zero and nothing moves.
 
 Only the chrome takes the insets. The motif spans the whole stage, insets included, and
