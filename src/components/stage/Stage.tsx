@@ -97,8 +97,13 @@ export function Stage({
           differ from each other by design — do not normalise them.
 
           The horizontal and bottom margins share three tiers, tightening twice
-          as the window narrows. The top offsets do not tier: they hold 62px and
-          56px at every width.
+          as the window narrows. The top offsets do not tier with them. The
+          right one holds 56px at every width; the left one falls to 34px below
+          the breakpoint, and that is not tightening — it is where a block 88px
+          tall has to start to be centred on the 44px row opposite, whose centre
+          line is 78px. The top-right offset is the one that governs, and the
+          number to re-derive if either cluster's height ever changes is this
+          one. See the Margins section of `docs/design/home.md`.
 
           That is a deliberate asymmetry rather than an oversight, and it is
           what the two edges are carrying. The top holds the identity and the
@@ -149,7 +154,7 @@ export function Stage({
           hit-testable from the first frame, so the sign-in toggle answers a
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
-      <div className="pointer-events-none fixed top-[62px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
+      <div className="pointer-events-none fixed top-[34px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[62px] row:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
         {topLeft}
       </div>
       <div className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] row:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">

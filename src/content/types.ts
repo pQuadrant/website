@@ -12,10 +12,15 @@ export interface LabelledControl {
   accessibleLabel: string;
 }
 
-/** Top-left cluster: the product line. */
+/**
+ * Top-left cluster: the product line. Both names are controls, so each carries
+ * an accessible name as well as a visible one — a product name on its own does
+ * not say what its button does. The separator between them is decorative and
+ * belongs to the component.
+ */
 export interface ChromeTopLeftContent {
-  productOne: string;
-  productTwo: string;
+  productOne: LabelledControl;
+  productTwo: LabelledControl;
 }
 
 /** Top-right cluster: the entry point button and the sign-in toggle. */

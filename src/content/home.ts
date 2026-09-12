@@ -24,10 +24,18 @@ export const MAX_SIGN_IN_ATTEMPTS = 5;
 export const homeContent: HomeContent = {
   chrome: {
     topLeft: {
-      // Two product names, held apart rather than joined, because they become
-      // independently clickable later.
-      productOne: "CONSTELLATION",
-      productTwo: "NORTHSTAR",
+      // Two product names, held apart rather than joined, because each is its
+      // own control. Neither surface exists yet, so neither button does
+      // anything — but a button still has to say what it will do, and the
+      // product name alone does not say it.
+      productOne: {
+        label: "CONSTELLATION",
+        accessibleLabel: "Open Constellation",
+      },
+      productTwo: {
+        label: "NORTHSTAR",
+        accessibleLabel: "Open Northstar",
+      },
     },
 
     topRight: {

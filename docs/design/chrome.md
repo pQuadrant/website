@@ -28,12 +28,18 @@ was high. The glow below raises presence and leaves prominence exactly where it 
 `PQ-CORE 4.2.118`, `TLS 1.3 · AES-256-GCM` and the Cairo clock — permanently. Those
 convey nothing the visitor needs and their dimness is the point.
 
-It binds the two product names only for as long as they are plain text. The rule's
-reason is that the chrome is not navigation; the product names are going to become
-buttons that open a product surface, and on the day they do, the reason no longer
-describes them and the rule stops governing their size. Their type is decided on that
-ticket, in this file, before the code changes. Until then they are 10px like everything
-else here.
+It bound the two product names only for as long as they were plain text, on the reason
+that the chrome is not navigation. They are controls now, that reason no longer
+describes them, and the rule has released their size by its own terms.
+
+**Released, they stay at 10px.** That is a decision rather than an omission, and it was
+taken for three reasons. The cluster has exactly one type size, and scaling only these
+two would introduce a second into a line of three items. Prominence was never the
+problem the glow was brought in to solve — presence was, and it is solved. And the
+rule's reason is being replaced by a control treatment rather than by permission to
+grow: these two now announce themselves by answering a pointer, which is a stronger
+claim to being actionable than a larger size would make, and it costs the composition
+nothing. The treatment that carries it is in _Top-left cluster_ below.
 
 The rule has never barred a larger **touch target**, which is not the same thing as
 larger type. See _Narrow windows_ below.
@@ -150,16 +156,19 @@ constants because they describe the product's character, not its telemetry. Do n
 wire them to real sources, and do not assume a service exists behind a name that
 appears here.
 
-The two product names are stored as separate values rather than one combined string.
-They become independently clickable later.
+The two product names are stored as separate values rather than one combined string,
+because each is its own control. Both are `LabelledControl` values — a visible label and
+an accessible name — since neither product name on its own says what its button does.
 
 ---
 
 ## Top-left cluster
 
-Anchored at the margin from the left edge and **62px** from the top. The horizontal
-margin tiers with the window and the top offset does not; the table is in
-`docs/design/home.md`.
+Anchored at the margin from the left edge and **62px** from the top, falling to **34px**
+below 640px so that this cluster and the top-right one share a centre line once this one
+is two touch targets tall. The horizontal margin tiers with the window; the top offset
+does not tier, and the one value that changes does so for that reason rather than for
+room. Both tables are in `docs/design/home.md`.
 
 One row. The server line that used to sit beneath it has moved to the bottom-right
 cluster — see below.
@@ -179,6 +188,57 @@ IBM Plex Mono, 10px, letter-spacing `0.2em`.
 The separator is markedly dimmer than the names on either side. It is a divider, not a
 character in a sentence. The three items align on their baselines, not their box
 centres.
+
+**Both product names are controls.** Each is a button that will open its product's
+surface. Neither surface is designed, so neither button does anything yet: they are
+rendered, styled and given their states, and their action is left unimplemented exactly
+as `p_Q`'s is. Do not invent a destination for either, and do not add link markup or a
+route.
+
+| Property                    | Value                                       |
+| --------------------------- | ------------------------------------------- |
+| Type                        | IBM Plex Mono, 10px, letter-spacing `0.2em` |
+| Colour                      | `#8B94A2`                                   |
+| Glow                        | `fg-1`; `fg-0` on hover and active          |
+| Hover colour                | `#EAEDF4`                                   |
+| Active colour               | `#EAEDF4`                                   |
+| Transition                  | 160ms ease on text colour and glow          |
+| Focus                       | See _Focus_ under the top-right cluster     |
+| Border, background, padding | None                                        |
+
+**This is `p_Q`'s treatment, value for value, and that is the point.** The page has one
+control language and this cluster does not get a second one three feet from the first.
+It is also the only treatment that fits here: the sign-in toggle's bordered 34px box is
+a control standing on its own in a button bar, and two of those in the top-left corner
+would turn a line of type into a toolbar. `p_Q` is this file's existing answer to what a
+control looks like when it sits inside a text row — it reads as a word until a pointer
+reaches it — and these two inherit it rather than inventing a third thing.
+
+**The resting appearance is therefore unchanged.** Nothing about this cluster moves,
+recolours or resizes until a pointer arrives. That is deliberate and it is what keeps the
+corner reading as a cluster of type rather than as a nav bar.
+
+**The active state is not a duplicate of the hover state.** Tailwind emits every
+`hover:` utility inside `@media (hover: hover)`, so on a touch device the hover rules
+never apply, and a button carrying only a hover state acknowledges a tap with nothing at
+all. This is the same reasoning that gives the two top-right controls theirs.
+
+**Nothing else in the cluster becomes interactive.** The corner region is inert so that
+clicks reach the motif beneath it. These two buttons opt back in; the separator does not.
+See _Layering and pointer behaviour_.
+
+**The separator still reads as a divider between two controls.** That it now divides two
+controls rather than two words changes nothing about the mark, because neither control
+carries a border, a fill or padding: the row is still three items of type sharing one
+baseline, and the `/` still sits between two of them rather than between two boxes. Had
+these become bordered boxes it would have had to go — a divider between two things that
+already have edges of their own is a third edge. They did not, so it stays. It remains
+decorative, remains the one mark in the chrome that does not emit, and is still dropped
+below 640px where the names stack.
+
+**Accessibility.** A button whose action is unimplemented still needs an accessible name
+saying what it will do, and a product name on its own does not say it. Both are held in
+`src/content/` as `LabelledControl` values, visible label and accessible name together.
 
 ---
 
@@ -306,8 +366,9 @@ this button. Focus must never be left on an element that has been removed.
 
 **Focus**
 
-Both controls in this cluster carry a visible focus indicator: a 1px ring in `#EAEDF4`
-with a 16px halo of the same colour at 0.3 alpha, held as `--shadow-glow-focus`.
+Every control in the chrome carries the same visible focus indicator — the two in this
+cluster and the two product names in the top-left one: a 1px ring in `#EAEDF4` with a
+16px halo of the same colour at 0.3 alpha, held as `--shadow-glow-focus`.
 
 It is built from this file's glow rather than the browser's default outline, so the page
 keeps one visual language, and the default outline is suppressed where it applies. The
@@ -317,6 +378,12 @@ crisp enough to locate and of a piece with the rest of the chrome.
 It is a `focus-visible` treatment, so it appears for a keyboard and not on a click or a
 tap, and it is deliberately outside the 160ms transition — a focus indicator that fades
 in is a focus indicator that is briefly not there.
+
+The ring is the only boundary any of these four controls draws besides the toggle's
+border. Measured on the rendered page it lands at full `#EAEDF4` and holds at
+**17.0:1 or better against the corner ground at 1440 x 900, 2560 x 1440 and 320 x 568** —
+the 3:1 that WCAG 1.4.11 asks of a focus indicator is never in question here, and the
+figure is recorded so that a future retune of the glow has a baseline to compare against.
 
 ---
 
@@ -424,15 +491,21 @@ every supported width, at 10px, in the corner it belongs to. If a narrow window 
 made to fit by dropping a string or shrinking type, that is the wrong fix — the lever is
 the direction a cluster runs in.
 
-| Cluster      | Above 640px                      | Below 640px                     |
-| ------------ | -------------------------------- | ------------------------------- |
-| Top-left     | Product line as a row, 14px gaps | Product names stacked, 7px gaps |
-| Top-right    | Row, 34px tall, 18px gap         | Row, 44px tall, 10px gap        |
-| Bottom-left  | Row, 40px gap                    | Stacked, 7px gap                |
-| Bottom-right | Row, 40px gap                    | Stacked, 7px gap                |
+| Cluster      | Above 640px                      | Below 640px                   |
+| ------------ | -------------------------------- | ----------------------------- |
+| Top-left     | Product line as a row, 14px gaps | Two 44px rows stacked, no gap |
+| Top-right    | Row, 34px tall, 18px gap         | Row, 44px tall, 10px gap      |
+| Bottom-left  | Row, 40px gap                    | Stacked, 7px gap              |
+| Bottom-right | Row, 40px gap                    | Stacked, 7px gap              |
 
-The stacked gap is **7px** throughout, which is the gap the top-left cluster already
-uses between its two rows. Stacking does not introduce a second vertical rhythm.
+The stacked gap is **7px** for the two bottom clusters, and that is the chrome's one
+stacked rhythm. Stacking does not introduce a second.
+
+**The top-left cluster is the exception and the gap between its targets is zero.** That
+is not a second rhythm but the absence of one: the two 44px hit areas tile directly, and
+a gap on top of them would open a strip between two adjacent targets where a tap lands on
+neither. What separates the two names is set by where each label sits inside its own
+target — see _The labels bracket the toggle_ below — not by a gap between the targets.
 
 **Why the top-right cluster stays a row.** It is the only cluster holding two controls
 rather than lines of telemetry, and two controls fit beside each other at 320px where
@@ -457,10 +530,57 @@ still a row and the items it divides are still beside each other.
 area at least **44px** tall. The label stays 10px: this is padding, not scale, and it is
 the distinction the low-prominence rule turns on.
 
-The height belongs to the row, not to the controls. The top-right row is 34px above the
-breakpoint and 44px below it, and both children stretch to fill it, so neither carries a
-height or padding of its own. A control that sizes itself is a control that can disagree
-with the one beside it.
+In the top-right cluster the height belongs to the row, not to the controls. That row is
+34px above the breakpoint and 44px below it, and both children stretch to fill it, so
+neither carries a height or padding of its own. A control that sizes itself is a control
+that can disagree with the one beside it.
+
+**In the top-left cluster there is no shared row to hold it, so each button carries its
+own 44px.** Stacked, the two are not beside each other and have nothing to disagree
+with. The height applies below the breakpoint only; above it each button is the height
+of its own type, exactly as it was when it was a span. Each is also only as wide as its
+own label — `CONSTELLATION` and `NORTHSTAR` are both far wider than 44px, so no width
+has to be added, and keeping each target to its word leaves the rest of the corner
+reaching the motif.
+
+**The two top clusters are centred on each other below the breakpoint.** This one is
+88px tall and the top-right row is 44px, so anchoring both at a fixed offset from the top
+leaves the taller one hanging 28px below the shorter one, and the top edge reads as two
+rows at two different heights rather than as one. The offset that produces the centring
+is in `docs/design/home.md`, derived there from the top-right cluster's 56px rather than
+chosen; that cluster does not move.
+
+**The labels bracket the toggle.** `CONSTELLATION`'s label begins on the sign-in toggle's
+top edge and `NORTHSTAR`'s ends on its bottom edge, so the two names span exactly the
+44px the toggle spans. That is what makes the top edge read as one band rather than as a
+short row and a tall one: every element along it starts and ends together.
+
+**The label is not centred in its target, and that is what lets both rules hold at
+once.** Centred, a 44px target puts its label in the middle of itself, and two of them
+stacked put the two labels 44px apart — far enough that the pair stops reading as a pair,
+which is the composition this replaces. So the target keeps its 44px and the label moves
+inside it: `CONSTELLATION`'s sits at the bottom of its box and `NORTHSTAR`'s at the top,
+each 7px from that edge, which is the chrome's stacked rhythm doing the only job left for
+it here. The labels end up 44px apart at their outer edges and 14px apart at their
+facing ones.
+
+The targets still tile at the shared centre line, so neither loses a pixel and they do
+not overlap. Each one's slack runs outward, away from the other control, which is the
+direction a mis-aimed tap goes anyway.
+
+**None of this shrinks a target, and nothing here licenses shrinking one.** The
+44px rule is not negotiable against composition: when the two disagreed, what moved was
+the label's position inside its target, not the size of the target. If a future change
+makes the two names sit closer still, the thing that has to give is the type's position
+or the cluster's height, never the 44px.
+
+**The composition that produces at 320 x 568.** Measured: the cluster is 88px tall, two
+44px targets, pinned 34px from the top, so it ends 122px into a 568px window. The
+bottom-left cluster starts at 507px, so the two clear each other by 385px — the height
+the touch targets add is spent on empty corner. The visible type runs 56px to 100px,
+matching the toggle's box to the pixel. Nothing changes horizontally: each button is the
+width of the word that was there before it, the cluster still ends 128px from the left
+edge, and the gutter to the top-right cluster is unchanged at 33px.
 
 **Anchoring** is unchanged — all four clusters stay pinned to the four true corners at
 every width. The margins they are pinned at, and the safe-area insets added to them, are
@@ -485,9 +605,14 @@ The clock continues updating under reduced motion. It is information, not animat
 All four clusters sit above the motif canvas and above the vignette layer, so they
 remain legible against the globe.
 
-The two bottom clusters and the top-left cluster are non-interactive and must not
-intercept pointer events over the canvas beneath them. Only the two buttons in the
-top-right cluster are interactive.
+The corner regions are non-interactive and must not intercept pointer events over the
+canvas beneath them. Every interactive element opts back in for itself and nothing else
+does. There are four of them: the two product names, the entry point and the sign-in
+toggle. The two bottom clusters are entirely inert, and so is everything in the top-left
+cluster that is not one of its two buttons, the separator included.
+
+That is what keeps the motif reachable. A click in the top-left corner that is not on a
+product name still lands on the canvas beneath, and the points there still scatter.
 
 ---
 
@@ -497,10 +622,14 @@ Do not invent behaviour for any of the following. Stop and ask.
 
 - **The action behind the `p_Q` button.** The conversational surface it opens is not
   designed.
-- **Making the product names clickable.** They are plain text for now. Do not add link
-  markup, routes, or hover states in anticipation.
-- **The type size of the product names once they become buttons.** Decided on that
-  ticket, in this file, before the code changes. See _What the chrome is for_.
+- **The destinations behind the two product names.** Both are buttons and both are
+  inert. Neither Constellation nor Northstar has a designed surface, nothing is routed
+  anywhere, and the page ships three controls that do nothing knowingly — the surfaces
+  are close behind.
+- **An accessible name for `p_Q`.** The other three controls have one. This one cannot,
+  because an accessible name has to say what a button does and `p_Q`'s action is the
+  entry above. A screen reader reads its visible label instead, which is poor, and the
+  fix arrives with the surface rather than ahead of it.
 
 ---
 
