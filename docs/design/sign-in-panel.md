@@ -402,6 +402,20 @@ Do not invent behaviour for any of the following. Stop and ask.
   does when a virtual keyboard takes half the viewport is not, and cannot be settled
   against a placeholder. Decide it when the fields are built, and verify it on a device
   rather than in an emulator.
+- **How the panel behaves in landscape.** The panel is a fixed 572px tall. A phone on
+  its side reports roughly 330px of viewport with the browser's toolbar showing, so the
+  panel is close to twice the height of the window it opens in and the page scrolls
+  badly for the whole of its use. This is not the keyboard case above and it is not
+  fixed by it: the panel does not fit before anything is focused.
+
+  The chrome now reflows on a short window as well as a narrow one — see
+  `docs/design/chrome.md` — and the panel does not, deliberately. The reflow ticket
+  ruled the panel out of its own scope rather than guessing at an answer here, and the
+  fixed height is load-bearing enough that shortening it is a decision for this file.
+  The options are all real and none is obviously right: a shorter landscape composition,
+  a scrolling panel that owns its own scroll rather than the page's, or refusing the
+  landscape orientation for this surface. Decide it against the built panel, not against
+  the placeholder, and record the reasoning here.
 
 ---
 

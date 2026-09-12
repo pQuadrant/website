@@ -165,9 +165,10 @@ an accessible name — since neither product name on its own says what its butto
 ## Top-left cluster
 
 Anchored at the margin from the left edge and **62px** from the top, falling to **34px**
-below 640px so that this cluster and the top-right one share a centre line once this one
-is two touch targets tall. The horizontal margin tiers with the window; the top offset
-does not tier, and the one value that changes does so for that reason rather than for
+in a tight window — narrow or short, see _Narrow windows, and short ones_ — so that this
+cluster and the top-right one share a centre line once this one is two touch targets
+tall. The horizontal margin tiers with the window's width alone; the top offset does not
+tier, and the one value that changes does so to hold the centre line rather than for
 room. Both tables are in `docs/design/home.md`.
 
 One row. The server line that used to sit beneath it has moved to the bottom-right
@@ -234,7 +235,7 @@ baseline, and the `/` still sits between two of them rather than between two box
 these become bordered boxes it would have had to go — a divider between two things that
 already have edges of their own is a third edge. They did not, so it stays. It remains
 decorative, remains the one mark in the chrome that does not emit, and is still dropped
-below 640px where the names stack.
+in a tight window, where the names stack.
 
 **Accessibility.** A button whose action is unimplemented still needs an accessible name
 saying what it will do, and a product name on its own does not say it. Both are held in
@@ -426,7 +427,7 @@ Anchored at the margin from the right edge and the same margin from the bottom. 
 tier with the window; the table is in `docs/design/home.md`.
 
 Two items, laid out exactly as the bottom-left cluster is: a horizontal row with a
-**40px** gap above the breakpoint, a column with a **7px** gap below it. The two ends of
+**40px** gap in a roomy window, a column with a **7px** gap in a tight one. The two ends of
 the bottom edge carry the same class of information and are arranged the same way, so
 the edge reads as one line of telemetry rather than as two arrangements that happen to
 share a colour.
@@ -481,22 +482,72 @@ time on each update rather than incrementing a stored value.
 
 ---
 
-## Narrow windows
+## Narrow windows, and short ones
 
-Below **640px** the clusters carrying more than two items become vertical columns. The
-top-right cluster is the exception and stays a row at every width.
+The clusters carrying more than two items become vertical columns when the window runs
+out of room. The top-right cluster is the exception and stays a row always.
+
+**There are two ways to run out of room, and either one triggers the same reflow.** A
+window is out of room when it is narrower than **640px** _or_ shorter than **500px**.
+One composition, one reflow of it, reachable from two directions — not two compositions.
+
+The second trigger exists because a phone in landscape is not narrow; it is short. An
+iPhone 15 Pro Max on its side is about 930px wide, which is comfortably above 640px, so
+a rule written against width alone hands it the desktop composition and then gives it
+330px of height to put it in. The bottom-left cluster is the widest thing in any corner
+— `PQ-CORE 4.2.118` and `TLS 1.3 · AES-256-GCM` on one row is 306px — so its inner
+corner reaches furthest toward the centre of the stage, and that is what the motif runs
+into. Measured on the page before this rule existed, that cluster cleared the motif by
+11px at 932 x 430 and **overlapped it by 12px at 844 x 390**. Stacked, at the same sizes,
+it clears by 115px and 84px.
+
+**Stacking helps in landscape, which is not the obvious result.** Stacking makes a
+cluster taller, and height is the scarce axis there, so the intuition is that it must
+make things worse. What is being protected is the _diagonal_ distance from the centre of
+the stage to the cluster's inner corner. Stacking the bottom-left cluster pulls that
+corner far further inward horizontally than it pushes it upward, and in a window twice as
+wide as it is tall the horizontal term dominates.
+
+**Where 500px comes from.** It is the gap between the tallest phone in landscape and the
+shortest tablet in landscape, and both bounds were checked rather than assumed. The
+tallest phone viewport is **480px** — a Galaxy S24 Ultra on its side with no browser
+chrome; an iPhone 15 Pro Max is 430px, and a landscape phone showing Safari's toolbar is
+nearer 330px. The shortest tablet in landscape is an iPad mini at **744px**. 500px clears
+the phone bound by 20px and sits 244px below the tablet bound, which is what keeps
+`docs/design/home.md`'s "there is no tablet composition" true.
+
+**The 20px is the tight side, and it is the number to re-derive if this is ever
+retuned.** A phone taller than 500px on its short edge would take the desktop
+composition and the motif would clash with the corner again. Nothing on the market is
+close, but the headroom below is an order of magnitude smaller than the headroom above,
+and only one of the two bounds can be moved without breaking the other rule.
 
 **Nothing is hidden and no type is scaled.** Every string in this file is on screen at
-every supported width, at 10px, in the corner it belongs to. If a narrow window is ever
-made to fit by dropping a string or shrinking type, that is the wrong fix — the lever is
-the direction a cluster runs in.
+every supported size, at 10px, in the corner it belongs to. If a narrow or a short window
+is ever made to fit by dropping a string or shrinking type, that is the wrong fix — the
+lever is the direction a cluster runs in.
 
-| Cluster      | Above 640px                      | Below 640px                   |
+Below, _roomy_ means at least 640px wide **and** at least 500px tall. _Tight_ means
+either one of those is not met.
+
+| Cluster      | Roomy                            | Tight                         |
 | ------------ | -------------------------------- | ----------------------------- |
 | Top-left     | Product line as a row, 14px gaps | Two 44px rows stacked, no gap |
 | Top-right    | Row, 34px tall, 18px gap         | Row, 44px tall, 10px gap      |
 | Bottom-left  | Row, 40px gap                    | Stacked, 7px gap              |
 | Bottom-right | Row, 40px gap                    | Stacked, 7px gap              |
+
+**The top-right cluster's 44px comes across to a short window too.** Landscape is a
+coarse pointer exactly as portrait is, so its two controls keep the touch height they
+have below 640px. A short window is not a reason to shrink a target, and this is the one
+place where the reflow makes a cluster taller on the axis that is already scarce. It
+costs 10px and it is not negotiable.
+
+**The margin tier does not come with the reflow.** The 24px margins belong to a window
+that has run out of _horizontal_ room; a landscape phone has 930px of it. At 932 x 330
+the left, right and bottom margins stay on their 40px tier while every cluster stacks.
+The two things were driven by one breakpoint because until now there was only one way to
+be short of room. See the Margins section of `docs/design/home.md`.
 
 The stacked gap is **7px** for the two bottom clusters, and that is the chrome's one
 stacked rhythm. Stacking does not introduce a second.
@@ -514,9 +565,9 @@ in one place instead of running them down the corner: the entry point is a butto
 and it will do something once the surface behind it exists. At 320px the row leaves a
 23px gutter between the two top clusters.
 
-Its gap tightens from 18px to 10px below the breakpoint, for the same reason the stage
-margin tightens: there is less room. Nothing else about it changes, and its divider
-stays.
+Its gap tightens from 18px to 10px in a tight window, for the same reason the stage
+margin tightens on the narrow trigger: there is less room. Nothing else about it changes,
+and its divider stays.
 
 **The product line's separator is dropped.** The `/` divides two items sitting side by
 side. Stacked, they are not side by side, and a divider between two things one above the
@@ -526,24 +577,24 @@ marked as decorative, so nothing in `src/content/` changes when it goes.
 The top-right cluster's hairline divider is **not** dropped, because that cluster is
 still a row and the items it divides are still beside each other.
 
-**Touch targets.** Below the breakpoint every interactive element in the chrome has a hit
+**Touch targets.** In a tight window every interactive element in the chrome has a hit
 area at least **44px** tall. The label stays 10px: this is padding, not scale, and it is
 the distinction the low-prominence rule turns on.
 
 In the top-right cluster the height belongs to the row, not to the controls. That row is
-34px above the breakpoint and 44px below it, and both children stretch to fill it, so
+34px in a roomy window and 44px in a tight one, and both children stretch to fill it, so
 neither carries a height or padding of its own. A control that sizes itself is a control
 that can disagree with the one beside it.
 
 **In the top-left cluster there is no shared row to hold it, so each button carries its
 own 44px.** Stacked, the two are not beside each other and have nothing to disagree
-with. The height applies below the breakpoint only; above it each button is the height
-of its own type, exactly as it was when it was a span. Each is also only as wide as its
+with. The height applies in a tight window only; in a roomy one each button is the
+height of its own type, exactly as it was when it was a span. Each is also only as wide as its
 own label — `CONSTELLATION` and `NORTHSTAR` are both far wider than 44px, so no width
 has to be added, and keeping each target to its word leaves the rest of the corner
 reaching the motif.
 
-**The two top clusters are centred on each other below the breakpoint.** This one is
+**The two top clusters are centred on each other in a tight window.** This one is
 88px tall and the top-right row is 44px, so anchoring both at a fixed offset from the top
 leaves the taller one hanging 28px below the shorter one, and the top edge reads as two
 rows at two different heights rather than as one. The offset that produces the centring
