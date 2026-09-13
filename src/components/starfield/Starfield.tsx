@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { motifRadius } from "@/lib/globe/projection";
+import { chromeClearance } from "@/lib/stage/chrome-clearance";
 import { drawAmbient, drawStars } from "@/lib/starfield/draw";
 import { createPointerResponse } from "@/lib/starfield/pointer-response";
 import { createStarfield } from "@/lib/starfield/starfield-points";
@@ -96,14 +97,28 @@ export function Starfield() {
       ambient.setTransform(ratio, 0, 0, ratio, 0, 0);
       field.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-      // The falloff is defined against the motif radius, so it is read from the
-      // motif's own module rather than a second copy of the formula living here.
-      const radius = motifRadius(width, height);
       // The same centre the motif draws on, from the same declaration. If these
       // two ever diverge the ambient hole stops sitting over the sphere and its
       // ramp lands on the rim as a halo — see the Motif centring section of
       // `docs/design/home.md`.
       const centreY = stageCentreY(starsCanvas, height);
+
+      // The falloff is defined against the motif radius, so it is read from the
+      // motif's own module rather than a second copy of the formula living here.
+      //
+      // Every argument has to match what the motif passes, not just the
+      // function. The radius rule reads the *visible* height and the room the
+      // corner chrome leaves, and this canvas is `lvh` like the motif's — so
+      // `height` is the wrong number here for exactly the reason it is the wrong
+      // number there. Hand it the same two terms and the ambient hole keeps
+      // sitting over the sphere; hand it `height` and the ramp lands on the rim
+      // as a halo welded to it, which is the failure the tonal-range work was
+      // done to remove.
+      const radius = motifRadius(
+        width,
+        centreY * 2,
+        chromeClearance(starsCanvas, width / 2, centreY),
+      );
       const stars = createStarfield(width, height, radius, centreY);
 
       drawAmbient(ambient, width, height, radius, centreY);

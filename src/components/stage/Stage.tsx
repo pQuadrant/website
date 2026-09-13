@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { CHROME_CORNER_ATTRIBUTE } from "@/lib/stage/chrome-clearance";
+
 /**
  * The stage: the full-window surface every other part of the home page sits on.
  *
@@ -141,6 +143,14 @@ export function Stage({
           without taking its clicks. A cluster with something interactive in it
           opts that element back in.
 
+          They carry `data-chrome-corner` so the motif can measure them. One of
+          the four terms in its radius rule is the room these leave it, and the
+          margins and offsets that decide that are all in the CSS above — so the
+          motif reads the boxes rather than keeping a second copy of the rules
+          that produce them. The marker is on the region and not on the cluster
+          inside it, because the margin is the part the motif has to stay out
+          of. See the Motif sizing section of `docs/design/home.md`.
+
           `fixed`, not `absolute`, and pinned to the window exactly as the two
           canvases are. Positioned in the document they moved when the document
           did, and the canvases did not, so a touch screen's rubber-band drag
@@ -162,16 +172,28 @@ export function Stage({
           hit-testable from the first frame, so the sign-in toggle answers a
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
-      <div className="pointer-events-none fixed top-[34px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[62px] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none">
+      <div
+        className="pointer-events-none fixed top-[34px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[62px] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
+        {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
+      >
         {topLeft}
       </div>
-      <div className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none">
+      <div
+        className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none"
+        {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
+      >
         {topRight}
       </div>
-      <div className="pointer-events-none fixed bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] stage-narrow:bottom-stage-margin-narrow stage-narrow:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none">
+      <div
+        className="pointer-events-none fixed bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] stage-narrow:bottom-stage-margin-narrow stage-narrow:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none"
+        {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
+      >
         {bottomLeft}
       </div>
-      <div className="pointer-events-none fixed right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] stage-narrow:bottom-stage-margin-narrow stage-narrow:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none">
+      <div
+        className="pointer-events-none fixed right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] stage-narrow:bottom-stage-margin-narrow stage-narrow:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none"
+        {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
+      >
         {bottomRight}
       </div>
     </main>

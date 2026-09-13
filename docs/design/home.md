@@ -309,19 +309,111 @@ the panel is centred far from any of them.
 
 ## Motif sizing
 
-The motif's radius is:
+The motif's radius is the **smallest of four terms**, with a floor:
 
 ```
-radius = min(window width, window height) × 0.44
+visibleHeight = 2 x --stage-centre-y          (svh, not the canvas height)
+
+factor   = min(window width, visibleHeight) x 0.44
+cap      = 396
+corners  = min over the four clusters of ( distance(centre, cluster's nearest point) - 24 )
+edge     = visibleHeight / 2 - 24
+
+radius   = max( 48, min(factor, cap, corners, edge) )
 ```
 
-capped at a maximum of **396px**.
+The centre the distances are measured from is (`width / 2`, `--stage-centre-y`) — the
+same centre everything else on this stage draws on, see _Motif centring_ below.
 
-396px is the radius this formula produces at 1440 × 900, which is the size the design
-was composed at. Without the cap the globe continues growing on large monitors and the
-relationship between the globe, the panel and the corner chrome no longer matches the
-design. Below that threshold the globe scales down with the window as the formula
-describes.
+**`visibleHeight` is the height the visitor can see, and it is not the canvas height.**
+The canvases are `lvh` and stay `lvh`; that rule is right and is not what this is. `lvh`
+is the viewport with the browser's retractable UI retracted, which is the tallest it ever
+gets, so a radius taken from it sizes the globe for a window taller than the one it is
+centred in and the sphere overhangs by half the difference at each end. In portrait that
+is about 60px out of 844 and nobody sees it. In landscape the browser's chrome is a far
+larger share of a far shorter viewport — around 100px out of 430 — and the sphere is cut
+off at the top **and** the bottom.
+
+Read it the way `src/lib/stage/centre.ts` does and double it. **Do not read
+`window.innerHeight`.** That is the _visual_ viewport, which changes as a mobile
+browser's toolbar slides, so the globe would be re-measured part way through a scroll and
+visibly resize — the same failure the `lvh` canvas rule exists to prevent, arrived at from
+a new direction.
+
+**Only landscape moves.** In portrait and on a desktop the width is the smaller dimension
+or the cap binds, so changing the height input changes nothing at all. Measured against
+the previous rule, the radius is identical to the hundredth of a pixel at 1440 x 900,
+1920 x 1080, 2560 x 1440, 1512 x 855, 768 x 1024, 430 x 932, 390 x 844, 360 x 640 and
+320 x 568.
+
+### Which term governs where
+
+| Window                        | factor | cap | corners | edge  | radius | binds   |
+| ----------------------------- | ------ | --- | ------- | ----- | ------ | ------- |
+| 2560 x 1440                   | 634    | 396 | 1089    | 696   | 396    | cap     |
+| 1920 x 1080                   | 475    | 396 | 724     | 516   | 396    | cap     |
+| 1440 x 900                    | 396    | 396 | 486     | 426   | 396    | factor  |
+| 768 x 1024, tablet portrait   | 338    | 396 | 431     | 488   | 338    | factor  |
+| 390 x 844, phone portrait     | 172    | 396 | 283     | 398   | 172    | factor  |
+| 320 x 568, narrowest          | 140.80 | 396 | 141.13  | 260   | 140.80 | factor  |
+| 932 x 430, phone landscape    | 189    | 396 | 280     | 191   | 189    | factor  |
+| 932 x 330, with the toolbar   | 145    | 396 | 261     | 141   | 141    | edge    |
+| 844 x 390                     | 172    | 396 | 231     | 171   | 171    | edge    |
+| 740 x 320                     | 141    | 396 | 169     | 136   | 136    | edge    |
+| 667 x 375, iPhone SE sideways | 165    | 396 | 153     | 163.5 | 153    | corners |
+
+**320 x 568 is the tightest point in the whole rule and it is where a regression will
+show first.** The corner term misses binding there by **0.33px**. That is not slack that
+was left; it is what the portrait composition already had — the globe at the narrowest
+supported window sits 24.33px from the top-left cluster, and the corner term asks for 24.
+If anything in the chrome ever grows at that size, this is the number that goes negative
+and portrait stops being pixel-identical. Re-measure it rather than assuming it held.
+
+### The corner term
+
+Each cluster is a rectangle and the motif is a circle. The nearest point of the box to
+the circle's centre gives the largest radius that clears it, and 24px is held back so the
+sphere does not graze the type.
+
+**The argument for this shape is that it is inert everywhere it should be.** It is not a
+tuned number and it introduces no breakpoint: on every desktop and portrait window it
+sits far above the factor and the cap and can have no effect, and it only ever speaks on
+a small window in landscape. A breakpoint with a tuned factor would have to be tuned per
+size and would put a visible jump in the globe as a window crossed it.
+
+It measures the chrome where the chrome actually is, through a `data-chrome-corner`
+marker on the four corner regions, rather than recomputing the margins in script. The
+margins and offsets live in CSS and there must not be a second copy of them. The corner
+regions animate opacity only and are laid out from the first frame, so measuring them
+before the entrance finishes is safe.
+
+### The edge term, and what it is actually for
+
+It is **not** what stops the sphere being clipped. Once the factor reads the visible
+height the sphere cannot clip: `0.44 x height` is always less than `half the height`,
+whichever dimension is the smaller. Fixing the input is the whole of that fix.
+
+What the factor leaves is a band of `0.06 x visibleHeight` between the sphere and the top
+and bottom of what the visitor sees — 20px at 330px tall, 12px at 200px tall, and
+shrinking as the window does. The edge term is what makes that band a **stated 24px at
+every size** instead of a proportion that quietly runs out. It is the same 24px the
+corner term holds back, so there is one clearance number on this page and not two.
+
+### The floor
+
+48px. It exists so that a window squashed to a couple of hundred pixels — dragged there
+on a desktop, or a landscape phone with a keyboard open — cannot produce a radius of zero
+or a negative one. It binds below **144px** of visible height, which is below the point
+at which the four clusters meet each other and the composition stops being defined
+anyway. It is a guard against arithmetic, not a design value.
+
+### The cap
+
+396px is the radius the factor produces at 1440 x 900, the size the design was composed
+at, and that is still true of the factor above because the factor is unchanged in every
+window where the cap is in play. Without the cap the globe keeps growing on large
+monitors and the relationship between the globe, the panel and the corner chrome no
+longer matches the design.
 
 ---
 
