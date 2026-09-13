@@ -173,7 +173,7 @@ export function Stage({
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
       <div
-        className="pointer-events-none fixed top-[34px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-[62px] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
+        className="pointer-events-none fixed top-chrome-top-left-tight left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-chrome-top-left-roomy stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
         {topLeft}

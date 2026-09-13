@@ -38,7 +38,7 @@ export function TopRightCluster({
     // 44px below the breakpoint sizes them both without either one carrying
     // padding of its own. The gap tightens for the same reason the stage margin
     // does: there is less room.
-    <div className="flex h-[44px] items-stretch gap-[10px] font-mono text-label row:h-[34px] row:gap-[18px]">
+    <div className="flex h-chrome-touch items-stretch gap-chrome-row-gap-tight font-mono text-chrome-label row:h-chrome-control row:gap-chrome-row-gap">
       {/* Text only, so it reads as a word rather than a control until hovered.
           It is the entry point for a conversational surface that is not yet
           designed, and does nothing until that surface exists.
@@ -78,7 +78,7 @@ export function TopRightCluster({
         aria-controls={panelId}
         aria-label={toggle.accessibleLabel}
         onClick={onToggle}
-        className={`pointer-events-auto border border-fg-2 bg-control-fill px-[16px] transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0 ${
+        className={`pointer-events-auto border border-fg-2 bg-control-fill px-chrome-control-pad transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0 ${
           panelOpen
             ? "text-fg-2 text-shadow-glow-2"
             : "text-fg-0 text-shadow-glow-0"

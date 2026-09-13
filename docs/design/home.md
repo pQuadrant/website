@@ -294,6 +294,23 @@ from the browser's own chrome than the 22px and 16px the correction above threw 
 the visible type starts 48px down rather than 34px, because 17px of each 44px target is
 the padding that makes it a target.
 
+**The margins do not scale with the chrome.** Above 1024px wide the chrome grows with
+the window — the rule is in the chrome specification — and these four margins do not
+follow it. They keep their 64 / 40 / 24 tiers at every width.
+
+That is a decision rather than an omission. **A margin describes the window's edge; it
+does not describe the type sitting inside it.** The tiers above exist because a narrow
+window has less room to give away, which is a fact about the window; the chrome's scale
+exists because a 10px label claims a fifth as much of a 27-inch monitor as it does of a
+phone, which is a fact about the type. Tying them together would mean the widest windows
+got both the largest margin and the largest chrome, compounding in the same direction for
+two unrelated reasons.
+
+The top offsets are the exception, and they are not margins in this sense. **56px on the
+top-right cluster holds at every size**; the top-left cluster's offset is derived from it
+so that the two keep their optical relationship as the control height changes. Both
+derivations are in the chrome specification.
+
 **Safe areas.** The page declares `viewport-fit: cover`, so the stage reaches under a
 notch, a dynamic island and a home indicator rather than being letterboxed inside them.
 The margins above are then measured from the edge of the _usable_ display: the device's
@@ -375,11 +392,26 @@ Each cluster is a rectangle and the motif is a circle. The nearest point of the 
 the circle's centre gives the largest radius that clears it, and 24px is held back so the
 sphere does not graze the type.
 
-**The argument for this shape is that it is inert everywhere it should be.** It is not a
-tuned number and it introduces no breakpoint: on every desktop and portrait window it
-sits far above the factor and the cap and can have no effect, and it only ever speaks on
-a small window in landscape. A breakpoint with a tuned factor would have to be tuned per
-size and would put a visible jump in the globe as a window crossed it.
+**The argument for this shape is that it is inert almost everywhere.** It is not a tuned
+number and it introduces no breakpoint: on nearly every desktop and portrait window it
+sits far above the factor and the cap and can have no effect. A breakpoint with a tuned
+factor would have to be tuned per size and would put a visible jump in the globe as a
+window crossed it.
+
+**It is no longer inert on every desktop window, and that changed when the chrome gained
+a scale.** Above 1024px wide the chrome grows with the window — see the Scale section of
+`docs/design/chrome.md` — which moves its inner corners toward the centre of the stage.
+In a narrow band of window shapes, around **1100px to 1180px wide at roughly a 1.7
+aspect**, this term now binds where it previously did not, and the motif is **at most
+7.9px smaller**, about 2.8%, at 1120 x 650. Outside that band nothing changes: the sweep
+that found it also confirmed the radius is untouched from 1024px through 2600px at four
+aspect ratios.
+
+**That is the two rules working rather than fighting.** If the chrome grows, either the
+motif yields a little or the two touch; this term exists to settle exactly that, and it
+settles it against the motif on purpose. Both terms are continuous in width, so the motif
+shrinks and recovers smoothly across the band rather than stepping at an edge. If the
+chrome's scale is ever raised, this is the figure to re-measure.
 
 It measures the chrome where the chrome actually is, through a `data-chrome-corner`
 marker on the four corner regions, rather than recomputing the margins in script. The

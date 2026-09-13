@@ -36,7 +36,7 @@ interface TopLeftClusterProps {
  * type's own, which is what these were as spans.
  */
 const productNameBase =
-  "pointer-events-auto flex h-[44px] text-fg-1 text-shadow-glow-1 transition-[color,text-shadow] duration-hover ease-[ease] hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0 active:text-shadow-glow-0 row:block row:h-auto";
+  "pointer-events-auto flex h-chrome-touch text-fg-1 text-shadow-glow-1 transition-[color,text-shadow] duration-hover ease-[ease] hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0 active:text-shadow-glow-0 row:block row:h-auto";
 
 /**
  * The label is not centred in its target, and that is what lets both rules hold
@@ -54,8 +54,8 @@ const productNameBase =
  * align on their baselines.
  */
 const productNameClasses = {
-  first: `${productNameBase} items-end pb-[7px] row:pb-0`,
-  second: `${productNameBase} items-start pt-[7px] row:pt-0`,
+  first: `${productNameBase} items-end pb-chrome-stack-gap row:pb-0`,
+  second: `${productNameBase} items-start pt-chrome-stack-gap row:pt-0`,
 };
 
 export function TopLeftCluster({ content }: TopLeftClusterProps) {
@@ -71,7 +71,7 @@ export function TopLeftCluster({ content }: TopLeftClusterProps) {
 
        `items-start` so each button is the width of its own label and no wider,
        which leaves the rest of the corner reaching the motif beneath. */
-    <p className="flex flex-col items-start font-mono text-label text-fg-1 text-shadow-glow-1 row:flex-row row:items-baseline row:gap-[14px]">
+    <p className="flex flex-col items-start font-mono text-chrome-label text-fg-1 text-shadow-glow-1 row:flex-row row:items-baseline row:gap-chrome-product-gap">
       <button
         type="button"
         aria-label={content.productOne.accessibleLabel}

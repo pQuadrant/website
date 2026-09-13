@@ -70,13 +70,17 @@
      recessive, so the quiet corners are lit just enough to sit on the page
      rather than brought up level with the one control. */
   --text-shadow-glow-0:
-    0 0 5px rgba(234, 237, 244, 0.45), 0 0 14px rgba(234, 237, 244, 0.28);
+    0 0 calc(5 * var(--chrome-unit)) rgba(234, 237, 244, 0.45),
+    0 0 calc(14 * var(--chrome-unit)) rgba(234, 237, 244, 0.28);
   --text-shadow-glow-1:
-    0 0 4px rgba(139, 148, 162, 0.38), 0 0 12px rgba(139, 148, 162, 0.22);
+    0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
+    0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
   --text-shadow-glow-2:
-    0 0 4px rgba(89, 98, 110, 0.36), 0 0 11px rgba(89, 98, 110, 0.21);
+    0 0 calc(4 * var(--chrome-unit)) rgba(89, 98, 110, 0.36),
+    0 0 calc(11 * var(--chrome-unit)) rgba(89, 98, 110, 0.21);
   --text-shadow-glow-3:
-    0 0 3px rgba(65, 74, 86, 0.34), 0 0 10px rgba(65, 74, 86, 0.2);
+    0 0 calc(3 * var(--chrome-unit)) rgba(65, 74, 86, 0.34),
+    0 0 calc(10 * var(--chrome-unit)) rgba(65, 74, 86, 0.2);
 
   /* The sign-in toggle's body. A faint white lift that gives the only action on
      the page something to be, rather than two floating words.
@@ -102,7 +106,9 @@
      the halo carries the emission; neither alone is both crisp and of a piece
      with the rest of the chrome. */
   --shadow-glow-focus:
-    0 0 0 1px var(--color-fg-0), 0 0 16px 2px rgba(234, 237, 244, 0.3);
+    0 0 0 1px var(--color-fg-0),
+    0 0 calc(16 * var(--chrome-unit)) calc(2 * var(--chrome-unit))
+      rgba(234, 237, 244, 0.3);
 
   /* Accents */
   --color-accent: #a8c4f0;
@@ -123,12 +129,30 @@
   --text-value-passphrase--letter-spacing: 0.06em;
   --text-submit: 11px;
   --text-submit--letter-spacing: 0.22em;
+  /* The panel's. 10px and unscaled — the panel has its own type scale and the
+     chrome's scale must not reach it. The chrome's equivalents are
+     `--text-chrome-*` below. These two were one token until the chrome gained a
+     scale; they are the same size today and they are not the same decision. */
   --text-label: 10px;
   --text-label--letter-spacing: 0.2em;
   --text-subhead: 10px;
   --text-subhead--letter-spacing: 0.16em;
   --text-meta: 10px;
   --text-meta--letter-spacing: 0.14em;
+
+  /* The chrome's two type roles, and the only two type sizes in it. Both are
+     10 units, so the chrome still has exactly one type size — one *scaled*
+     size is still one size. They differ in tracking only: the top clusters
+     carry identity and controls at 0.2em, the bottom two carry telemetry at
+     0.14em.
+
+     Letter-spacing stays in `em` and is deliberately not multiplied by the
+     unit: `em` already scales with the font size, and scaling it again would
+     double the tracking as the window grew. */
+  --text-chrome-label: calc(10 * var(--chrome-unit));
+  --text-chrome-label--letter-spacing: 0.2em;
+  --text-chrome-meta: calc(10 * var(--chrome-unit));
+  --text-chrome-meta--letter-spacing: 0.14em;
   --text-error: 10px;
   --text-error--letter-spacing: 0.12em;
   --text-error--line-height: 1.6;
@@ -142,6 +166,44 @@
   --color-bloom-core: rgba(49, 131, 245, 0.42);
   --color-bloom-mid: rgba(79, 209, 131, 0.16);
   --color-bloom-edge: rgba(49, 131, 245, 0);
+
+  /* The chrome's dimensions, every one of them the same count of units as it
+     used to be pixels. They come from one number so the cluster keeps its
+     internal proportions at every window size instead of drifting apart — a
+     control that grows while the type inside it does not is how a control stops
+     fitting its label. See `docs/design/chrome.md`.
+
+     What is *not* here is as load-bearing as what is. Borders stay 1px, the
+     focus ring's ring stays 1px, and the four corner margins keep their
+     64/40/24 tiers. A border describes an edge and a margin describes the
+     window; neither describes the type sitting inside it. */
+  --spacing-chrome-control: calc(34 * var(--chrome-unit));
+  --spacing-chrome-touch: calc(44 * var(--chrome-unit));
+  --spacing-chrome-control-pad: calc(16 * var(--chrome-unit));
+  --spacing-chrome-row-gap: calc(18 * var(--chrome-unit));
+  --spacing-chrome-row-gap-tight: calc(10 * var(--chrome-unit));
+  --spacing-chrome-product-gap: calc(14 * var(--chrome-unit));
+  --spacing-chrome-meta-gap: calc(40 * var(--chrome-unit));
+  --spacing-chrome-stack-gap: calc(7 * var(--chrome-unit));
+
+  /* The top-left cluster's offset, derived from the top-right cluster's 56px
+     rather than chosen — which is the rule 86cbey2du established and the number
+     it said to re-derive if either cluster's height ever changed. The control
+     height now changes with the window, so both of these follow it.
+
+     Tight: the two clusters share a centre line. The top-right row is
+     `44u` tall from 56px, so its centre is `56 + 22u`; a stacked top-left
+     cluster is `88u` tall, so it starts at `56 + 22u - 44u`. At one unit that
+     is 34px, which is the value that shipped.
+
+     Roomy: the top-left is a single line of type, `15u` tall, and it sits 3.5px
+     above the centre the top-right row keeps — that lift is the 6px difference
+     between 62px and 56px, which `docs/design/home.md` records as optical and
+     says not to normalise. Holding it as a fixed 3.5px rather than scaling it
+     keeps the two edges reading together at every size; at one unit this is
+     62px, which is the value that shipped. */
+  --spacing-chrome-top-left-tight: calc(56px - 22 * var(--chrome-unit));
+  --spacing-chrome-top-left-roomy: calc(52.5px + 9.5 * var(--chrome-unit));
 
   /* Stage geometry */
   --spacing-stage-margin: 64px;
@@ -267,4 +329,31 @@
 
 :root {
   --stage-centre-y: 50svh;
+
+  /*
+   * The chrome's scale, as a length whose numeric value is the factor.
+   *
+   *   S = clamp(1, 1 + (viewport width - 1024px) x k, S_MAX)
+   *
+   * Held as a length rather than a plain number because a scale has to be
+   * multiplied into pixel values, and `calc()` cannot divide a length by a
+   * length to get one back. `calc(10 * var(--chrome-unit))` is the idiom: the
+   * unit carries the factor and every dimension states how many of it it is.
+   *
+   * At 1024px wide and below this is exactly 1px and nothing changes — which
+   * covers every phone in portrait and in landscape, the widest landscape phone
+   * viewport being about 932px. Above 1024px it grows with width and reaches
+   * S_MAX at 2560px, so an ultrawide does not keep inflating.
+   *
+   * Width, not `min(width, height)`. The motif uses the smaller dimension and
+   * the consistency would be pleasant, but the short side of a 14-inch MacBook
+   * Pro is 855px — nearer a phone's long side than a monitor — so a min-based
+   * ramp barely moves at exactly the size this rule exists to fix.
+   *
+   * `clamp()` rather than a breakpoint: it is continuous, so there is no size at
+   * which the chrome visibly jumps, and it adds no tier to the two
+   * `docs/design/home.md` allows. See `docs/design/chrome.md` for the derivation
+   * of S_MAX and the values it produces.
+   */
+  --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
 }
