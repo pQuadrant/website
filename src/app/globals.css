@@ -357,3 +357,51 @@
    */
   --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
 }
+
+/* A control shows a pointer cursor.
+ *
+ * One base rule for the whole page rather than a utility on each control.
+ * Showing a pointer is a property of *being* a control, not of any particular
+ * one — and a per-element approach is four places today, a dozen once the panel
+ * exists, and forgettable by construction: the failure is a new control
+ * shipping without it and nobody noticing for a month. See the Pointer
+ * behaviour section of `docs/design/home.md`, and do not add `cursor-pointer`
+ * to an element.
+ *
+ * Nothing was overriding this before. Every control on this page is a
+ * `<button>`, a browser's own stylesheet gives `<button>` an arrow, and only
+ * `<a href>` gets a pointer for free — so the glow was left doing all the work
+ * of saying "this is pressable" while the cursor said the opposite. Tailwind is
+ * the obvious suspect and is not to blame: its preflight has no cursor rule on
+ * buttons, only a comment about Safari's number-input spin buttons.
+ *
+ * The list is what activates on a click, and it stops there. `input` generally
+ * would take the caret away from the panel's text fields, which would look like
+ * an improvement while doing it; `[role]` generally would catch everything.
+ *
+ * Disabled is excluded for `:disabled` and `[aria-disabled="true"]` alike — a
+ * control can be disabled to assistive technology while still being focusable,
+ * and a pointer over it claims it is clickable. Nothing on this page is
+ * disabled yet; the panel's submit button will be while a sign-in is
+ * processing.
+ *
+ * Not gated behind `@media (hover: hover)`. The hover *states* need that guard
+ * and this does not: a device with no pointer never renders a cursor, so the
+ * rule is already inert there and the condition would do nothing.
+ *
+ * The motif is deliberately not here. Its canvas takes pointer events but is
+ * inert to the cursor; direct manipulation will want `grab` and `grabbing`,
+ * which is a different cursor and a different decision. */
+@layer base {
+  :is(
+    button,
+    a[href],
+    [role="button"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    summary
+  ):not(:disabled, [aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}

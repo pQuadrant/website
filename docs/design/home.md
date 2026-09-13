@@ -177,6 +177,46 @@ This layer is suppressed entirely when the user has requested reduced motion.
 Layers 1, 2, 4 and 5 must not intercept pointer events. Only the motif canvas and the
 chrome and panel above it are interactive.
 
+**A control shows a pointer cursor, everywhere on this page.** Anything a visitor clicks
+to make something happen — a button, an anchor with an `href`, anything carrying
+`role="button"`, a button-like `input`, a `summary` — shows `cursor: pointer` while the
+pointer is over it.
+
+This is a page-wide rule rather than a property of any particular control, and it is
+written once as a base rule in `globals.css`. **Do not add a `cursor-pointer` utility to
+an individual element.** A per-element approach is four places today and a dozen once the
+panel exists, and it is forgettable by construction: the failure is a new control
+shipping without it and nobody noticing for a month. Showing a pointer is a property of
+_being_ a control.
+
+**Every control on this page is a `<button>`, and a browser gives `<button>` an arrow.**
+Only `<a href>` gets a pointer for free. Nothing was overriding the rule before this —
+there was simply no rule, and the glow was left doing all the work of saying "this is
+pressable" while the cursor quietly said the opposite.
+
+**What the rule must not reach.** Text inputs keep the caret — the panel's `EMAIL` and
+`PASSPHRASE` fields want it, and a rule loose enough to catch `input` generally would
+take it away while looking like an improvement. Field labels are not pressable. And
+**anything disabled is excluded**, for `:disabled` and for `[aria-disabled="true"]`
+alike: a control can be disabled to assistive technology while still being focusable, and
+a pointer over it would claim it is clickable. Nothing on the page is disabled today; the
+panel's submit button will be while a sign-in is processing.
+
+**It is not gated behind `@media (hover: hover)`,** by analogy with the hover states or
+otherwise. Those need the guard; this does not. A device with no pointer never renders a
+cursor, so the rule is already inert there and a condition would do nothing.
+
+**The motif is not covered and is not an oversight.** The globe's canvas takes pointer
+events but is deliberately inert to the cursor — see `docs/design/globe.md`. When direct
+manipulation arrives it will want `grab` and `grabbing`, which is a different cursor and
+a decision for that ticket.
+
+**The three inert controls get the pointer too.** `p_Q`, `CONSTELLATION` and `NORTHSTAR`
+are buttons whose surfaces are not designed yet. They already carry hover, active and
+focus states and look pressable by design; a pointer is the same promise the glow is
+already making, and withholding it would make the page inconsistent with itself rather
+than more honest.
+
 **Colour scheme**
 
 There is no light mode. The stage fill is the surface colour in every condition, and

@@ -72,8 +72,18 @@ that is a bug.
 ## Styling
 
 Tailwind utility classes only. No CSS modules, no styled-components, no
-inline `style` props. `globals.css` holds Tailwind directives and design
-tokens only.
+inline `style` props. `globals.css` holds Tailwind directives, design tokens,
+and the page's base rules — the handful of declarations that apply to an
+element because of what it is rather than because of where it is used.
+
+**A control already shows a pointer cursor. Do not add `cursor-pointer` to an
+element.** `globals.css` carries one base rule covering `button`, `a[href]`,
+`[role="button"]`, the button-like `input` types and `summary`, and excluding
+anything disabled. Every control you add inherits it with no markup. Adding
+the utility as well leaves the codebase with two mechanisms and nobody able to
+say which is authoritative. The rule is stated in `docs/design/home.md` under
+_Pointer behaviour_; if a control needs a different cursor, that is a change
+to that file first.
 
 **A radial gradient's size percentages are radii, not extents.** `118% 88%`
 is an ellipse whose horizontal radius is 1.18 times the element's width — wider
