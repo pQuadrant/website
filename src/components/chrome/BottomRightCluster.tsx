@@ -23,7 +23,7 @@ interface BottomRightClusterProps {
 
 export function BottomRightCluster({ content }: BottomRightClusterProps) {
   return (
-    <div className="flex flex-col items-end gap-[7px] text-right font-mono text-meta text-fg-3 text-shadow-glow-3 row:flex-row row:gap-[40px]">
+    <div className="flex flex-col items-end gap-chrome-stack-gap text-right font-mono text-chrome-meta text-fg-3 text-shadow-glow-3 row:flex-row row:gap-chrome-meta-gap">
       <p>{content.server}</p>
       <p>
         {content.city} <Clock />

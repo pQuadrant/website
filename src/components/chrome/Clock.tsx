@@ -56,7 +56,7 @@ export const Clock = memo(function Clock() {
     // The slot holds the width of the eight characters it will contain,
     // tracking included, so the right-anchored cluster does not shift when the
     // first value appears or as the digits change.
-    <span className="inline-block w-[calc(8ch_+_8*var(--text-meta--letter-spacing))] whitespace-nowrap">
+    <span className="inline-block w-[calc(8ch_+_8*var(--text-chrome-meta--letter-spacing))] whitespace-nowrap">
       {time}
     </span>
   );

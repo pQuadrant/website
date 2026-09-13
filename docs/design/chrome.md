@@ -42,12 +42,139 @@ claim to being actionable than a larger size would make, and it costs the compos
 nothing. The treatment that carries it is in _Top-left cluster_ below.
 
 The rule has never barred a larger **touch target**, which is not the same thing as
-larger type. See _Narrow windows_ below.
+larger type. See _Narrow windows, and short ones_ below.
+
+**Nor does it bar the chrome growing with the window.** Low prominence is a claim about
+how much of the page the chrome takes up, and that is a proportion rather than a pixel
+count. Holding 10px from a phone to a 27-inch monitor does not hold the proportion
+steady; it shrinks it fivefold. See _Scale_ below.
 
 Everything here is set in IBM Plex Mono. The mono typeface carries anything labelled,
 metered or system-voiced, which on this page is all of the chrome. Wide letter-spacing
 is applied throughout and is not optional — these strings were composed with it, and
 they collapse into something generic without it.
+
+---
+
+## Scale
+
+**Every fixed dimension in this file is quoted at one unit, and a unit is a pixel only
+up to 1024px wide.** Above that the chrome grows with the window:
+
+```
+S = clamp(1, 1 + (viewport width - 1024px) x k, 1.7)     k = 0.7 / 1536
+```
+
+At 1024px and below `S = 1` and **nothing changes at all** — which covers every phone in
+portrait and in landscape, the widest landscape phone viewport being about 932px, and
+every window where this file's values already read correctly. Above 1024px it grows with
+width and reaches 1.7 at 2560px, holding there, so an ultrawide does not keep inflating.
+
+**One number drives every dimension.** Type size, control height, control padding and
+every gap are all stated as a count of units and multiply together. They are one cluster
+and this file describes them as one system; scaling them apart is how a control stops
+fitting the type inside it.
+
+### Why this exists
+
+The chrome had no size rule. Every dimension was a fixed pixel that held from 1024px
+wide to 3440px and beyond, and the only thing that changed with the window was the
+margin — which moves the wrong way, being largest on desktop, so the chrome was pushed
+further into the corners while staying exactly the same size.
+
+The result was an inversion nobody chose: **the only sized control on the page was
+smaller on a large monitor than on a phone**, 34px against 44px. That was a leftover
+rather than a decision. 44px arrived as a touch-target minimum below 640px and the
+desktop value above the breakpoint was never revisited against it, so a floor became the
+maximum by accident.
+
+### Width, not the smaller dimension
+
+The motif scales on `min(width, height)` and the consistency would be pleasant, but it
+does not work here. The short side of a 14-inch MacBook Pro is 855px — nearer a phone's
+long side than a monitor's — so a `min`-based ramp barely moves at exactly the size this
+rule exists to fix. Width is the axis the problem is measured on.
+
+### Why `S_max` is 1.7
+
+Two candidates were built and rendered: a restrained 1.5 and a present 1.7. The measure
+that decided it is the one the problem was reported against — **the sign-in control as a
+share of the viewport's height**, against the phone, which is the one size where this
+file's values already read correctly:
+
+| Window                | Before | `S_max` 1.5 | `S_max` 1.7 |
+| --------------------- | ------ | ----------- | ----------- |
+| 390 x 844, phone      | 5.21%  | 5.21%       | 5.21%       |
+| 1024 x 768, the floor | 4.43%  | 4.43%       | 4.43%       |
+| 1440 x 900            | 3.78%  | 4.29%       | 4.49%       |
+| 1512 x 855            | 3.98%  | 4.61%       | 4.86%       |
+| 1920 x 1080           | 3.15%  | 4.07%       | 4.43%       |
+| 2560 x 1440           | 2.36%  | 3.54%       | 4.01%       |
+
+**Neither candidate reaches the phone's proportion at any size, which is what settles
+it.** 1.7 cannot be too large by the measure the complaint was made in: at its maximum
+the control still claims less of the window than it does on a phone. 1.5 closes a little
+under half the gap at 2560 and leaves the reported problem largely in place. 1.7 closes
+about two thirds of it.
+
+**The argument against 1.7, recorded because it is real.** Corrected for viewing
+distance rather than screen share, the ramp slightly overshoots at the top end. Matching
+the phone's apparent size needs about 1.3x on a laptop and about 1.4x on a 27-inch
+monitor at arm's length; 1.7 arrives at 1.22x on the laptop and 1.7x on the monitor. It
+undershoots where the complaint came from and overshoots where it did not. A linear ramp
+between two fixed ends cannot do both, and the end that was reported is the laptop.
+
+### What these produce
+
+Type and control height, at `S_max` 1.7:
+
+| Window      | S    | Type   | Control    | Row gap |
+| ----------- | ---- | ------ | ---------- | ------- |
+| <= 1024     | 1.00 | 10px   | 34 x 90px  | 18px    |
+| 1440 x 900  | 1.19 | 11.9px | 40 x 107px | 21.4px  |
+| 1512 x 855  | 1.22 | 12.2px | 42 x 110px | 22.0px  |
+| 1920 x 1080 | 1.41 | 14.1px | 48 x 126px | 25.4px  |
+| 2560 x 1440 | 1.70 | 17.0px | 58 x 152px | 30.6px  |
+| 3440 x 1440 | 1.70 | 17.0px | 58 x 152px | 30.6px  |
+
+### What does not scale
+
+**Borders stay 1px** at every size. `docs/design/home.md` is unconditional about it, and
+a scale applied to the whole cluster with `zoom` or a transform would take the sign-in
+button's border with it. The scale multiplies stated dimensions; it is not a magnifier
+over the corner.
+
+**The focus ring's ring stays 1px** for the same reason. Its halo scales with the glow.
+
+**Letter-spacing does not scale**, because it is already in `em` and therefore scales
+with the type for free. Multiplying it again would double the tracking as the window
+grew.
+
+**The four corner margins keep their 64 / 40 / 24 tiers.** A margin describes the
+window's edge; it does not describe the type sitting inside it. That is recorded in the
+Margins section of `docs/design/home.md`.
+
+**The phone keeps its 44px touch target**, untouched, because the whole ramp is inert at
+and below 1024px. Above that the target only ever grows.
+
+### A breakpoint would have been the wrong shape
+
+`clamp()` is continuous, so there is no width at which the chrome visibly jumps, and it
+adds no tier to the two `docs/design/home.md` allows. A third tier with a tuned factor
+would need tuning per size and would put a step in the middle of a resize.
+
+### The one thing the scale reaches that is not the chrome
+
+Growing the chrome moves its inner corners toward the centre of the stage, and the
+motif's radius has a term that holds it clear of them. In a narrow band of window shapes
+— around **1100px to 1180px wide at roughly a 1.7 aspect** — that term now binds where it
+did not before, and the motif is **at most 7.9px smaller**, about 2.8%, at 1120 x 650.
+Everywhere else it is unchanged.
+
+That is the two rules working rather than fighting: the alternative to the motif yielding
+a little is the chrome touching it. Both terms are continuous in width, so the motif
+shrinks and recovers smoothly rather than stepping. The full rule is in the Motif sizing
+section of `docs/design/home.md`, which records this band.
 
 ---
 
@@ -74,8 +201,15 @@ Each halo is a **tight core plus a wide bleed**, not a single blur.
 The values are held as tokens in `globals.css`, `--text-shadow-glow-0` through
 `--text-shadow-glow-3`, and never as literals in a component.
 
+**The radii scale with the type.** Every value in the table above is a count of units,
+like everything else in this file — a halo tuned to a 10px stroke and left at a fixed
+blur would read tighter and harder as the type grew, because the same blur spreads
+proportionally less over a thicker stroke. Scaled, the halo is the same halo at every
+window size. The alphas do not scale; they are not lengths.
+
 **The core is not a refinement of the bleed; without it there is no visible effect.**
-This type is 10px, so its strokes are about a pixel across. Blur a one-pixel stroke over
+The reasoning below is written at one unit, where this type is 10px and its strokes are
+about a pixel across. Blur a one-pixel stroke over
 a ten-pixel radius and its light spreads across roughly twenty pixels, so the peak
 brightness falls by about that factor — a stop at 0.22 alpha arrives on screen as
 roughly **one level**. That is measurable and invisible, and it is exactly what the
