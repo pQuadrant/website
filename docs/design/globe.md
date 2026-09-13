@@ -254,6 +254,14 @@ screenY = centreY − Y × R
 `R` is the radius, specified in `docs/design/home.md`, multiplied by the current
 `contract` factor from the state table below.
 
+The radius is the smallest of four terms there — a factor on the smaller window
+dimension, the 396px cap, the room the corner chrome leaves, and a margin against the
+top and bottom of the visible viewport — with a 48px floor. The dimension the factor
+reads is the **visible** height, `2 x --stage-centre-y`, not the canvas height: the
+canvas is `lvh` and the visitor sees `svh`. Two of the four terms speak only on a small
+window in landscape and are inert on every desktop and portrait size. That file is where
+the rule lives; this one consumes it.
+
 `Z` is used only for depth. There is no perspective divide.
 
 ### Far-side culling
@@ -404,6 +412,13 @@ therefore gets denser as the window narrows, not smaller-but-identical:
 | ---------- | ------- | -------------------- | ------ | --------------------- |
 | 1440 × 900 | 396px   | —                    | 15,000 | ×1                    |
 | 390 × 844  | 171.6px | 19%                  | 15,000 | **×5.3**              |
+| 932 × 330  | 141px   | 13%                  | 15,000 | **×7.9**              |
+| 667 × 375  | 153px   | 15%                  | 15,000 | **×6.7**              |
+
+The last two are landscape, where `home.md`'s edge and corner terms bind and the disc is
+smaller than the old rule produced. **This is the densest the motif gets anywhere**, and
+it is the case to look at if the density is ever reported as a problem: the continents
+still have to read as continents rather than as one mass. They do at both sizes.
 
 **This is intentional. Do not "fix" it.** On a phone the same fifteen thousand points fall
 into a fifth of the area, the gaps between them close, and the globe reads as a denser and
@@ -421,6 +436,10 @@ _Not yet specified_. If it ever has to give, reach for the point **size** before
 count: scaling `size` with the radius thins the density without removing a single island,
 where cutting the count re-rolls the whole sphere and loses islands permanently — see
 _What the point count does and does not buy_.
+
+That rule is not negotiable and it applies to the landscape sizes above in particular.
+They are the smallest discs the motif is ever drawn into, so they are where the
+temptation to thin the field by dropping points will arrive first. The lever is `size`.
 
 ---
 

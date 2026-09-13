@@ -39,6 +39,7 @@ import {
   createGlobeState,
   snap,
 } from "@/lib/globe/state";
+import { chromeClearance } from "@/lib/stage/chrome-clearance";
 
 /**
  * Ceiling on the canvas backing store, as a multiple of the layout size.
@@ -145,7 +146,23 @@ export function createGlobe(
     // less than that. The panel, the density falloff and the ambient light all
     // centre on this same number.
     view.centreY = options.centreY(height);
-    view.radius = motifRadius(width, height);
+
+    // And not `height` either, for the same reason the line above is not
+    // `height / 2`. The radius used to read the canvas height while the centre
+    // read the visible one, so the globe was sized for one viewport and centred
+    // in a shorter one and overhung by half the difference at each end. Twice
+    // the centre is the visible height, which is the one number both of these
+    // now come from.
+    //
+    // The chrome term is measured here rather than per frame: the corner
+    // regions are laid out from the first frame and only their opacity
+    // animates, so this is a layout read on resize and not on every tick.
+    const visibleHeight = view.centreY * 2;
+    view.radius = motifRadius(
+      width,
+      visibleHeight,
+      chromeClearance(canvas, view.centreX, view.centreY),
+    );
 
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);

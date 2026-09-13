@@ -71,6 +71,31 @@ const RADIUS_FACTOR = 0.44;
 /** ...capped here, the radius the factor produces at 1440 x 900. */
 const RADIUS_CAP = 396;
 
+/**
+ * How far the sphere is held back from the top and bottom of what the visitor
+ * can see. The same number `chromeClearance` holds it back from the type, so
+ * this page has one clearance and not two.
+ *
+ * This is not what stops the sphere being clipped — reading the visible height
+ * is. `0.44 x height` is always less than half the height whichever dimension
+ * is the smaller, so once the input is right the sphere cannot reach the edge.
+ * What the factor leaves is a band of `0.06 x visibleHeight`, which is 20px at
+ * 330px tall and 12px at 200px tall and keeps shrinking. This is what makes
+ * that band a stated number instead of a proportion that quietly runs out.
+ */
+const EDGE_MARGIN = 24;
+
+/**
+ * The smallest radius the rule may produce.
+ *
+ * A guard against arithmetic rather than a design value: a window squashed to a
+ * couple of hundred pixels — dragged there on a desktop, or a landscape phone
+ * with a keyboard open — must not yield zero or a negative. It binds below
+ * 144px of visible height, which is already below the point at which the four
+ * corner clusters meet each other.
+ */
+const RADIUS_FLOOR = 48;
+
 /** Below this depth a point is drawn only if its index is even. */
 const CULL_DEPTH = -0.05;
 
@@ -144,9 +169,43 @@ export function createGlobeFrame(): GlobeFrame {
   };
 }
 
-/** Radius rule and cap, from `docs/design/home.md`. */
-export function motifRadius(width: number, height: number): number {
-  return Math.min(Math.min(width, height) * RADIUS_FACTOR, RADIUS_CAP);
+/**
+ * The radius rule, from the Motif sizing section of `docs/design/home.md`: the
+ * smallest of four terms, with a floor.
+ *
+ * `visibleHeight` is the height the visitor can see — `2 x --stage-centre-y`,
+ * which is `svh` — and **not** the canvas height. The canvas is `lvh`, the
+ * viewport with a mobile browser's retractable UI retracted, which is the
+ * tallest it ever gets; a radius taken from that sizes the globe for a window
+ * taller than the one it is centred in, and the sphere overhangs by half the
+ * difference at each end. In portrait that is about 60px out of 844 and invisible.
+ * In landscape it is around 100px out of 430 and the sphere is cut off top and
+ * bottom.
+ *
+ * `chromeLimit` is what the corner clusters leave, from
+ * `@/lib/stage/chrome-clearance`. It defaults to infinity so that a caller with
+ * no chrome to clear gets the rule without that term rather than a globe
+ * collapsed to its floor.
+ *
+ * Two of the four terms are inert on every desktop and portrait window and only
+ * ever speak on a small window in landscape. That property is the argument for
+ * this shape over a breakpoint with a tuned factor, which would have to be tuned
+ * per size and would put a visible jump in the globe as a window crossed it.
+ */
+export function motifRadius(
+  width: number,
+  visibleHeight: number,
+  chromeLimit: number = Number.POSITIVE_INFINITY,
+): number {
+  return Math.max(
+    RADIUS_FLOOR,
+    Math.min(
+      Math.min(width, visibleHeight) * RADIUS_FACTOR,
+      RADIUS_CAP,
+      chromeLimit,
+      visibleHeight / 2 - EDGE_MARGIN,
+    ),
+  );
 }
 
 /**
