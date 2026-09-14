@@ -73,3 +73,48 @@ export function chromeClearance(
 
   return nearest - CHROME_CLEARANCE;
 }
+
+/**
+ * Whether `panel` comes within `CHROME_CLEARANCE` of any corner region, at any
+ * scroll position.
+ *
+ * The regions are fixed and the panel is in the document, so on a window short
+ * enough to scroll the panel travels past them. Its reach is therefore taken
+ * across the whole scroll — from where it sits at the bottom of the scroll to
+ * where it sits at the top — which makes the answer a property of the window's
+ * size rather than of the current scroll, and stops the chrome flickering in
+ * and out as the page moves.
+ *
+ * Decides whether the chrome recedes while the panel is open. See _The chrome
+ * while the panel is open_ in `docs/design/sign-in-panel.md`.
+ */
+export function panelMeetsChrome(panel: Element): boolean {
+  const regions = document.querySelectorAll(`[${CHROME_CORNER_ATTRIBUTE}]`);
+  if (regions.length === 0) return false;
+
+  const box = panel.getBoundingClientRect();
+  const root = document.documentElement;
+  const travel = Math.max(0, root.scrollHeight - root.clientHeight);
+
+  // In viewport terms: lowest with the page at the top, highest at the bottom.
+  const top = box.top + window.scrollY - travel - CHROME_CLEARANCE;
+  const bottom = box.bottom + window.scrollY + CHROME_CLEARANCE;
+  const left = box.left - CHROME_CLEARANCE;
+  const right = box.right + CHROME_CLEARANCE;
+
+  for (const region of regions) {
+    const corner = region.getBoundingClientRect();
+    if (corner.width === 0 || corner.height === 0) continue;
+
+    if (
+      corner.left < right &&
+      corner.right > left &&
+      corner.top < bottom &&
+      corner.bottom > top
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}

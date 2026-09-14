@@ -195,7 +195,7 @@ there was simply no rule, and the glow was left doing all the work of saying "th
 pressable" while the cursor quietly said the opposite.
 
 **What the rule must not reach.** Text inputs keep the caret — the panel's `EMAIL` and
-`PASSPHRASE` fields want it, and a rule loose enough to catch `input` generally would
+`PASSWORD` fields want it, and a rule loose enough to catch `input` generally would
 take it away while looking like an improvement. Field labels are not pressable. And
 **anything disabled is excluded**, for `:disabled` and for `[aria-disabled="true"]`
 alike: a control can be disabled to assistive technology while still being focusable, and
@@ -549,20 +549,36 @@ On desktop `svh`, `lvh` and `dvh` are the same number and nothing about this is 
 
 ## Panel placement
 
-The panel is **400px** wide, centred horizontally and vertically on the stage, on the
-height given in _Motif centring_ — so the panel and the motif are concentric.
+The panel is centred horizontally and vertically on the stage, on the height given in
+_Motif centring_ — so the panel and the motif are concentric.
 
-Where 400px plus its clearance does not fit, the panel narrows to the window rather than
-holding 400px: its width is 400px or the window width less twice the narrow margin,
-whichever is smaller. At 320px the panel is 272px. It must never be allowed to shrink
-into its own clearance and sit edge to edge, which is what a fixed width on a flexible
-element does when the window is narrower than the width.
+It has two compositions, specified in the panel's own file: **portrait**, 400px wide,
+and **landscape**, 640px wide and 250px tall, used when the window is at least 640px wide
+and under 500px tall.
 
-It must never come closer than **64px** to the top or bottom edge of the window.
+Where the width plus its clearance does not fit, the panel narrows to the window rather
+than holding it: its width is the composition's width or the window width less twice the
+narrow margin, whichever is smaller. At 320px the portrait panel is 272px. It must never
+be allowed to shrink into its own clearance and sit edge to edge, which is what a fixed
+width on a flexible element does when the window is narrower than the width.
 
-The panel has a fixed height that does not change between its states, so its position
-is stable and nothing on the page moves when its contents change. The panel's own
-specification covers this — see _Related files_.
+**Vertical clearance.** The portrait panel never comes closer than **64px** to the top
+or bottom edge of the window. The landscape panel never comes closer than **24px**, or
+the bottom safe-area inset if that is larger. Landscape exists to fit a phone on its side
+— Safari gives an iPhone 15 Pro about 312px there — so 64px above and below would scroll
+it; 24px is the page's one clearance number, and it is larger than the 21px an iPhone's
+home indicator takes, so the panel's bottom edge clears the indicator too. At 312px the
+250px panel sits 31px from each edge.
+
+The panel's height does not change between its states, so its position is stable and
+nothing on the page moves when its contents change. The panel's own specification covers
+this — see _Related files_.
+
+**The chrome recedes where it would meet the panel.** While the panel is open, the corner
+chrome fades out if the panel would come within 24px of any corner cluster at any scroll
+position, and returns when the panel closes. On a desktop window of ordinary size nothing
+recedes. The rule and its reasoning are in the panel's specification, under _The chrome
+while the panel is open_.
 
 ---
 
@@ -618,13 +634,11 @@ follows, and applying it to the chrome is what makes the page consistent: before
 scroll slid the frame across the instrument, which this file cited as a reason the page
 must not scroll. The frame no longer slides, so that is no longer a reason.
 
-The accepted consequence is that on a window short enough to scroll, the chrome sits over
-the panel for the whole of the scroll rather than travelling out of the way. It already
-overlapped it at the top of the scroll, so this is more of an existing condition rather
-than a new one, and the corner regions take no pointer events, so nothing in the form
-becomes unreachable. **Whether the chrome should recede while the panel is open is a
-question for the panel's own specification**, not for this file, and it is not decided
-here.
+A window short enough to scroll would put the pinned chrome over the panel at some point
+in the scroll. This file used to accept that, on the grounds that the corner regions take
+no pointer events. They do not, but four controls inside them do, and one of them lands on
+the panel's own close button. **So on such a window the chrome recedes while the panel is
+open** — see _Panel placement_ above and the panel's specification.
 
 **The clearance is the padding.** The stage does not compute a minimum height from the
 panel's height. It reserves 64px above and below its content and lets the content decide
@@ -681,24 +695,26 @@ measured rather than assumed, and the phone bound is the tight one.
 
 **Verify at these window sizes:**
 
-| Size                        | Why                                                         |
-| --------------------------- | ----------------------------------------------------------- |
-| 320 × 568                   | The narrowest window supported; the tightest gutter         |
-| 360 × 640                   | Common small Android                                        |
-| 390 × 844                   | Common iPhone, the size the mobile problem was found at     |
-| 430 × 932                   | Large iPhone                                                |
-| 768 × 1024                  | Tablet portrait, on the desktop composition                 |
-| 932 × 430                   | Phone in landscape, browser chrome hidden                   |
-| 932 × 330                   | The same phone with Safari's toolbar showing — the real one |
-| 896 × 414                   | Phone in landscape, the tightest clearance measured         |
-| 844 × 390                   | Phone in landscape: short and wide at once                  |
-| 1060 × 480                  | Tallest phone in landscape; just inside the 500px trigger   |
-| 1133 × 744                  | iPad mini in landscape; must NOT take the tight composition |
-| 1512 × 855                  | 14-inch MacBook Pro, the primary development machine        |
-| 1440 × 900                  | The size the design was composed at                         |
-| 1920 × 1080                 | Common external monitor                                     |
-| 2560 × 1440                 | Confirms the motif cap holds and the composition survives   |
-| Any window under 700px tall | Confirms the page scrolls rather than clipping              |
+| Size                        | Why                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| 320 × 568                   | The narrowest window supported; the tightest gutter                               |
+| 360 × 640                   | Common small Android                                                              |
+| 390 × 844                   | Common iPhone, the size the mobile problem was found at                           |
+| 430 × 932                   | Large iPhone                                                                      |
+| 768 × 1024                  | Tablet portrait, on the desktop composition                                       |
+| 932 × 430                   | Phone in landscape, browser chrome hidden                                         |
+| 932 × 330                   | The same phone with Safari's toolbar showing — the real one                       |
+| 852 × 312                   | iPhone 15 Pro on its side, Safari's address and tab bars — measured on the device |
+| 896 × 414                   | Phone in landscape, the tightest clearance measured                               |
+| 844 × 390                   | Phone in landscape: short and wide at once                                        |
+| 1060 × 480                  | Tallest phone in landscape; just inside the 500px trigger                         |
+| 1133 × 744                  | iPad mini in landscape; must NOT take the tight composition                       |
+| 1512 × 855                  | 14-inch MacBook Pro, the primary development machine                              |
+| 1440 × 900                  | The size the design was composed at                                               |
+| 1920 × 1080                 | Common external monitor                                                           |
+| 2560 × 1440                 | Confirms the motif cap holds and the composition survives                         |
+| 667 × 375                   | iPhone SE on its side; the narrowest landscape panel                              |
+| Any window under 616px tall | Portrait panel open: the page scrolls rather than clipping                        |
 
 Verify with a coarse pointer as well as a fine one. They are different compositions and
 different behaviour, not the same page at two sizes.

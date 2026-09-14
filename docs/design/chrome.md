@@ -801,6 +801,25 @@ product name still lands on the canvas beneath, and the points there still scatt
 
 ---
 
+## While the sign-in panel is open
+
+All four clusters **recede** — fade out, stop taking pointer events, and leave the
+accessibility tree — whenever the open panel would come within 24px of any of them, and
+return when it closes. The fade is 700ms, the panel's own, and immediate under reduced
+motion. It applies to the whole frame at once rather than to the clusters that collide:
+a frame with one corner missing reads as a fault, not as a frame receding.
+
+On a desktop window of ordinary size, and on the larger portrait phones — 390 x 844 and
+up — nothing collides and nothing recedes; the toggle stays, reading `CLOSE`. On most landscape phones and
+on the smallest portrait phones everything does. The rule, the table of where it applies,
+and the reasoning are in `docs/design/sign-in-panel.md`.
+
+What recedes is opacity and visibility only. The corner regions keep their boxes, so the
+motif's corner term — which measures them — does not change and the globe does not resize
+when the panel opens.
+
+---
+
 ## Not yet specified
 
 Do not invent behaviour for any of the following. Stop and ask.

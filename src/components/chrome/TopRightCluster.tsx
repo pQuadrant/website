@@ -1,5 +1,7 @@
 "use client";
 
+import type { Ref } from "react";
+
 import type { ChromeTopRightContent } from "@/content/types";
 
 /**
@@ -16,6 +18,8 @@ interface TopRightClusterProps {
   onToggle: () => void;
   /** The id of the panel the toggle controls. */
   panelId: string;
+  /** The toggle, which is where focus returns when the panel closes. */
+  toggleRef?: Ref<HTMLButtonElement>;
 }
 
 export function TopRightCluster({
@@ -23,6 +27,7 @@ export function TopRightCluster({
   panelOpen,
   onToggle,
   panelId,
+  toggleRef,
 }: TopRightClusterProps) {
   const toggle = panelOpen
     ? content.signInToggle.open
@@ -73,6 +78,7 @@ export function TopRightCluster({
           transition: a focus indicator that fades in is a focus indicator that
           is briefly not there. */}
       <button
+        ref={toggleRef}
         type="button"
         aria-expanded={panelOpen}
         aria-controls={panelId}
