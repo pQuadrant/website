@@ -632,10 +632,41 @@ edge is hard: there is no gradient falloff. At 13% opacity the boundary is not v
 
 **The globe must not read this rectangle from the DOM.** The prototype looks up the
 panel element by id and measures it, which couples the render loop to the page's markup
-and to the panel's implementation. The zone is supplied to the module as four numbers by
+and to the panel's implementation. The zone is supplied to the module as four numbers, and the
+moment the panel's appearance began, by
 whatever owns the panel. See _Module contract_.
 
 When the panel is closed, the zone is null and no dimming is applied.
+
+**It fades in with the panel, and not ahead of it.** When a zone appears, its dimming
+arrives over **700ms on CSS's `ease` curve** — the panel's own appearance, value for
+value — from no dimming to the full 0.13. Dimmed at once, it showed as a dark rectangle
+26px larger than the panel on every side, arriving on the first frame while the panel
+was still fading in over it: the backdrop landed before the thing it was the backdrop
+for.
+
+**It is timed from the panel's own start, which the browser reports.** Whoever supplies
+the zone reads the start time of the panel's appearance animation once the animation is
+ready, and hands it over with the rectangle. The fade is measured from that moment on the
+page clock — the clock CSS animations are sampled on — so on every frame the zone and the
+panel are at the same point on the same curve; the curve itself matches the panel's
+computed opacity to four decimal places.
+
+Stamping the fade when the zone arrived was the first attempt and was wrong in the other
+direction from the one suspected. A CSS animation is held for a frame or two before it
+starts, so a fade stamped on arrival led the panel by **one to two frames**, measured in
+headless Chrome. Anchored to the reported start, the only difference left is the panel's
+first frame: the start time is reported after that frame is drawn, so the zone begins one
+frame later, when the panel is about 1% opaque. It cannot be closed without predicting the
+browser's scheduling.
+
+It is a curve rather than this module's usual exponential ease so that it reaches each
+opacity at the same moment the panel does. With no appearance animation — reduced motion
+— the start is the moment the zone is supplied, and the zone is painted at full strength.
+
+Only an appearance fades. A zone that moves, on resize or scroll, keeps its strength. A
+zone that is cleared goes at once, because the panel is removed at once. Under reduced
+motion the panel appears without a fade and so does the zone.
 
 ---
 
@@ -667,7 +698,7 @@ Everything it needs to know arrives through this surface:
 | Create         | Given a canvas element and options, generates geometry and starts |
 | Set status     | `idle`, `loading`, or `error`                                     |
 | Set focused    | Whether a form field currently has focus                          |
-| Set clear zone | Four numbers, or null to clear it                                 |
+| Set clear zone | Four numbers and when the panel began to appear, or null to clear |
 | Resize         | Recompute dimensions and backing store                            |
 | Destroy        | Cancel the loop, remove listeners, release buffers                |
 

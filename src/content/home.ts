@@ -8,7 +8,7 @@ import type { HomeContent } from "@/content/types";
  * below is quoted from one of those two files. If a string here disagrees with
  * the spec, the spec wins.
  *
- * Glyphs and the passphrase field's bullet mask are presentation, not
+ * Glyphs and the password field's bullet mask are presentation, not
  * language, and live in the components that draw them.
  */
 
@@ -76,6 +76,8 @@ export const homeContent: HomeContent = {
   },
 
   panel: {
+    dialogLabel: "Sign in",
+
     // `ESC` alone does not describe the action to a screen reader.
     escape: {
       label: "ESC",
@@ -90,10 +92,10 @@ export const homeContent: HomeContent = {
         label: "EMAIL",
         placeholder: "name@company.com",
       },
-      passphrase: {
+      password: {
         // The placeholder is a bullet mask, which is presentation and belongs
         // to the component.
-        label: "PASSPHRASE",
+        label: "PASSWORD",
       },
     },
 
@@ -106,6 +108,13 @@ export const homeContent: HomeContent = {
         `ATTEMPT ${attempt} OF ${MAX_SIGN_IN_ATTEMPTS} · SESSION LOGGED`,
     },
 
+    // One line each, and never the credentials error: an empty field is caught
+    // before anything is sent. Email is checked first.
+    missing: {
+      email: "ENTER AN EMAIL ADDRESS",
+      password: "ENTER YOUR PASSWORD",
+    },
+
     submit: {
       resting: "SIGN IN",
       processing: "AUTHENTICATING",
@@ -113,9 +122,8 @@ export const homeContent: HomeContent = {
     },
 
     footer: {
-      // Labels only. Neither destination has been decided, and the trailing
-      // arrow on `REQUEST ACCESS` is a glyph the component draws.
-      forgotPassphrase: "FORGOT PASSPHRASE",
+      // Labels only. Neither destination has been decided.
+      forgotPassword: "FORGOT PASSWORD",
       requestAccess: "REQUEST ACCESS",
     },
   },

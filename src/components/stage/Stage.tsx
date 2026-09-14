@@ -24,6 +24,10 @@ interface StageProps {
   bottomRight?: ReactNode;
   /** The panel, centred over the motif. */
   children?: ReactNode;
+  /** A sign-in attempt is processing: the auth bloom is up. */
+  bloom?: boolean;
+  /** The open panel would meet the chrome, so the chrome recedes. */
+  chromeReceded?: boolean;
 }
 
 export function Stage({
@@ -34,7 +38,23 @@ export function Stage({
   bottomLeft,
   bottomRight,
   children,
+  bloom = false,
+  chromeReceded = false,
 }: StageProps) {
+  /* Receding is opacity and visibility, on a wrapper inside each region rather
+     than on the region. The region's entrance animation holds its opacity with
+     a fill mode, which would override an opacity set beside it; and the region
+     keeps its box, so the motif's corner term measures the same thing and the
+     globe does not resize when the panel opens.
+
+     `invisible` takes the clusters out of hit testing and the accessibility
+     tree once the fade ends, and a transition on visibility flips it at the
+     start of a fade in, so a toggle returning with the panel's close is
+     focusable immediately. See `docs/design/chrome.md`. */
+  const recede = `transition-[opacity,visibility] duration-panel ease-[ease] motion-reduce:transition-none ${
+    chromeReceded ? "invisible opacity-0" : ""
+  }`;
+
   return (
     <main className="relative">
       {/* Layer 2 — starfield. Carries the ambient light as well as the stars,
@@ -59,8 +79,12 @@ export function Stage({
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(118%_88%_at_50%_46%,transparent_52%,var(--color-vignette)_100%)]" />
 
       {/* Layer 5 — auth bloom. At rest it is invisible; it is revealed only
-          while a sign-in attempt is processing, which nothing triggers yet. */}
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(42%_46%_at_50%_50%,var(--color-bloom-core)_0%,var(--color-bloom-mid)_46%,var(--color-bloom-edge)_78%)] opacity-0 mix-blend-screen transition-opacity duration-bloom ease-out motion-reduce:hidden" />
+          while a sign-in attempt is processing. */}
+      <div
+        className={`pointer-events-none fixed inset-0 bg-[radial-gradient(42%_46%_at_50%_50%,var(--color-bloom-core)_0%,var(--color-bloom-mid)_46%,var(--color-bloom-edge)_78%)] mix-blend-screen transition-opacity duration-bloom ease-out motion-reduce:hidden ${
+          bloom ? "opacity-100" : "opacity-0"
+        }`}
+      />
 
       {/* The panel region. It is at least the height of the window, and grows
           past it only when something inside it does not fit — which means the
@@ -89,8 +113,15 @@ export function Stage({
           it tracks a mobile browser's toolbar: the panel sat correctly while the
           toolbar showed, then slid to a new centre as it retracted while the
           motif stayed put — two layers centring on two heights, one of which
-          moves. */}
-      <div className="pointer-events-none relative flex min-h-[calc(var(--stage-centre-y)*2)] items-center justify-center py-stage-margin">
+          moves.
+
+          The landscape panel takes 24px, or the bottom safe-area inset if that
+          is larger. It exists to fit a phone on its side — Safari gives an
+          iPhone 15 Pro about 312px — and 64px above and below would scroll it.
+          24px is the page's one clearance number and clears the home indicator
+          as well. It is symmetric so the panel stays on the shared centre. See
+          Panel placement in `docs/design/home.md`. */}
+      <div className="pointer-events-none relative flex min-h-[calc(var(--stage-centre-y)*2)] items-center justify-center py-stage-margin panel-landscape:py-[max(24px,env(safe-area-inset-bottom))]">
         {children}
       </div>
 
@@ -176,25 +207,25 @@ export function Stage({
         className="pointer-events-none fixed top-chrome-top-left-tight left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-chrome-top-left-roomy stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        {topLeft}
+        <div className={recede}>{topLeft}</div>
       </div>
       <div
         className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        {topRight}
+        <div className={recede}>{topRight}</div>
       </div>
       <div
         className="pointer-events-none fixed bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] stage-narrow:bottom-stage-margin-narrow stage-narrow:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        {bottomLeft}
+        <div className={recede}>{bottomLeft}</div>
       </div>
       <div
         className="pointer-events-none fixed right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] stage-narrow:bottom-stage-margin-narrow stage-narrow:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        {bottomRight}
+        <div className={recede}>{bottomRight}</div>
       </div>
     </main>
   );

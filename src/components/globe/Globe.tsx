@@ -2,9 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { attachStateKeys } from "@/components/globe/state-keys";
 import { type GlobeHandle, createGlobe } from "@/lib/globe/globe";
-import type { ClearZone } from "@/lib/globe/state";
+import type { ClearZone, GlobeStatus } from "@/lib/globe/state";
 import { stageCentreY } from "@/lib/stage/centre";
 
 /**
@@ -23,13 +22,26 @@ import { stageCentreY } from "@/lib/stage/centre";
  */
 interface GlobeProps {
   /**
-   * Where the panel sits, or null when it is closed. Four numbers: the globe
-   * is told nothing else about it.
+   * Where the panel sits and when it began to appear, or null when it is
+   * closed. Four numbers and a time: the globe is told nothing else about it.
    */
   clearZone?: ClearZone | null;
+  /**
+   * The sign-in form's status. `error` is handed over once and the module
+   * clears it by itself after its hold, so this prop can still read `error`
+   * long after the motif has returned to idle. That is harmless: the next
+   * attempt passes through `loading`, so a second failure is still a change.
+   */
+  status?: GlobeStatus;
+  /** Whether a form field has focus. */
+  focused?: boolean;
 }
 
-export function Globe({ clearZone = null }: GlobeProps) {
+export function Globe({
+  clearZone = null,
+  status = "idle",
+  focused = false,
+}: GlobeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const globeRef = useRef<GlobeHandle | null>(null);
 
@@ -55,26 +67,28 @@ export function Globe({ clearZone = null }: GlobeProps) {
     const observer = new ResizeObserver(() => globe.resize());
     observer.observe(canvas);
 
-    // SCAFFOLDING: drives the states from the keyboard until the sign-in panel
-    // drives them for real. Delete this line, the one in the cleanup below, and
-    // `state-keys.ts`; see that file.
-    const detachStateKeys = attachStateKeys(globe);
-
     // Both halves matter: a fast refresh in development runs this cleanup and
     // then the effect again, and a globe that outlived it would leave a second
     // loop drawing to the same canvas.
     return () => {
-      detachStateKeys(); // SCAFFOLDING
       observer.disconnect();
       globe.destroy();
       globeRef.current = null;
     };
   }, []);
 
-  // Runs after the effect above on mount, so the handle is always there.
+  // These run after the effect above on mount, so the handle is always there.
   useEffect(() => {
     globeRef.current?.setClearZone(clearZone);
   }, [clearZone]);
+
+  useEffect(() => {
+    globeRef.current?.setStatus(status);
+  }, [status]);
+
+  useEffect(() => {
+    globeRef.current?.setFocused(focused);
+  }, [focused]);
 
   return (
     /* Decorative: it carries nothing a screen reader can use.

@@ -35,6 +35,7 @@ import {
   ERROR_HOLD_SECONDS,
   type GlobeStatus,
   advance,
+  applyClearZone,
   applyStatus,
   createGlobeState,
   snap,
@@ -267,7 +268,7 @@ export function createGlobe(
     },
     setClearZone(zone) {
       if (destroyed) return;
-      state.clearZone = zone;
+      applyClearZone(state, zone);
       settle();
     },
     resize() {

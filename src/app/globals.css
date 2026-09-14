@@ -125,8 +125,8 @@
      font-mono, which Tailwind cannot fold into a text token. */
   --text-value-email: 14px;
   --text-value-email--letter-spacing: -0.01em;
-  --text-value-passphrase: 14px;
-  --text-value-passphrase--letter-spacing: 0.06em;
+  --text-value-password: 14px;
+  --text-value-password--letter-spacing: 0.06em;
   --text-submit: 11px;
   --text-submit--letter-spacing: 0.22em;
   /* The panel's. 10px and unscaled — the panel has its own type scale and the
@@ -135,10 +135,17 @@
      scale; they are the same size today and they are not the same decision. */
   --text-label: 10px;
   --text-label--letter-spacing: 0.2em;
+  --text-label--line-height: 13px;
   --text-subhead: 10px;
   --text-subhead--letter-spacing: 0.16em;
+  --text-subhead--line-height: 13px;
   --text-meta: 10px;
   --text-meta--letter-spacing: 0.14em;
+  --text-meta--line-height: 13px;
+  /* The wordmark's typed stand-in, until the drawn mark is supplied. */
+  --text-wordmark: 14px;
+  --text-wordmark--letter-spacing: 0.02em;
+  --text-wordmark--line-height: 1;
 
   /* The chrome's two type roles, and the only two type sizes in it. Both are
      10 units, so the chrome still has exactly one type size — one *scaled*
@@ -158,6 +165,20 @@
   --text-error--line-height: 1.6;
   --text-esc: 9px;
   --text-esc--letter-spacing: 0.22em;
+  --text-esc--line-height: 1;
+
+  /* The panel's copies of the chrome's emission. The panel has its own scale
+     and the chrome's must not reach it, so these are the chrome's values at one
+     unit, fixed, rather than multiplied by `--chrome-unit`. */
+  --text-shadow-panel-glow:
+    0 0 5px rgba(234, 237, 244, 0.45), 0 0 14px rgba(234, 237, 244, 0.28);
+  --shadow-panel-focus:
+    0 0 0 1px var(--color-fg-0), 0 0 16px 2px rgba(234, 237, 244, 0.3);
+
+  /* The submit button while a sign-in is processing — the only box shadow on
+     the page. See `docs/design/sign-in-panel.md`. */
+  --shadow-submit-processing:
+    0 0 34px rgba(49, 131, 245, 0.45), inset 0 0 22px rgba(49, 131, 245, 0.16);
 
   /* Stage layer colours. The stage's five background layers compose with
      gradients rather than flat fills, so each stop is a token of its own.
@@ -210,11 +231,11 @@
   --spacing-stage-margin-narrow: 40px;
   --spacing-stage-margin-tight: 24px;
   --spacing-panel-width: 400px;
+  --spacing-panel-width-landscape: 640px;
 
-  /* The panel's fixed height, from `docs/design/sign-in-panel.md`. Every state
-     it can enter fits inside it, so nothing on the page moves when the form's
-     contents change. */
-  --spacing-panel-height: 572px;
+  /* There is no panel height token. The panel is the sum of boxes no state can
+     resize, which holds its height constant at every width; a stored value is
+     right at exactly one. See `docs/design/sign-in-panel.md`. */
 
   /* The motif's diameter ceiling: twice the 396px radius cap in
      `docs/design/home.md`. Below it the motif is min(width, height) x 0.88. */
@@ -256,6 +277,24 @@
      the animation. */
   --animate-stars-in: entrance-fade 400ms ease-out both;
   --animate-chrome-in: entrance-fade 520ms ease-out both;
+
+  /* The sign-in panel's appearance: opacity only, it does not slide or scale. */
+  --animate-panel-in: entrance-fade 700ms ease both;
+
+  /* The submit button's scan line. The line is 38% of the button, and a
+     transform percentage is of the line itself, so 263% (100 / 38) is the
+     distance that carries it from just off the left edge to just off the
+     right. */
+  --animate-scan: submit-scan 1100ms linear infinite;
+
+  @keyframes submit-scan {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(263%);
+    }
+  }
 
   @keyframes entrance-fade {
     from {
@@ -305,6 +344,16 @@
    token generates a width-only `min-width` query and this is a condition on
    both axes. */
 @custom-variant row (@media (width >= 640px) and (height >= 500px));
+
+/* `panel-landscape:` — the sign-in panel's landscape composition.
+
+   The chrome's short trigger with its narrow one excluded: under 500px tall is
+   what puts a 488px panel out of reach, and under 640px wide cannot hold two
+   columns, so a window that is both gets the portrait panel. Built from the
+   same two numbers as `row` and adding none, so it is not a third breakpoint.
+   Layout viewport, so an on-screen keyboard never swaps the composition under
+   the visitor. See `docs/design/sign-in-panel.md`. */
+@custom-variant panel-landscape (@media (width >= 640px) and (height < 500px));
 
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff, the starfield's ambient light, and the panel.

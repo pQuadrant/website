@@ -46,6 +46,16 @@ export interface ClearZone {
   y: number;
   width: number;
   height: number;
+  /**
+   * When the panel's own appearance began, on the page clock, or null while it
+   * has not yet begun.
+   *
+   * The zone fades in on the panel's fade, and the only reliable account of when
+   * that started is the browser's: a CSS animation is held for a frame or two
+   * before it starts, so a fade stamped when the zone arrived ran ahead of the
+   * panel. Measured in headless Chrome it led by one to two frames.
+   */
+  since: number | null;
 }
 
 /** How far the zone reaches beyond the panel's footprint, on every side. */
@@ -56,20 +66,45 @@ const CLEAR_ZONE_MARGIN = 26;
  *
  * The margin is a property of the motif rather than of the panel, so it lives
  * here; the caller measures an element and passes the rectangle in. This is the
- * whole of the module's knowledge of the panel: four numbers, and no way back.
+ * whole of the module's knowledge of the panel: four numbers and the moment it
+ * began to appear, and no way back.
  */
-export function expandToClearZone(rect: {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}): ClearZone {
+export function expandToClearZone(
+  rect: { x: number; y: number; width: number; height: number },
+  since: number | null,
+): ClearZone {
   return {
     x: rect.x - CLEAR_ZONE_MARGIN,
     y: rect.y - CLEAR_ZONE_MARGIN,
     width: rect.width + CLEAR_ZONE_MARGIN * 2,
     height: rect.height + CLEAR_ZONE_MARGIN * 2,
+    since,
   };
+}
+
+/**
+ * How long the zone takes to dim fully once it appears, in milliseconds.
+ *
+ * The panel's own appearance: the zone reaches 26px beyond the panel, so dimmed
+ * at once it showed as a dark rectangle arriving ahead of the panel fading in
+ * over it. It runs on the same duration and the same curve so the two arrive
+ * together. See _Clear zone_ in `docs/design/globe.md`.
+ */
+export const CLEAR_ZONE_FADE_MS = 700;
+
+/**
+ * Sets the zone, arming its fade when it appears.
+ *
+ * Only an appearance fades. A zone that moves — a resize, a scroll — keeps its
+ * strength, and a zone that is cleared goes at once, because the panel it
+ * belongs to is removed at once rather than fading out.
+ */
+export function applyClearZone(
+  state: GlobeState,
+  zone: ClearZone | null,
+): void {
+  if (zone === null || state.clearZone === null) state.clearZoneFade = 0;
+  state.clearZone = zone;
 }
 
 /** What each status eases toward. `dotGlow` is not here; it follows focus. */
@@ -140,6 +175,8 @@ export interface GlobeState {
   /** Seconds left on the error state's self-clearing hold. */
   errorHold: number;
   clearZone: ClearZone | null;
+  /** How far the zone's dimming has arrived, 0 to 1. */
+  clearZoneFade: number;
   status: GlobeStatus;
   focused: boolean;
 }
@@ -160,6 +197,7 @@ export function createGlobeState(): GlobeState {
     rotationRamp: 0,
     errorHold: 0,
     clearZone: null,
+    clearZoneFade: 0,
     status: "idle",
     focused: false,
   };
@@ -197,6 +235,19 @@ export function advance(state: GlobeState, delta: number, now: number): void {
   if (state.entranceRunning) {
     state.entranceRunning = now < ENTRANCE.endMs;
     state.rotationRamp = state.entranceRunning ? rotationRamp(now) : 1;
+  }
+
+  // Timed from the panel's own start on the page clock, not eased by delta and
+  // not from when the zone arrived. The panel's CSS fade runs on this clock, and
+  // a frame's timestamp is the time its animations are sampled at, so the two
+  // reach the same progress on the same frame. Held at nothing until the panel's
+  // fade has a start time.
+  const zone = state.clearZone;
+  if (zone !== null && state.clearZoneFade < 1) {
+    const elapsed = zone.since === null ? 0 : now - zone.since;
+    state.clearZoneFade = cssEase(
+      Math.min(1, Math.max(0, elapsed / CLEAR_ZONE_FADE_MS)),
+    );
   }
 
   // Ticked before the targets are read, so the frame the hold expires on is
@@ -246,6 +297,37 @@ export function advance(state: GlobeState, delta: number, now: number): void {
   if (state.yaw > TAU) state.yaw -= TAU;
 }
 
+/**
+ * CSS's `ease` timing function, `cubic-bezier(0.25, 0.1, 0.25, 1)`, at `t`.
+ *
+ * The panel fades in on this curve, so the zone's fade uses it too; an
+ * exponential ease would reach the panel's opacity at different moments along
+ * the way. Solved for x by Newton's method, which converges in a few steps on
+ * this curve.
+ */
+function cssEase(t: number): number {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+
+  const cx = 0.75;
+  const bx = -0.75;
+  const ax = 1;
+  const cy = 0.3;
+  const by = 2.4;
+  const ay = -1.7;
+
+  let u = t;
+  for (let i = 0; i < 8; i++) {
+    const x = ((ax * u + bx) * u + cx) * u - t;
+    if (Math.abs(x) < 1e-6) break;
+    const slope = (3 * ax * u + 2 * bx) * u + cx;
+    if (Math.abs(slope) < 1e-6) break;
+    u -= x / slope;
+  }
+
+  return ((ay * u + by) * u + cy) * u;
+}
+
 function ease(
   current: number,
   target: number,
@@ -274,4 +356,5 @@ export function snap(state: GlobeState): void {
   state.dim = target.dim;
   state.glow = target.glow;
   state.dotGlow = dotGlowTarget(state);
+  state.clearZoneFade = state.clearZone === null ? 0 : 1;
 }

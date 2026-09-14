@@ -301,6 +301,9 @@ function projectRange(
   const zoneTop = zone === null ? 0 : zone.y - view.originY;
   const zoneRight = zoneLeft + (zone === null ? 0 : zone.width);
   const zoneBottom = zoneTop + (zone === null ? 0 : zone.height);
+  // Full strength is `CLEAR_ZONE_ALPHA`; while the zone fades in it is part of
+  // the way there.
+  const zoneAlpha = 1 - (1 - CLEAR_ZONE_ALPHA) * state.clearZoneFade;
 
   // Hoisted so the per-point branch below reads one array each rather than one
   // object property each, and so a settled globe pays a single null check.
@@ -380,7 +383,7 @@ function projectRange(
       y >= zoneTop &&
       y <= zoneBottom
     ) {
-      alpha *= CLEAR_ZONE_ALPHA;
+      alpha *= zoneAlpha;
     }
 
     if (alpha <= ALPHA_FLOOR) continue;

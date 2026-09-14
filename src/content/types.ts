@@ -72,6 +72,15 @@ export interface SignInErrorContent {
   attemptLine: (attempt: number) => string;
 }
 
+/**
+ * The one-line messages shown when a field is submitted empty. Deliberately not
+ * the credentials error: nothing was sent and no attempt was counted.
+ */
+export interface SignInMissingContent {
+  email: string;
+  password: string;
+}
+
 /** The submit button's label in each of its three states. */
 export interface SignInSubmitContent {
   resting: string;
@@ -81,21 +90,27 @@ export interface SignInSubmitContent {
 
 /** The two footer links. Destinations are undecided; these are labels only. */
 export interface SignInFooterContent {
-  forgotPassphrase: string;
+  forgotPassword: string;
   requestAccess: string;
 }
 
 /** The sign-in panel. */
 export interface SignInPanelContent {
+  /** The dialog's accessible name. */
+  dialogLabel: string;
   escape: LabelledControl;
-  /** The drawn wordmark is an SVG; this is its accessible label. */
+  /**
+   * The wordmark's accessible label — and, until the drawn mark is supplied,
+   * the typed stand-in's visible text.
+   */
   wordmarkLabel: string;
   subhead: string;
   fields: {
     email: FieldContent;
-    passphrase: FieldContent;
+    password: FieldContent;
   };
   error: SignInErrorContent;
+  missing: SignInMissingContent;
   submit: SignInSubmitContent;
   footer: SignInFooterContent;
 }
