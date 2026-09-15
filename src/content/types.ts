@@ -23,9 +23,16 @@ export interface ChromeTopLeftContent {
   productTwo: LabelledControl;
 }
 
-/** Top-right cluster: the entry point button and the sign-in toggle. */
+/** A link that leaves the page: its visible label and where it goes. */
+export interface ExternalLink {
+  label: string;
+  href: string;
+}
+
+/** Top-right cluster: the entry point button and the platform link. */
 export interface ChromeTopRightContent {
   entryPoint: { label: string };
+  platformLink: ExternalLink;
   signInToggle: {
     closed: LabelledControl;
     open: LabelledControl;

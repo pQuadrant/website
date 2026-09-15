@@ -1,43 +1,24 @@
 "use client";
 
-import type { Ref } from "react";
-
 import type { ChromeTopRightContent } from "@/content/types";
 
 /**
- * The top-right cluster: the entry point, a divider, and the sign-in toggle.
+ * The top-right cluster: the entry point, a divider, and the platform link.
  *
  * Specified in `docs/design/chrome.md`. The only interactive part of the
- * chrome, so the two buttons opt back into pointer events that the stage's
+ * chrome, so both controls opt back into pointer events that the stage's
  * corner region turns off.
  */
 interface TopRightClusterProps {
   content: ChromeTopRightContent;
-  /** Whether the sign-in panel is currently open. */
-  panelOpen: boolean;
-  onToggle: () => void;
-  /** The id of the panel the toggle controls. */
-  panelId: string;
-  /** The toggle, which is where focus returns when the panel closes. */
-  toggleRef?: Ref<HTMLButtonElement>;
 }
 
-export function TopRightCluster({
-  content,
-  panelOpen,
-  onToggle,
-  panelId,
-  toggleRef,
-}: TopRightClusterProps) {
-  const toggle = panelOpen
-    ? content.signInToggle.open
-    : content.signInToggle.closed;
-
+export function TopRightCluster({ content }: TopRightClusterProps) {
   return (
     // The one cluster that stays a row at every width. Two controls fit beside
-    // each other where four lines of telemetry do not, and both of them are
-    // buttons — keeping them together keeps the page's controls in one place
-    // instead of scattering them down the corner.
+    // each other where four lines of telemetry do not — keeping them together
+    // keeps the page's controls in one place instead of scattering them down
+    // the corner.
     //
     // The row's height is the touch target, and both children stretch to it, so
     // 44px below the breakpoint sizes them both without either one carrying
@@ -51,7 +32,7 @@ export function TopRightCluster({
           Its active state is not a duplicate of its hover state. Tailwind emits
           every `hover:` utility inside `@media (hover: hover)`, so on a touch
           device the hover rules never apply, and without this the button would
-          acknowledge a tap with nothing at all. The toggle beside it has had
+          acknowledge a tap with nothing at all. The control beside it has had
           one for this reason since it was built; this one had not. */}
       <button
         type="button"
@@ -64,34 +45,30 @@ export function TopRightCluster({
           divides two controls; a halo on it would make it compete with them. */}
       <span aria-hidden="true" className="w-px bg-line-chrome" />
 
-      {/* Dimmer while the panel is open: with the panel on screen, the panel is
-          the subject and this control recedes. The spec records that colour as
-          an accepted contrast deviation — do not raise it.
+      {/* A real link, not a button: it leaves the page, so it has to open in a
+          new tab on a modified click, a middle click or the context menu, and
+          only an anchor with an `href` gets all of that from the browser. Same
+          tab by default — no `target`.
+
+          `flex items-center` is not a design change. A `<button>` centres its
+          label vertically on its own; an anchor stretched to the row's height
+          puts it at the top. This keeps the label where the toggle had it.
 
           The border is `fg-2` rather than `line-control`, and the body carries a
           faint white lift, so the only action on the page reads as an object
-          rather than as two floating words. Both values, and the ceiling on the
+          rather than as a floating word. Both values, and the ceiling on the
           fill, are in `docs/design/chrome.md`.
 
           The focus ring is a `focus-visible:` treatment, so it appears for a
           keyboard and not on a click or a tap. It is deliberately outside the
           transition: a focus indicator that fades in is a focus indicator that
           is briefly not there. */}
-      <button
-        ref={toggleRef}
-        type="button"
-        aria-expanded={panelOpen}
-        aria-controls={panelId}
-        aria-label={toggle.accessibleLabel}
-        onClick={onToggle}
-        className={`pointer-events-auto border border-fg-2 bg-control-fill px-chrome-control-pad transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0 ${
-          panelOpen
-            ? "text-fg-2 text-shadow-glow-2"
-            : "text-fg-0 text-shadow-glow-0"
-        }`}
+      <a
+        href={content.platformLink.href}
+        className="pointer-events-auto flex items-center border border-fg-2 bg-control-fill px-chrome-control-pad text-fg-0 text-shadow-glow-0 transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0"
       >
-        {toggle.label}
-      </button>
+        {content.platformLink.label}
+      </a>
     </div>
   );
 }
