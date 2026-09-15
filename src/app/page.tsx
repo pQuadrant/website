@@ -85,15 +85,7 @@ export default function HomePage() {
       bloom={globeStatus === "loading"}
       chromeReceded={chromeReceded}
       topLeft={<TopLeftCluster content={chrome.topLeft} />}
-      topRight={
-        <TopRightCluster
-          content={chrome.topRight}
-          panelOpen={panelOpen}
-          onToggle={() => (panelOpen ? closePanel() : setPanelOpen(true))}
-          panelId={PANEL_ID}
-          toggleRef={toggleRef}
-        />
-      }
+      topRight={<TopRightCluster content={chrome.topRight} />}
       bottomLeft={<BottomLeftCluster content={chrome.bottomLeft} />}
       bottomRight={<BottomRightCluster content={chrome.bottomRight} />}
     >

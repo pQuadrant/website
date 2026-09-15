@@ -191,12 +191,12 @@ inverse: the element's own colour bleeding into the space around it.
 
 Each halo is a **tight core plus a wide bleed**, not a single blur.
 
-| Role   | Applies to                       | Colour    | Core        | Bleed        |
-| ------ | -------------------------------- | --------- | ----------- | ------------ |
-| `fg-0` | `SIGN IN`, and every hover state | `#EAEDF4` | 5px at 0.45 | 14px at 0.28 |
-| `fg-1` | Product names, `p_Q`             | `#8B94A2` | 4px at 0.38 | 12px at 0.22 |
-| `fg-2` | The toggle's label, panel open   | `#59626E` | 4px at 0.36 | 11px at 0.21 |
-| `fg-3` | Telemetry, server line, clock    | `#414A56` | 3px at 0.34 | 10px at 0.20 |
+| Role   | Applies to                        | Colour    | Core        | Bleed        |
+| ------ | --------------------------------- | --------- | ----------- | ------------ |
+| `fg-0` | `PLATFORM`, and every hover state | `#EAEDF4` | 5px at 0.45 | 14px at 0.28 |
+| `fg-1` | Product names, `p_Q`              | `#8B94A2` | 4px at 0.38 | 12px at 0.22 |
+| `fg-2` | Nothing in the chrome at present  | `#59626E` | 4px at 0.36 | 11px at 0.21 |
+| `fg-3` | Telemetry, server line, clock     | `#414A56` | 3px at 0.34 | 10px at 0.20 |
 
 The values are held as tokens in `globals.css`, `--text-shadow-glow-0` through
 `--text-shadow-glow-3`, and never as literals in a component.
@@ -234,7 +234,7 @@ sit on the page, not brought up level with the one control on it.
 **The proportionality is the point, not a detail of the tuning.** Alpha and radius scale
 with each string's own luminance. A uniform halo would close the gap between the loudest
 element and the quietest, flattening the page's single point of focus — the opposite of
-what the glow is for. Scaled, `SIGN IN` gains the most presence, the telemetry stays
+what the glow is for. Scaled, `PLATFORM` gains the most presence, the telemetry stays
 recessive, and the hierarchy described in this file survives intact.
 
 `fg-2` is interpolated rather than picked. Its luminance, 97.0, sits about a third of
@@ -252,14 +252,14 @@ falls very slightly. There is no version of this technique where that cost is ze
 can only be kept small. Measured at 1440 × 900 against the same page with the halos
 switched off:
 
-| Cluster                    | Before  | After   |
-| -------------------------- | ------- | ------- |
-| Product names              | 6.61:1  | 6.52:1  |
-| Server line                | 2.26:1  | 2.26:1  |
-| Core version and transport | 2.24:1  | 2.23:1  |
-| City and clock             | 2.24:1  | 2.23:1  |
-| `p_Q`                      | 6.63:1  | 6.60:1  |
-| `SIGN IN`, on its own fill | 16.51:1 | 16.46:1 |
+| Cluster                     | Before  | After   |
+| --------------------------- | ------- | ------- |
+| Product names               | 6.61:1  | 6.52:1  |
+| Server line                 | 2.26:1  | 2.26:1  |
+| Core version and transport  | 2.24:1  | 2.23:1  |
+| City and clock              | 2.24:1  | 2.23:1  |
+| `p_Q`                       | 6.63:1  | 6.60:1  |
+| `PLATFORM`, on its own fill | 16.51:1 | 16.46:1 |
 
 The largest loss is 0.09 of a contrast point, on a string with six to spare. The
 telemetry — the weakest value on the page, and the one to watch if these numbers are
@@ -343,7 +343,7 @@ route.
 
 **This is `p_Q`'s treatment, value for value, and that is the point.** The page has one
 control language and this cluster does not get a second one three feet from the first.
-It is also the only treatment that fits here: the sign-in toggle's bordered 34px box is
+It is also the only treatment that fits here: the platform link's bordered 34px box is
 a control standing on its own in a button bar, and two of those in the top-left corner
 would turn a line of type into a toolbar. `p_Q` is this file's existing answer to what a
 control looks like when it sits inside a text row — it reads as a word until a pointer
@@ -406,10 +406,10 @@ Text only. No border, no fill, no padding — it reads as a word, not a control,
 hovered.
 
 **The active state is not a duplicate of the hover state**, for the same reason it is
-not on the toggle: Tailwind emits every `hover:` utility inside `@media (hover: hover)`,
+not on the platform link: Tailwind emits every `hover:` utility inside `@media (hover: hover)`,
 so on a touch device the hover rules never apply. Without an active state this button
 acknowledged a tap with nothing at all, which it did for as long as it existed. It now
-gets the same treatment the toggle has always had.
+gets the same treatment the platform link has always had.
 
 This label is typed characters in the mono typeface. It is **not** the pQuadrant
 wordmark asset, and must not be replaced with it. The drawn wordmark appears only
@@ -424,26 +424,38 @@ action unimplemented. Do not invent behaviour for it.
 
 A 1px wide vertical hairline in `#232B36`, spanning the full 34px height of the row.
 
-**3. Sign-in toggle**
+**3. Platform link**
 
-| Property      | Value                                                  |
-| ------------- | ------------------------------------------------------ |
-| Height        | 34px                                                   |
-| Padding       | 0 16px                                                 |
-| Border        | 1px solid `#59626E`                                    |
-| Background    | White at 0.03 alpha                                    |
-| Type          | IBM Plex Mono, 10px, letter-spacing `0.2em`            |
-| Glow          | `fg-0` closed, `fg-2` open; `fg-0` on hover and active |
-| Hover border  | `#4E9BFB`                                              |
-| Hover colour  | `#EAEDF4`                                              |
-| Active border | `#4E9BFB`                                              |
-| Active colour | `#EAEDF4`                                              |
-| Transition    | 160ms ease on border colour, text colour and glow      |
-| Focus         | See _Focus_ below                                      |
-| Border radius | 0                                                      |
+A link to the pQuadrant platform at `https://app.pquadrant.com`. It is the one control in
+the chrome that leaves the page; every other control acts on the page itself.
+
+| Property      | Value                                             |
+| ------------- | ------------------------------------------------- |
+| Label         | `PLATFORM`                                        |
+| Destination   | `https://app.pquadrant.com`, in the same tab      |
+| Height        | 34px                                              |
+| Padding       | 0 16px                                            |
+| Border        | 1px solid `#59626E`                               |
+| Background    | White at 0.03 alpha                               |
+| Type          | IBM Plex Mono, 10px, letter-spacing `0.2em`       |
+| Colour        | `#EAEDF4`                                         |
+| Glow          | `fg-0`, at rest, on hover and on active           |
+| Hover border  | `#4E9BFB`                                         |
+| Hover colour  | `#EAEDF4`                                         |
+| Active border | `#4E9BFB`                                         |
+| Active colour | `#EAEDF4`                                         |
+| Transition    | 160ms ease on border colour, text colour and glow |
+| Focus         | See _Focus_ below                                 |
+| Border radius | 0                                                 |
+
+**It is a real link, not a button with a click handler.** It must be an anchor with an
+`href`, so that a modified click, a middle click and the context menu can all open it in a
+new tab, and so that a keyboard reaches it in the tab order. It opens in the same tab by
+default and carries no `target`. The label is centred vertically in the row's height, as
+the button it replaced centred its own.
 
 **The border is `#59626E` because it is the first value on the ramp that clears 3:1.**
-The button previously had no visible body: its border sat at `#262D3A`, which is 1.45:1
+The control previously had no visible body: its border sat at `#262D3A`, which is 1.45:1
 against the corner ground, so the only action on the page read as two floating words
 rather than as a control. WCAG 1.4.11 asks 3:1 of the visual boundary of a UI component.
 Walking the existing blue-grey ramp, `#525C6A` reaches only 2.97:1 and misses; `#59626E`
@@ -451,53 +463,17 @@ reaches 3.25:1 and is already a token, so no new colour entered the palette. Mea
 the rendered page it holds at **3.20:1 or better at 1440 × 900, 1920 × 1080 and
 2560 × 1440**.
 
-**The fill is capped at 0.03 alpha, and the cap is load-bearing rather than taste.**
-With the panel open the toggle's own label is `#59626E` — an accepted contrast deviation
-recorded below — and a fill underneath it lowers that number. Measured against the
-ground actually under the button, luminance 9.0:
-
-| Fill alpha | Body luminance | `#59626E` on it      |
-| ---------- | -------------- | -------------------- |
-| 0.03       | 17.0           | 3.05:1               |
-| 0.04       | 19.0           | 3.00:1 — no headroom |
-| 0.05       | 21.9           | 2.93:1 — fails       |
-| 0.08       | 28.0           | 2.76:1 — fails       |
-
-Raising the fill takes the open state below 3:1, and it will not be visible in a
-screenshot. Above roughly 0.05 the button also stops reading as a lit control and starts
-reading as a grey card, which `docs/design/home.md` rules out. If this value is ever
-retuned, the open-state label is the number that breaks first.
+**The fill is capped at 0.03 alpha.** The cap was set when this control was a sign-in
+toggle whose open-state label dropped to `#59626E`, and a fill underneath that label
+lowered its contrast below 3:1 above 0.04. That state no longer exists, but the other
+reason for the cap still holds: above roughly 0.05 the control stops reading as a lit
+control and starts reading as a grey card, which `docs/design/home.md` rules out.
 
 The active state repeats the hover state's colours and is not redundant with it. Hover
 styling must be confined to inputs that can hover, or it sticks to the last thing
 tapped on a touch screen; confined, it never applies on a phone, and without an active
 state this control would acknowledge a tap with nothing at all. The active state is what
 gives the only action on the page a response on the device most visitors arrive on.
-
-The label and resting colour depend on whether the panel is open:
-
-| Panel state | Label     | Colour    |
-| ----------- | --------- | --------- |
-| Closed      | `SIGN IN` | `#EAEDF4` |
-| Open        | `CLOSE`   | `#59626E` |
-
-The colour drop when open is deliberate: with the panel on screen, the panel is the
-subject and this control recedes.
-
-`#59626E` on the stage background falls below the WCAG AA contrast threshold for text.
-This is an accepted deviation for this control, on the basis that the panel it dismisses
-carries its own labelled dismiss affordance and can also be closed with the Escape key,
-so the action is not reachable only through this label. Do not raise the value to
-"fix" the contrast. If the accessibility position changes, it changes here first and
-the code follows.
-
-**Accessibility**
-
-The toggle controls the panel's visibility and must expose that relationship to
-assistive technology, including whether the panel is currently open.
-
-When the panel opens, keyboard focus moves into it. When it closes, focus returns to
-this button. Focus must never be left on an element that has been removed.
 
 **Focus**
 
@@ -514,8 +490,8 @@ It is a `focus-visible` treatment, so it appears for a keyboard and not on a cli
 tap, and it is deliberately outside the 160ms transition — a focus indicator that fades
 in is a focus indicator that is briefly not there.
 
-The ring is the only boundary any of these four controls draws besides the toggle's
-border. Measured on the rendered page it lands at full `#EAEDF4` and holds at
+The ring is the only boundary any of these four controls draws besides the platform
+link's border. Measured on the rendered page it lands at full `#EAEDF4` and holds at
 **17.0:1 or better against the corner ground at 1440 x 900, 2560 x 1440 and 320 x 568** —
 the 3:1 that WCAG 1.4.11 asks of a focus indicator is never in question here, and the
 figure is recorded so that a future retune of the glow has a baseline to compare against.
@@ -690,7 +666,7 @@ stacked rhythm. Stacking does not introduce a second.
 is not a second rhythm but the absence of one: the two 44px hit areas tile directly, and
 a gap on top of them would open a strip between two adjacent targets where a tap lands on
 neither. What separates the two names is set by where each label sits inside its own
-target — see _The labels bracket the toggle_ below — not by a gap between the targets.
+target — see _The labels bracket the platform link_ below — not by a gap between the targets.
 
 **Why the top-right cluster stays a row.** It is the only cluster holding two controls
 rather than lines of telemetry, and two controls fit beside each other at 320px where
@@ -735,9 +711,9 @@ rows at two different heights rather than as one. The offset that produces the c
 is in `docs/design/home.md`, derived there from the top-right cluster's 56px rather than
 chosen; that cluster does not move.
 
-**The labels bracket the toggle.** `CONSTELLATION`'s label begins on the sign-in toggle's
+**The labels bracket the platform link.** `CONSTELLATION`'s label begins on the platform link's
 top edge and `NORTHSTAR`'s ends on its bottom edge, so the two names span exactly the
-44px the toggle spans. That is what makes the top edge read as one band rather than as a
+44px the platform link spans. That is what makes the top edge read as one band rather than as a
 short row and a tall one: every element along it starts and ends together.
 
 **The label is not centred in its target, and that is what lets both rules hold at
@@ -763,7 +739,7 @@ or the cluster's height, never the 44px.
 44px targets, pinned 34px from the top, so it ends 122px into a 568px window. The
 bottom-left cluster starts at 507px, so the two clear each other by 385px — the height
 the touch targets add is spent on empty corner. The visible type runs 56px to 100px,
-matching the toggle's box to the pixel. Nothing changes horizontally: each button is the
+matching the platform link's box to the pixel. Nothing changes horizontally: each button is the
 width of the word that was there before it, the cluster still ends 128px from the left
 edge, and the gutter to the top-right cluster is unchanged at 33px.
 
@@ -792,8 +768,8 @@ remain legible against the globe.
 
 The corner regions are non-interactive and must not intercept pointer events over the
 canvas beneath them. Every interactive element opts back in for itself and nothing else
-does. There are four of them: the two product names, the entry point and the sign-in
-toggle. The two bottom clusters are entirely inert, and so is everything in the top-left
+does. There are four of them: the two product names, the entry point and the platform
+link. The two bottom clusters are entirely inert, and so is everything in the top-left
 cluster that is not one of its two buttons, the separator included.
 
 That is what keeps the motif reachable. A click in the top-left corner that is not on a
@@ -830,7 +806,8 @@ Do not invent behaviour for any of the following. Stop and ask.
   inert. Neither Constellation nor Northstar has a designed surface, nothing is routed
   anywhere, and the page ships three controls that do nothing knowingly — the surfaces
   are close behind.
-- **An accessible name for `p_Q`.** The other three controls have one. This one cannot,
+- **An accessible name for `p_Q`.** The two product names have one, and the platform
+  link's visible label is its name. This one cannot,
   because an accessible name has to say what a button does and `p_Q`'s action is the
   entry above. A screen reader reads its visible label instead, which is poor, and the
   fix arrives with the surface rather than ahead of it.

@@ -42,6 +42,12 @@ export const homeContent: HomeContent = {
       // Typed characters in the mono typeface, not the drawn wordmark.
       entryPoint: { label: "p_Q" },
 
+      // The one control in the chrome that leaves the page. Same tab.
+      platformLink: {
+        label: "PLATFORM",
+        href: "https://app.pquadrant.com",
+      },
+
       signInToggle: {
         closed: {
           label: "SIGN IN",
