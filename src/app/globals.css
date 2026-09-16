@@ -10,10 +10,8 @@
 @theme static {
   /* Surfaces */
   --color-stage: #020306;
-  --color-panel: rgba(8, 10, 15, 0.9);
 
   /* Hairlines */
-  --color-line-panel: #1e242f;
   --color-line-chrome: #232b36;
   --color-line-control: #262d3a;
 
@@ -22,8 +20,6 @@
   --color-fg-1: #8b94a2;
   --color-fg-2: #59626e;
   --color-fg-3: #414a56;
-  --color-fg-processing: #c7d8f5;
-  --color-placeholder: #3f474c;
   --color-separator: #2b323d;
 
   /* Chrome glow. Every string in the four corner clusters emits a halo of its
@@ -36,13 +32,11 @@
      proportionality is the point rather than a detail of the tuning. A uniform
      halo would close the gap between the loudest element and the quietest,
      which flattens the page's single point of focus — the opposite of what the
-     glow is for. Scaled, `SIGN IN` gains the most presence and the telemetry
+     glow is for. Scaled, `PLATFORM` gains the most presence and the telemetry
      stays recessive, so the existing hierarchy survives intact.
 
-     The `glow-*` names track the `fg-*` ramp they are drawn from. `glow-2` is
-     interpolated between its neighbours on luminance — fg-2 at 97.0 sits a
-     third of the way from fg-3's 73.0 to fg-1's 147.1 — because the ramp is a
-     ramp and a value on it should not be a special case.
+     The `glow-*` names track the `fg-*` ramp they are drawn from. There is no
+     `glow-2`, because no string in the chrome is set in `fg-2`.
 
      Named `glow-*` rather than `fg-*` on purpose: `--text-shadow-fg-1` would
      collide with the `text-shadow-<color>` utility that `--color-fg-1` already
@@ -75,9 +69,6 @@
   --text-shadow-glow-1:
     0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
     0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
-  --text-shadow-glow-2:
-    0 0 calc(4 * var(--chrome-unit)) rgba(89, 98, 110, 0.36),
-    0 0 calc(11 * var(--chrome-unit)) rgba(89, 98, 110, 0.21);
   --text-shadow-glow-3:
     0 0 calc(3 * var(--chrome-unit)) rgba(65, 74, 86, 0.34),
     0 0 calc(10 * var(--chrome-unit)) rgba(65, 74, 86, 0.2);
@@ -111,9 +102,7 @@
       rgba(234, 237, 244, 0.3);
 
   /* Accents */
-  --color-accent: #a8c4f0;
   --color-accent-bright: #4e9bfb;
-  --color-signal: #3183f5;
   --color-land: #5fd98f;
   --color-ocean: #4e9bfb;
   /* The motif's white point. Land and ocean both top out well short of white —
@@ -122,32 +111,9 @@
   --color-highlight: #f2f7ff;
 
   /* Type roles. Each carries its own letter-spacing; pair with font-sans or
-     font-mono, which Tailwind cannot fold into a text token. */
-  --text-value-email: 14px;
-  --text-value-email--letter-spacing: -0.01em;
-  --text-value-password: 14px;
-  --text-value-password--letter-spacing: 0.06em;
-  --text-submit: 11px;
-  --text-submit--letter-spacing: 0.22em;
-  /* The panel's. 10px and unscaled — the panel has its own type scale and the
-     chrome's scale must not reach it. The chrome's equivalents are
-     `--text-chrome-*` below. These two were one token until the chrome gained a
-     scale; they are the same size today and they are not the same decision. */
-  --text-label: 10px;
-  --text-label--letter-spacing: 0.2em;
-  --text-label--line-height: 13px;
-  --text-subhead: 10px;
-  --text-subhead--letter-spacing: 0.16em;
-  --text-subhead--line-height: 13px;
-  --text-meta: 10px;
-  --text-meta--letter-spacing: 0.14em;
-  --text-meta--line-height: 13px;
-  /* The wordmark's typed stand-in, until the drawn mark is supplied. */
-  --text-wordmark: 14px;
-  --text-wordmark--letter-spacing: 0.02em;
-  --text-wordmark--line-height: 1;
+     font-mono, which Tailwind cannot fold into a text token.
 
-  /* The chrome's two type roles, and the only two type sizes in it. Both are
+     The chrome's two type roles, and the only two type sizes in it. Both are
      10 units, so the chrome still has exactly one type size — one *scaled*
      size is still one size. They differ in tracking only: the top clusters
      carry identity and controls at 0.2em, the bottom two carry telemetry at
@@ -160,33 +126,11 @@
   --text-chrome-label--letter-spacing: 0.2em;
   --text-chrome-meta: calc(10 * var(--chrome-unit));
   --text-chrome-meta--letter-spacing: 0.14em;
-  --text-error: 10px;
-  --text-error--letter-spacing: 0.12em;
-  --text-error--line-height: 1.6;
-  --text-esc: 9px;
-  --text-esc--letter-spacing: 0.22em;
-  --text-esc--line-height: 1;
 
-  /* The panel's copies of the chrome's emission. The panel has its own scale
-     and the chrome's must not reach it, so these are the chrome's values at one
-     unit, fixed, rather than multiplied by `--chrome-unit`. */
-  --text-shadow-panel-glow:
-    0 0 5px rgba(234, 237, 244, 0.45), 0 0 14px rgba(234, 237, 244, 0.28);
-  --shadow-panel-focus:
-    0 0 0 1px var(--color-fg-0), 0 0 16px 2px rgba(234, 237, 244, 0.3);
-
-  /* The submit button while a sign-in is processing — the only box shadow on
-     the page. See `docs/design/sign-in-panel.md`. */
-  --shadow-submit-processing:
-    0 0 34px rgba(49, 131, 245, 0.45), inset 0 0 22px rgba(49, 131, 245, 0.16);
-
-  /* Stage layer colours. The stage's five background layers compose with
-     gradients rather than flat fills, so each stop is a token of its own.
+  /* Stage layer colours. The stage's background layers compose with gradients
+     rather than flat fills, so each stop is a token of its own.
      See `docs/design/home.md`. */
   --color-vignette: rgba(0, 0, 0, 0.38);
-  --color-bloom-core: rgba(49, 131, 245, 0.42);
-  --color-bloom-mid: rgba(79, 209, 131, 0.16);
-  --color-bloom-edge: rgba(49, 131, 245, 0);
 
   /* The chrome's dimensions, every one of them the same count of units as it
      used to be pixels. They come from one number so the cluster keeps its
@@ -230,12 +174,6 @@
   --spacing-stage-margin: 64px;
   --spacing-stage-margin-narrow: 40px;
   --spacing-stage-margin-tight: 24px;
-  --spacing-panel-width: 400px;
-  --spacing-panel-width-landscape: 640px;
-
-  /* There is no panel height token. The panel is the sum of boxes no state can
-     resize, which holds its height constant at every width; a stored value is
-     right at exactly one. See `docs/design/sign-in-panel.md`. */
 
   /* The motif's diameter ceiling: twice the 396px radius cap in
      `docs/design/home.md`. Below it the motif is min(width, height) x 0.88. */
@@ -278,24 +216,6 @@
   --animate-stars-in: entrance-fade 400ms ease-out both;
   --animate-chrome-in: entrance-fade 520ms ease-out both;
 
-  /* The sign-in panel's appearance: opacity only, it does not slide or scale. */
-  --animate-panel-in: entrance-fade 700ms ease both;
-
-  /* The submit button's scan line. The line is 38% of the button, and a
-     transform percentage is of the line itself, so 263% (100 / 38) is the
-     distance that carries it from just off the left edge to just off the
-     right. */
-  --animate-scan: submit-scan 1100ms linear infinite;
-
-  @keyframes submit-scan {
-    from {
-      transform: translateX(-100%);
-    }
-    to {
-      transform: translateX(263%);
-    }
-  }
-
   @keyframes entrance-fade {
     from {
       opacity: 0;
@@ -307,10 +227,7 @@
 
   /* Transitions */
   --transition-duration-hover: 160ms;
-  --transition-duration-control: 180ms;
   --transition-duration-glow: 320ms;
-  --transition-duration-bloom: 520ms;
-  --transition-duration-panel: 700ms;
 }
 
 /* `row:` — the window has room to run the chrome as rows.
@@ -345,18 +262,8 @@
    both axes. */
 @custom-variant row (@media (width >= 640px) and (height >= 500px));
 
-/* `panel-landscape:` — the sign-in panel's landscape composition.
-
-   The chrome's short trigger with its narrow one excluded: under 500px tall is
-   what puts a 488px panel out of reach, and under 640px wide cannot hold two
-   columns, so a window that is both gets the portrait panel. Built from the
-   same two numbers as `row` and adding none, so it is not a third breakpoint.
-   Layout viewport, so an on-screen keyboard never swaps the composition under
-   the visitor. See `docs/design/sign-in-panel.md`. */
-@custom-variant panel-landscape (@media (width >= 640px) and (height < 500px));
-
 /* Where the stage centres what it draws: the motif, the starfield's density
-   falloff, the starfield's ambient light, and the panel.
+   falloff and the starfield's ambient light. Twice it is the document's height.
 
    Half the *small* viewport height, not half the canvas. The canvases are `lvh`
    tall — the viewport with the browser's retractable UI retracted, the tallest
@@ -411,28 +318,26 @@
  *
  * One base rule for the whole page rather than a utility on each control.
  * Showing a pointer is a property of *being* a control, not of any particular
- * one — and a per-element approach is four places today, a dozen once the panel
- * exists, and forgettable by construction: the failure is a new control
- * shipping without it and nobody noticing for a month. See the Pointer
- * behaviour section of `docs/design/home.md`, and do not add `cursor-pointer`
- * to an element.
+ * one — and a per-element approach is one place per control, and forgettable by
+ * construction: the failure is a new control shipping without it and nobody
+ * noticing for a month. See the Pointer behaviour section of
+ * `docs/design/home.md`, and do not add `cursor-pointer` to an element.
  *
- * Nothing was overriding this before. Every control on this page is a
- * `<button>`, a browser's own stylesheet gives `<button>` an arrow, and only
- * `<a href>` gets a pointer for free — so the glow was left doing all the work
- * of saying "this is pressable" while the cursor said the opposite. Tailwind is
- * the obvious suspect and is not to blame: its preflight has no cursor rule on
- * buttons, only a comment about Safari's number-input spin buttons.
+ * A browser's own stylesheet gives `<button>` an arrow, and only `<a href>`
+ * gets a pointer for free. Three of the page's four controls are buttons, so
+ * without this the glow was left doing all the work of saying "this is
+ * pressable" while the cursor said the opposite. Tailwind is the obvious
+ * suspect and is not to blame: its preflight has no cursor rule on buttons,
+ * only a comment about Safari's number-input spin buttons.
  *
  * The list is what activates on a click, and it stops there. `input` generally
- * would take the caret away from the panel's text fields, which would look like
- * an improvement while doing it; `[role]` generally would catch everything.
+ * would take the caret away from text fields, which would look like an
+ * improvement while doing it; `[role]` generally would catch everything.
  *
  * Disabled is excluded for `:disabled` and `[aria-disabled="true"]` alike — a
  * control can be disabled to assistive technology while still being focusable,
  * and a pointer over it claims it is clickable. Nothing on this page is
- * disabled yet; the panel's submit button will be while a sign-in is
- * processing.
+ * disabled.
  *
  * Not gated behind `@media (hover: hover)`. The hover *states* need that guard
  * and this does not: a device with no pointer never renders a cursor, so the

@@ -33,10 +33,6 @@ export interface ExternalLink {
 export interface ChromeTopRightContent {
   entryPoint: { label: string };
   platformLink: ExternalLink;
-  signInToggle: {
-    closed: LabelledControl;
-    open: LabelledControl;
-  };
 }
 
 /** Bottom-left cluster: the core version and the transport line. */
@@ -62,68 +58,7 @@ export interface ChromeContent {
   bottomRight: ChromeBottomRightContent;
 }
 
-/** A form field's visible label and, where one is specified, its placeholder. */
-export interface FieldContent {
-  label: string;
-  placeholder?: string;
-}
-
-/** The invalid-credentials message. */
-export interface SignInErrorContent {
-  /** Line one, shown whenever the message is showing. */
-  headline: string;
-  /**
-   * Line two. Takes the number of attempts already made and returns the whole
-   * sentence, so the string is never assembled outside this file.
-   */
-  attemptLine: (attempt: number) => string;
-}
-
-/**
- * The one-line messages shown when a field is submitted empty. Deliberately not
- * the credentials error: nothing was sent and no attempt was counted.
- */
-export interface SignInMissingContent {
-  email: string;
-  password: string;
-}
-
-/** The submit button's label in each of its three states. */
-export interface SignInSubmitContent {
-  resting: string;
-  processing: string;
-  granted: string;
-}
-
-/** The two footer links. Destinations are undecided; these are labels only. */
-export interface SignInFooterContent {
-  forgotPassword: string;
-  requestAccess: string;
-}
-
-/** The sign-in panel. */
-export interface SignInPanelContent {
-  /** The dialog's accessible name. */
-  dialogLabel: string;
-  escape: LabelledControl;
-  /**
-   * The wordmark's accessible label — and, until the drawn mark is supplied,
-   * the typed stand-in's visible text.
-   */
-  wordmarkLabel: string;
-  subhead: string;
-  fields: {
-    email: FieldContent;
-    password: FieldContent;
-  };
-  error: SignInErrorContent;
-  missing: SignInMissingContent;
-  submit: SignInSubmitContent;
-  footer: SignInFooterContent;
-}
-
 /** Everything the home page says. */
 export interface HomeContent {
   chrome: ChromeContent;
-  panel: SignInPanelContent;
 }
