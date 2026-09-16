@@ -20,8 +20,8 @@ much of the page a thing claims: its size, its weight, its place in the reading 
 That is what the rule above protects, and nothing in this file scales, moves or
 recolours a string to make it easier to see. Presence is whether a thing reads as
 sitting _on_ the page or behind it — and the chrome had none. It was the only element on
-this page rendered as flat paint, while the stars, the motif's nearest points and the
-submit button all emit light. That is why the corners receded even where their contrast
+this page rendered as flat paint, while the stars and the motif's nearest points both
+emit light. That is why the corners receded even where their contrast
 was high. The glow below raises presence and leaves prominence exactly where it was.
 
 **How far that rule reaches.** It binds the ambient telemetry — `SERVER EG-CAI-1`,
@@ -195,11 +195,11 @@ Each halo is a **tight core plus a wide bleed**, not a single blur.
 | ------ | --------------------------------- | --------- | ----------- | ------------ |
 | `fg-0` | `PLATFORM`, and every hover state | `#EAEDF4` | 5px at 0.45 | 14px at 0.28 |
 | `fg-1` | Product names, `p_Q`              | `#8B94A2` | 4px at 0.38 | 12px at 0.22 |
-| `fg-2` | Nothing in the chrome at present  | `#59626E` | 4px at 0.36 | 11px at 0.21 |
 | `fg-3` | Telemetry, server line, clock     | `#414A56` | 3px at 0.34 | 10px at 0.20 |
 
-The values are held as tokens in `globals.css`, `--text-shadow-glow-0` through
-`--text-shadow-glow-3`, and never as literals in a component.
+The values are held as tokens in `globals.css`, `--text-shadow-glow-0`, `-1` and `-3`,
+and never as literals in a component. There is no `fg-2` halo: no string in the chrome
+is set in `fg-2`.
 
 **The radii scale with the type.** Every value in the table above is a count of units,
 like everything else in this file — a halo tuned to a 10px stroke and left at a fixed
@@ -236,10 +236,6 @@ with each string's own luminance. A uniform halo would close the gap between the
 element and the quietest, flattening the page's single point of focus — the opposite of
 what the glow is for. Scaled, `PLATFORM` gains the most presence, the telemetry stays
 recessive, and the hierarchy described in this file survives intact.
-
-`fg-2` is interpolated rather than picked. Its luminance, 97.0, sits about a third of
-the way from `fg-3`'s 73.0 to `fg-1`'s 147.1, and its glow sits at the same fraction
-between theirs. The ramp is a ramp, and a value on it is not a special case.
 
 **The two dividers do not glow.** The product line's `/` and the top-right cluster's
 hairline are marks that separate other things, and a halo on a divider makes it compete
@@ -412,9 +408,7 @@ acknowledged a tap with nothing at all, which it did for as long as it existed. 
 gets the same treatment the platform link has always had.
 
 This label is typed characters in the mono typeface. It is **not** the pQuadrant
-wordmark asset, and must not be replaced with it. The drawn wordmark appears only
-inside the sign-in panel, at a much larger size. The two rendering differently is
-intended.
+wordmark asset, and must not be replaced with it.
 
 This button currently does nothing. It is the entry point for a conversational surface
 that is not yet designed. Render it, style it, give it its hover state, and leave its
@@ -571,8 +565,8 @@ changes twice a year. A hardcoded offset will be wrong for roughly half the year
 
 **Rendering isolation.** This is the only element on the page that changes every
 second. It must be isolated so that its updates do not cause the rest of the page to
-re-render. The motif runs its own continuous animation and the panel holds form state;
-neither should be touched by the clock ticking. This constraint is structural — how it
+re-render. The motif runs its own continuous animation, and it should not be touched by
+the clock ticking. This constraint is structural — how it
 is achieved is an implementation decision, but a clock that re-renders the page is not
 an acceptable outcome.
 
@@ -777,25 +771,6 @@ product name still lands on the canvas beneath, and the points there still scatt
 
 ---
 
-## While the sign-in panel is open
-
-All four clusters **recede** — fade out, stop taking pointer events, and leave the
-accessibility tree — whenever the open panel would come within 24px of any of them, and
-return when it closes. The fade is 700ms, the panel's own, and immediate under reduced
-motion. It applies to the whole frame at once rather than to the clusters that collide:
-a frame with one corner missing reads as a fault, not as a frame receding.
-
-On a desktop window of ordinary size, and on the larger portrait phones — 390 x 844 and
-up — nothing collides and nothing recedes; the toggle stays, reading `CLOSE`. On most landscape phones and
-on the smallest portrait phones everything does. The rule, the table of where it applies,
-and the reasoning are in `docs/design/sign-in-panel.md`.
-
-What recedes is opacity and visibility only. The corner regions keep their boxes, so the
-motif's corner term — which measures them — does not change and the globe does not resize
-when the panel opens.
-
----
-
 ## Not yet specified
 
 Do not invent behaviour for any of the following. Stop and ask.
@@ -816,8 +791,7 @@ Do not invent behaviour for any of the following. Stop and ask.
 
 ## Related files
 
-| File                           | Covers                                                     |
-| ------------------------------ | ---------------------------------------------------------- |
-| `docs/design/home.md`          | The stage: layers, margins, sizing rules, window behaviour |
-| `docs/design/globe.md`         | The motif                                                  |
-| `docs/design/sign-in-panel.md` | The sign-in panel                                          |
+| File                   | Covers                                                     |
+| ---------------------- | ---------------------------------------------------------- |
+| `docs/design/home.md`  | The stage: layers, margins, sizing rules, window behaviour |
+| `docs/design/globe.md` | The motif                                                  |

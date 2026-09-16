@@ -22,12 +22,6 @@ interface StageProps {
   topRight?: ReactNode;
   bottomLeft?: ReactNode;
   bottomRight?: ReactNode;
-  /** The panel, centred over the motif. */
-  children?: ReactNode;
-  /** A sign-in attempt is processing: the auth bloom is up. */
-  bloom?: boolean;
-  /** The open panel would meet the chrome, so the chrome recedes. */
-  chromeReceded?: boolean;
 }
 
 export function Stage({
@@ -37,24 +31,7 @@ export function Stage({
   topRight,
   bottomLeft,
   bottomRight,
-  children,
-  bloom = false,
-  chromeReceded = false,
 }: StageProps) {
-  /* Receding is opacity and visibility, on a wrapper inside each region rather
-     than on the region. The region's entrance animation holds its opacity with
-     a fill mode, which would override an opacity set beside it; and the region
-     keeps its box, so the motif's corner term measures the same thing and the
-     globe does not resize when the panel opens.
-
-     `invisible` takes the clusters out of hit testing and the accessibility
-     tree once the fade ends, and a transition on visibility flips it at the
-     start of a fade in, so a toggle returning with the panel's close is
-     focusable immediately. See `docs/design/chrome.md`. */
-  const recede = `transition-[opacity,visibility] duration-panel ease-[ease] motion-reduce:transition-none ${
-    chromeReceded ? "invisible opacity-0" : ""
-  }`;
-
   return (
     <main className="relative">
       {/* Layer 2 — starfield. Carries the ambient light as well as the stars,
@@ -78,52 +55,22 @@ export function Stage({
           legible. Its centre sits above the middle of the stage. */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(118%_88%_at_50%_46%,transparent_52%,var(--color-vignette)_100%)]" />
 
-      {/* Layer 5 — auth bloom. At rest it is invisible; it is revealed only
-          while a sign-in attempt is processing. */}
-      <div
-        className={`pointer-events-none fixed inset-0 bg-[radial-gradient(42%_46%_at_50%_50%,var(--color-bloom-core)_0%,var(--color-bloom-mid)_46%,var(--color-bloom-edge)_78%)] mix-blend-screen transition-opacity duration-bloom ease-out motion-reduce:hidden ${
-          bloom ? "opacity-100" : "opacity-0"
-        }`}
-      />
+      {/* The document's height. Every layer on the stage is fixed, so without
+          this the document would have none of its own. It holds nothing and
+          exists so the page is exactly as tall as the window a visitor can see:
+          there is nothing below the fold, so the page does not scroll at any
+          window size.
 
-      {/* The panel region. It is at least the height of the window, and grows
-          past it only when something inside it does not fit — which means the
-          page scrolls when the panel is open on a short window, and does not
-          scroll at all when the panel is closed. There is nothing below the
-          fold on this page, so a page that scrolls with the panel shut is
-          revealing empty room reserved for something that is not on screen.
+          It spans the stage, so it is inert for the same reason the corner
+          regions are: were it not, it would take every click meant for the
+          motif.
 
-          The clearance is the padding, and only the padding. An explicit
-          minimum height computed from the panel's height said the same thing a
-          second time, and the two could disagree; the region sizes itself to
-          its contents, so the padding alone keeps the panel off the window
-          edges without anything needing to know how tall the panel is.
-
-          The region spans the stage, so it is inert for the same reason the
-          corner regions are: were it not, it would take every click meant for
-          the motif. The panel opts back in.
-
-          The height is twice the shared centre, so the panel's middle lands on
-          exactly the number the motif draws on — see the Motif centring section
+          The height is twice the shared centre — see the Motif centring section
           of `docs/design/home.md`. Written that way rather than as `min-h-svh`,
           which would be the same rule expressed a second time and free to drift
-          from it; the declaration is the one in `globals.css`.
-
-          Not `dvh`, which is what this was. `dvh` is the *current* viewport, so
-          it tracks a mobile browser's toolbar: the panel sat correctly while the
-          toolbar showed, then slid to a new centre as it retracted while the
-          motif stayed put — two layers centring on two heights, one of which
-          moves.
-
-          The landscape panel takes 24px, or the bottom safe-area inset if that
-          is larger. It exists to fit a phone on its side — Safari gives an
-          iPhone 15 Pro about 312px — and 64px above and below would scroll it.
-          24px is the page's one clearance number and clears the home indicator
-          as well. It is symmetric so the panel stays on the shared centre. See
-          Panel placement in `docs/design/home.md`. */}
-      <div className="pointer-events-none relative flex min-h-[calc(var(--stage-centre-y)*2)] items-center justify-center py-stage-margin panel-landscape:py-[max(24px,env(safe-area-inset-bottom))]">
-        {children}
-      </div>
+          from it; the declaration is the one in `globals.css`. Not `dvh`, which
+          is the *current* viewport and tracks a mobile browser's toolbar. */}
+      <div className="pointer-events-none relative min-h-[calc(var(--stage-centre-y)*2)]" />
 
       {/* The four corner regions. They carry the margin rules only; what sits
           in them is the chrome's business. The two top offsets are optical and
@@ -186,8 +133,8 @@ export function Stage({
           canvases are. Positioned in the document they moved when the document
           did, and the canvases did not, so a touch screen's rubber-band drag
           slid the corner telemetry across the middle of the globe. Everything
-          except the panel is now pinned, so nothing moves relative to anything
-          else and the gesture has nothing left to break — which is what lets
+          is now pinned, so nothing moves relative to anything else and the
+          gesture has nothing left to break — which is what lets
           the page leave pull-to-refresh and the trackpad's bounce alone. See
           Touch edges in `docs/design/home.md`.
 
@@ -200,32 +147,32 @@ export function Stage({
           `docs/design/globe.md`.
 
           The fade is opacity and nothing else — the regions are laid out and
-          hit-testable from the first frame, so the sign-in toggle answers a
+          hit-testable from the first frame, so the platform link answers a
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
       <div
         className="pointer-events-none fixed top-chrome-top-left-tight left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-chrome-top-left-roomy stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        <div className={recede}>{topLeft}</div>
+        {topLeft}
       </div>
       <div
         className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        <div className={recede}>{topRight}</div>
+        {topRight}
       </div>
       <div
         className="pointer-events-none fixed bottom-stage-margin-tight left-stage-margin-tight pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] stage-narrow:bottom-stage-margin-narrow stage-narrow:left-stage-margin-narrow stage:bottom-stage-margin stage:left-stage-margin animate-chrome-in [animation-delay:320ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        <div className={recede}>{bottomLeft}</div>
+        {bottomLeft}
       </div>
       <div
         className="pointer-events-none fixed right-stage-margin-tight bottom-stage-margin-tight pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] stage-narrow:bottom-stage-margin-narrow stage-narrow:right-stage-margin-narrow stage:bottom-stage-margin stage:right-stage-margin animate-chrome-in [animation-delay:380ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
-        <div className={recede}>{bottomRight}</div>
+        {bottomRight}
       </div>
     </main>
   );
