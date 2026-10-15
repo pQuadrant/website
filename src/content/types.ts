@@ -22,7 +22,18 @@ export interface ChromeContent {
   topRight: ChromeTopRightContent;
 }
 
+/**
+ * The home page's tagline. Held in two parts because the last words are set
+ * apart — brighter, later, and underlined — and that split is a decision about
+ * the copy, not about the component.
+ */
+export interface TaglineContent {
+  lead: string;
+  emphasis: string;
+}
+
 /** Everything the home page says. */
 export interface HomeContent {
   chrome: ChromeContent;
+  tagline: TaglineContent;
 }

@@ -53,6 +53,10 @@ export function chromeClearance(x: number, y: number): number {
   for (const region of regions) {
     const box = region.getBoundingClientRect();
 
+    // A region that is not displayed reports an empty box at the viewport's
+    // origin. It is not there, so there is nothing to clear.
+    if (box.width === 0 || box.height === 0) continue;
+
     // The point of the box closest to the centre. Clamping the centre into the
     // box's own range gives it for all nine cases at once — beside the box, above
     // or below it, or diagonally off one of its corners — without branching on

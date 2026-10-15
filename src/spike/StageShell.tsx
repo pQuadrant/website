@@ -12,6 +12,7 @@ import { motifRadius } from "@/lib/globe/projection";
 import { chromeClearance } from "@/lib/stage/chrome-clearance";
 import { stageCentreY } from "@/lib/stage/centre";
 import { SpikeTopBar } from "@/spike/SpikeTopBar";
+import { Tagline } from "@/spike/Tagline";
 
 /**
  * SPIKE. The persistent stage for the route experiment. It lives in a layout, so
@@ -102,6 +103,7 @@ export function StageShell({ children }: StageShellProps) {
       topLeft={<SpikeTopBar mode={mode} />}
       topRight={<TopRightCluster content={homeContent.chrome.topRight} />}
     >
+      <Tagline content={homeContent.tagline} mode={mode} />
       {children}
     </Stage>
   );
