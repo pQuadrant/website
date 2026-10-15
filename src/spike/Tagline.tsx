@@ -18,6 +18,9 @@ import { CHROME_CORNER_ATTRIBUTE } from "@/lib/stage/chrome-clearance";
  * bar, and a window narrower than 640px would leave the globe a marble beside
  * it; it is not shown there.
  *
+ * Leaving home it fades in 100ms, out of the way before the shrinking globe
+ * passes under it (on a phone on its side the globe starts 24px from it); coming back it waits 600ms for the globe to arrive.
+ *
  * It lives in the persistent stage rather than on the home route, for two
  * reasons. It is a chrome corner, so the globe sizes itself to clear it, and a
  * corner that came and went with the route would change the globe's size
@@ -107,7 +110,7 @@ export function Tagline({ content, mode }: TaglineProps) {
       data-mode={mode}
       inert={mode === "market"}
       {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
-      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] transition-opacity duration-500 data-[mode=market]:opacity-0 row:right-auto row:bottom-[var(--mk-inset-bottom)] short:right-auto short:bottom-[calc(50px+env(safe-area-inset-bottom))] [@media(height<310px)]:hidden [@media(height<500px)_and_(width<640px)]:hidden"
+      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] transition-opacity delay-600 duration-400 data-[mode=market]:opacity-0 data-[mode=market]:delay-0 data-[mode=market]:duration-100 row:right-auto row:bottom-[var(--mk-inset-bottom)] short:right-auto short:bottom-[calc(50px+env(safe-area-inset-bottom))] [@media(height<310px)]:hidden [@media(height<500px)_and_(width<640px)]:hidden"
     >
       {/* Beside the globe, the line stops 130px short of the window's middle so
           it never runs under the centre, but not narrower than 18em, which on

@@ -95,7 +95,7 @@ export function StageShell({ children }: StageShellProps) {
         <div
           ref={motifRef}
           data-mode={mode}
-          className="fixed top-0 left-0 h-lvh w-full origin-[50%_var(--stage-centre-y)] data-ready:transition-[translate,scale] data-ready:duration-1000 data-ready:ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[mode=market]:[scale:var(--globe-scale,0.15)] data-[mode=market]:[translate:calc(var(--mk-globe-x)-50%)_calc(var(--mk-globe-y)-var(--stage-centre-y))] motion-reduce:transition-none"
+          className="fixed top-0 left-0 h-lvh w-full origin-[50%_var(--stage-centre-y)] data-ready:transition-[translate,scale] data-ready:duration-1000 data-[mode=home]:delay-150 data-ready:ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[mode=market]:[scale:var(--globe-scale,0.15)] data-[mode=market]:[translate:calc(var(--mk-globe-x)-50%)_calc(var(--mk-globe-y)-var(--stage-centre-y))] motion-reduce:transition-none"
         >
           <Globe />
         </div>
