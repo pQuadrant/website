@@ -3,44 +3,45 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { COMMIT_AT, DEAD_ZONE, RESISTANCE } from "@/spike/pull";
+import { DEAD_ZONE } from "@/spike/pull";
+
+/** Finger travel upward, in pixels, that opens the marketplace on release. */
+const SWIPE_DISTANCE = 60;
+/** A shorter swipe still counts if it is a flick at least this fast, in px/ms. */
+const FLICK_SPEED = 0.5;
+/** The shortest flick that counts, so a tap that slips does not navigate. */
+const FLICK_DISTANCE = 24;
 
 /**
- * SPIKE. Swipe up anywhere on home to open the marketplace: the mirror of the
- * pull down that closes it, with the same resistance and commit distance.
+ * SPIKE. Swipe up anywhere on home to open the marketplace.
+ *
+ * Nothing on the page moves with the finger. The stage is anchored, and a copy
+ * that lifted with the swipe slid over the globe; the gesture is read, not
+ * shown, and the route transition is the response. A long enough swipe or a
+ * quick flick, released, navigates; anything else does nothing.
  *
  * Touch only. A wheel or trackpad scroll on a desktop is too easily an
  * accident, and there the HOME / MARKETPLACE switch is always in view.
- *
- * The document never scrolls; this reads the finger and moves the home copy
- * itself. It writes the travel to `--home-pull` on the root, and the Browse
- * hint and the tagline lift by it. `data-home-pull` on the root is `drag`
- * while the finger is down, so they track it without easing, and `settle`
- * while they spring back.
  */
 export function HomeSwipe() {
   const router = useRouter();
 
   useEffect(() => {
-    const root = document.documentElement;
     let startX = 0;
     let startY = 0;
+    let startTime = 0;
+    let travel = 0;
     let tracking = false;
     let decided = false;
-    let pull = 0;
     let committed = false;
-
-    const setPull = (pixels: number, phase: "drag" | "settle") => {
-      root.dataset.homePull = phase;
-      root.style.setProperty("--home-pull", `${pixels}px`);
-    };
 
     const onTouchStart = (event: TouchEvent) => {
       tracking = event.touches.length === 1 && !committed;
       decided = false;
-      pull = 0;
+      travel = 0;
       startX = event.touches[0]?.clientX ?? 0;
       startY = event.touches[0]?.clientY ?? 0;
+      startTime = event.timeStamp;
     };
 
     const onTouchMove = (event: TouchEvent) => {
@@ -60,36 +61,40 @@ export function HomeSwipe() {
         decided = true;
       }
 
+      // Ours: keep the browser from bouncing the page under the finger.
       event.preventDefault();
-      pull = Math.max(0, dy) * RESISTANCE;
-      setPull(pull, "drag");
+      travel = dy;
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (event: TouchEvent) => {
       const was = tracking && decided;
       tracking = false;
       if (!was) return;
-      if (pull >= COMMIT_AT) {
+
+      const speed = travel / Math.max(1, event.timeStamp - startTime);
+      const swiped =
+        travel >= SWIPE_DISTANCE ||
+        (travel >= FLICK_DISTANCE && speed >= FLICK_SPEED);
+      if (swiped) {
         committed = true;
         router.push("/marketplace");
       }
-      // Either way the copy settles back: on a commit it is fading out as the
-      // marketplace arrives, and it must be in place when the visitor returns.
-      setPull(0, "settle");
+    };
+
+    const onTouchCancel = () => {
+      tracking = false;
     };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchcancel", onTouchEnd);
-      // The pull is left as it is: already settling to zero, and the copy is
-      // still on screen fading out, so removing it would snap it back.
+      window.removeEventListener("touchcancel", onTouchCancel);
     };
   }, [router]);
 

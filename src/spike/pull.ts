@@ -1,7 +1,7 @@
 /**
- * SPIKE. The tuning both route gestures share: the pull down that closes the
- * marketplace, and the swipe up on home that opens it. One feel in both
- * directions.
+ * SPIKE. Tuning for the route gestures: the pull down that closes the
+ * marketplace, and the swipe up on home that opens it. The swipe moves
+ * nothing, so it shares only the dead zone.
  */
 
 /** How far the content moves per unit of finger or wheel travel. */
