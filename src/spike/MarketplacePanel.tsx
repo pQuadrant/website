@@ -168,7 +168,7 @@ export function MarketplacePanel() {
     <div
       ref={panelRef}
       data-settling="false"
-      className="fixed right-0 bottom-0 left-[var(--panel-left,0px)] top-[var(--panel-top,160px)] translate-y-[var(--pull,0px)] data-[settling=true]:transition-transform data-[settling=true]:duration-300 data-[settling=true]:ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+      className="fixed right-0 bottom-0 left-[var(--mk-panel-left)] top-[var(--mk-content-top)] translate-y-[var(--pull,0px)] data-[settling=true]:transition-transform data-[settling=true]:duration-300 data-[settling=true]:ease-[cubic-bezier(0.2,0.7,0.2,1)]"
     >
       {/* Its own scroller. No scrollbar, and the top 28px fades so rows
           disappear softly under the globe. `overscroll-contain` keeps a pull
@@ -179,15 +179,12 @@ export function MarketplacePanel() {
         role="region"
         aria-label={panel.regionLabel}
         tabIndex={0}
-        className="h-full overflow-y-auto overscroll-contain px-stage-margin-tight pt-7 pb-[calc(48px+env(safe-area-inset-bottom))] [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [scrollbar-width:none] stage-narrow:px-stage-margin-narrow stage:px-stage-margin [&::-webkit-scrollbar]:hidden"
+        className="h-full overflow-y-auto overscroll-contain pt-7 pr-[var(--mk-inset-right)] pb-[calc(48px+env(safe-area-inset-bottom))] pl-[var(--mk-panel-pad)] [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        <h2 className="font-sans text-[calc(28*var(--chrome-unit))] text-fg-0 text-shadow-glow-0">
-          {panel.heading}
-        </h2>
         <input
           type="search"
           placeholder={panel.searchPlaceholder}
-          className="mt-4 h-chrome-touch w-full max-w-[360px] border border-fg-2 bg-control-fill px-chrome-control-pad font-mono text-chrome-label text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden pointer-coarse:text-[16px]"
+          className="h-chrome-touch w-full max-w-[360px] border border-fg-2 bg-control-fill px-chrome-control-pad font-mono text-chrome-label text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden pointer-coarse:text-[16px]"
         />
         {panel.rows.map((row) => (
           <section key={row} className="mt-8">

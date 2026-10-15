@@ -9,6 +9,7 @@ export const spikeContent = {
   panel: {
     regionLabel: "AI systems catalogue",
     heading: "AI Systems",
+    subline: "Pick the job you need done.",
     searchPlaceholder: "Search (focus test)",
     rows: [
       "Popular",

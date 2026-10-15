@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 import { TopRightCluster } from "@/components/chrome/TopRightCluster";
 import { Globe } from "@/components/globe/Globe";
@@ -18,61 +18,24 @@ import { SpikeTopBar } from "@/spike/SpikeTopBar";
  * it is never remounted when the route changes: the globe and starfield keep
  * running and only their placement follows the URL.
  *
- * VARIANT A: the globe's canvas is scaled and translated with CSS. The target
- * is worked out here from the same numbers the globe uses for its own radius,
- * and handed to CSS as custom properties on the root.
+ * Where the small globe goes is CSS — `--mk-globe-x`, `--mk-globe-y` and `--mk-r`
+ * in `globals.css`, which know the margins, the bar height and the safe-area
+ * insets, and are right on the first paint. The one number CSS cannot produce
+ * is the scale, because it divides the small radius by the motif's own, and the
+ * motif's radius is decided in script. That is all this sets.
  */
-
-/** The small globe's radius in chrome units, wide window and phone. */
-const SMALL_RADIUS_WIDE = 52;
-const SMALL_RADIUS_NARROW = 34;
-
-/** The chrome scale from `--chrome-unit`, which script cannot read as a number. */
-function chromeUnit(width: number): number {
-  return Math.min(1.7, Math.max(1, 1 + (width - 1024) * 0.00045573));
-}
-
-function place(): void {
-  const root = document.documentElement;
+function measureScale(root: HTMLElement): void {
   const width = window.innerWidth;
-  const height = window.innerHeight;
-  const centreX = width / 2;
-  const centreY = stageCentreY(root, height);
+  const centreY = stageCentreY(root, window.innerHeight);
   const radius = motifRadius(
     width,
     centreY * 2,
-    chromeClearance(root, centreX, centreY),
+    chromeClearance(width / 2, centreY),
   );
-
-  const unit = chromeUnit(width);
-  const wide = width >= 640;
-  // A window too short to stack the globe above the catalogue, which is every
-  // phone on its side. It has width to spare and no height, so the globe moves
-  // into a column of its own and the catalogue sits beside it.
-  const short = height < 500;
-  const row = wide && !short;
-  const margin = width >= 1100 ? 64 : wide ? 40 : 24;
-  const targetRadius =
-    (wide && !short ? SMALL_RADIUS_WIDE : SMALL_RADIUS_NARROW) * unit;
-  const barBottom = 56 + (row ? 34 : 44) * unit;
-  const targetX = margin + targetRadius;
-  const targetY = barBottom + (short ? 12 : 24) + targetRadius;
-  const panelTop = short ? barBottom + 12 : targetY + targetRadius + 12;
-  // The panel box starts one margin early so that its own padding puts the
-  // content a gutter clear of the globe.
-  const panelLeft = short ? targetX + targetRadius + 24 - margin : 0;
-
-  root.style.setProperty("--globe-origin", `${centreX}px ${centreY}px`);
-  root.style.setProperty("--globe-dx", `${targetX - centreX}px`);
-  root.style.setProperty("--globe-dy", `${targetY - centreY}px`);
-  root.style.setProperty("--globe-scale", `${targetRadius / radius}`);
-  root.style.setProperty("--panel-top", `${panelTop}px`);
-  root.style.setProperty("--panel-left", `${panelLeft}px`);
-  root.style.setProperty("--globe-radius", `${radius}px`);
-  root.style.setProperty(
-    "--globe-small",
-    `${targetX}px ${targetY}px ${targetRadius}px`,
+  const small = Number.parseFloat(
+    getComputedStyle(root).getPropertyValue("--mk-r"),
   );
+  root.style.setProperty("--globe-scale", `${small / radius}`);
 }
 
 interface StageShellProps {
@@ -83,11 +46,26 @@ export function StageShell({ children }: StageShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const mode = pathname.startsWith("/marketplace") ? "market" : "home";
+  const motifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    place();
-    window.addEventListener("resize", place);
-    return () => window.removeEventListener("resize", place);
+    const root = document.documentElement;
+    const motif = motifRef.current;
+    const update = () => measureScale(root);
+    update();
+
+    // The move is only animated once the first scale is in place, so a visit
+    // that opens on `/marketplace` gets the small globe where it belongs instead
+    // of watching it shrink from a guess. Reading the computed scale makes the
+    // browser apply the new value now; without it the value and the transition
+    // land in the same style update and the transition animates the change.
+    if (motif !== null) {
+      void getComputedStyle(motif).scale;
+      motif.dataset.ready = "";
+    }
+
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
   useEffect(() => {
@@ -110,9 +88,13 @@ export function StageShell({ children }: StageShellProps) {
         </div>
       }
       motif={
+        // Translated so the motif's centre lands on the small globe's, and
+        // scaled about that centre. The canvas is the full stage, so 50% of its
+        // own width is the motif's x, and `--stage-centre-y` is its y.
         <div
+          ref={motifRef}
           data-mode={mode}
-          className="fixed top-0 left-0 h-lvh w-full origin-(--globe-origin) transition-transform duration-1000 ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[mode=market]:translate-x-(--globe-dx) data-[mode=market]:translate-y-(--globe-dy) data-[mode=market]:scale-(--globe-scale) motion-reduce:transition-none"
+          className="fixed top-0 left-0 h-lvh w-full origin-[50%_var(--stage-centre-y)] data-ready:transition-[translate,scale] data-ready:duration-1000 data-ready:ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[mode=market]:[scale:var(--globe-scale,0.15)] data-[mode=market]:[translate:calc(var(--mk-globe-x)-50%)_calc(var(--mk-globe-y)-var(--stage-centre-y))] motion-reduce:transition-none"
         >
           <Globe />
         </div>

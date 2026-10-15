@@ -6,23 +6,6 @@
  * sentence of their own.
  */
 
-/** A control whose visible label does not, on its own, describe its action. */
-export interface LabelledControl {
-  label: string;
-  accessibleLabel: string;
-}
-
-/**
- * Top-left cluster: the product line. Both names are controls, so each carries
- * an accessible name as well as a visible one — a product name on its own does
- * not say what its button does. The separator between them is decorative and
- * belongs to the component.
- */
-export interface ChromeTopLeftContent {
-  productOne: LabelledControl;
-  productTwo: LabelledControl;
-}
-
 /** A link that leaves the page: its visible label and where it goes. */
 export interface ExternalLink {
   label: string;
@@ -34,9 +17,8 @@ export interface ChromeTopRightContent {
   platformLink: ExternalLink;
 }
 
-/** The text clusters pinned at the top corners of the stage. */
+/** The text clusters pinned at the corners of the stage. */
 export interface ChromeContent {
-  topLeft: ChromeTopLeftContent;
   topRight: ChromeTopRightContent;
 }
 
