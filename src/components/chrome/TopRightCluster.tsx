@@ -24,7 +24,7 @@ export function TopRightCluster({ content }: TopRightClusterProps) {
 
           `flex items-center` is not a design change. A `<button>` centres its
           label vertically on its own; an anchor stretched to the row's height
-          puts it at the top. This keeps the label where the toggle had it.
+          puts it at the top. This keeps the label vertically centred.
 
           The border is `fg-2`, and the body carries a faint white lift, so the
           only action on the page reads as an object rather than as a floating
