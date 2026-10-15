@@ -200,6 +200,10 @@
    both axes. */
 @custom-variant row (@media (width >= 640px) and (height >= 500px));
 
+/* A short window: a phone on its side. The globe fills the height, so what
+   would sit under it moves beside it instead. Never overlaps `row:`. */
+@custom-variant short (@media (height < 500px));
+
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff and the starfield's ambient light. Twice it is the document's height.
 
