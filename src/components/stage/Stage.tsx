@@ -17,12 +17,20 @@ interface StageProps {
   starfield?: ReactNode;
   /** The motif, layer three, spanning the stage behind everything above it. */
   motif?: ReactNode;
+  /** The route's content, above the stage layers and below the corner chrome. */
+  children?: ReactNode;
   /** The chrome clusters, pinned at the two top corners. */
   topLeft?: ReactNode;
   topRight?: ReactNode;
 }
 
-export function Stage({ starfield, motif, topLeft, topRight }: StageProps) {
+export function Stage({
+  starfield,
+  motif,
+  children,
+  topLeft,
+  topRight,
+}: StageProps) {
   return (
     <main className="relative">
       {/* Layer 2 — starfield. Carries the ambient light as well as the stars,
@@ -63,18 +71,17 @@ export function Stage({ starfield, motif, topLeft, topRight }: StageProps) {
           is the *current* viewport and tracks a mobile browser's toolbar. */}
       <div className="pointer-events-none relative min-h-[calc(var(--stage-centre-y)*2)]" />
 
+      {children}
+
       {/* The two top corner regions. They carry the margin rules only; what
-          sits in them is the chrome's business. The two top offsets are optical
-          and differ from each other by design — do not normalise them.
+          sits in them is the chrome's business.
 
           The horizontal margins share three tiers, tightening twice as the
           window narrows, and both are driven by width alone — `stage-narrow:`
-          and `stage:`. The top offsets do not tier with them. The right one
-          holds 56px at every size; the left one falls to 34px in a tight
-          window, and that is not tightening — it is where a block 88px tall has
-          to start to be centred on the 44px row opposite, whose centre line is
-          78px. The top-right offset is the one that governs, and the number to
-          re-derive if either cluster's height ever changes is this one.
+          and `stage:`. The top offset does not tier with them: both regions sit
+          56px from the top at every size. The two bars inside them are the same
+          height at every size, so they share one centre line and a wordmark
+          reads level with the bordered control opposite it.
 
           The margin tier and the reflow are deliberately on different
           triggers. `row:` is both axes — at least 640px wide and at least
@@ -82,10 +89,6 @@ export function Stage({ starfield, motif, topLeft, topRight }: StageProps) {
           The margin tightens only because the window has run out of
           *horizontal* room, and a phone in landscape has 930px of it. At
           932 x 330 every cluster stacks and these margins stay at 40px.
-
-          The two top offsets differ from each other by an optical lift — the
-          right cluster's bordered control sits lower inside its own box than
-          bare type does. Do not normalise them.
 
           The safe-area padding is added to the margin rather than substituted
           for it, and that does not change with the tiers. The margins are
@@ -129,7 +132,7 @@ export function Stage({ starfield, motif, topLeft, topRight }: StageProps) {
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
       <div
-        className="pointer-events-none fixed top-chrome-top-left-tight left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] row:top-chrome-top-left-roomy stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
+        className="pointer-events-none fixed top-[56px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
         {topLeft}
