@@ -256,6 +256,16 @@
   --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
 }
 
+/* SPIKE. A phone held upright stacks the tagline and the Browse hint under the
+   globe, about 180px from the bottom against the bar's 100px at the top, so
+   centring on the window leaves it looking low. Halfway between the two is 40px
+   above the middle. */
+@media (width < 640px) and (height >= 500px) {
+  :root {
+    --stage-centre-y: calc(50svh - 40px);
+  }
+}
+
 /* A control shows a pointer cursor.
  *
  * One base rule for the whole page rather than a utility on each control.

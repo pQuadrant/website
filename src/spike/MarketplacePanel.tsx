@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { spikeContent } from "@/spike/content";
+import { COMMIT_AT, DEAD_ZONE, RESISTANCE } from "@/spike/pull";
 
 /**
  * SPIKE. The marketplace panel, with the pull-down-to-go-home gesture.
@@ -17,12 +18,6 @@ import { spikeContent } from "@/spike/content";
  * began while the scroller was not at the top, so it never becomes a pull.
  */
 
-/** How far the panel moves per unit of finger or wheel travel. */
-const RESISTANCE = 0.55;
-/** Panel travel, in pixels, past which releasing goes home. */
-const COMMIT_AT = 70;
-/** Movement below this, in pixels, decides nothing yet. */
-const DEAD_ZONE = 6;
 /** Wheel quiet time that starts a new gesture. */
 const WHEEL_GAP_MS = 150;
 /** Wheel quiet time after which an unfinished pull springs back. */

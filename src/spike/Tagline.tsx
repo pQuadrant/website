@@ -10,12 +10,16 @@ import { CHROME_CORNER_ATTRIBUTE } from "@/lib/stage/chrome-clearance";
  * above the Browse hint on a phone held upright, on the same axis as the globe
  * and the hint.
  *
- * On a phone on its side it is a column of its own under the wordmark, at a
- * smaller size, its last line level with the Browse hint opposite. The column's
- * width is set by what reads well, not by where the globe happens to be: it is
- * a chrome corner, so the globe shrinks to clear it. At 13em that is six lines,
- * which needs 311px of height to stay clear of the bar, and a window narrower
- * than 640px would leave the globe a marble beside it; it is not shown there.
+ * On a phone on its side it is a column of its own in the bottom-left corner,
+ * at a smaller size and tighter leading. The Browse hint is not shown there on
+ * a touch screen, where a swipe up opens the marketplace, so the corner is the
+ * copy's alone. The column's width is set by what reads well, not by where the
+ * globe happens to be: it is a chrome corner, so the globe shrinks to clear it.
+ * At 13em that is six lines, which needs 305px of height to stay clear of the
+ * bar, and a window narrower than 640px would leave the globe a marble beside
+ * it; it is not shown there.
+ *
+ * Swiping up on home lifts it by `--home-pull`; see `HomeSwipe`.
  *
  * It lives in the persistent stage rather than on the home route, for two
  * reasons. It is a chrome corner, so the globe sizes itself to clear it, and a
@@ -106,7 +110,7 @@ export function Tagline({ content, mode }: TaglineProps) {
       data-mode={mode}
       inert={mode === "market"}
       {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
-      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] transition-opacity duration-500 data-[mode=market]:opacity-0 row:right-auto row:bottom-[var(--mk-inset-bottom)] short:right-auto short:bottom-[calc(50px+env(safe-area-inset-bottom))] [@media(height<311px)]:hidden [@media(height<500px)_and_(width<640px)]:hidden"
+      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] [transform:translateY(calc(-1*var(--home-pull,0px)))] transition-[opacity,transform] duration-500 in-data-[home-pull=drag]:transition-opacity data-[mode=market]:opacity-0 row:right-auto row:bottom-[var(--mk-inset-bottom)] short:right-auto short:bottom-[var(--mk-inset-bottom)] [@media(height<305px)]:hidden [@media(height<500px)_and_(width<640px)]:hidden"
     >
       {/* Beside the globe, the line stops 130px short of the window's middle so
           it never runs under the centre, but not narrower than 18em, which on
