@@ -11,19 +11,14 @@
   /* Surfaces */
   --color-stage: #020306;
 
-  /* Hairlines */
-  --color-line-chrome: #232b36;
-  --color-line-control: #262d3a;
-
-  /* Foreground, fg-0 brightest to fg-3 dimmest */
+  /* Foreground, fg-0 brightest to fg-2 dimmest */
   --color-fg-0: #eaedf4;
   --color-fg-1: #8b94a2;
   --color-fg-2: #59626e;
-  --color-fg-3: #414a56;
   --color-separator: #2b323d;
 
-  /* Chrome glow. Every string in the four corner clusters emits a halo of its
-     own colour, which is what makes it read as lit rather than printed on the
+  /* Chrome glow. Every string in the corner clusters emits a halo of its own
+     colour, which is what makes it read as lit rather than printed on the
      surface. A drop shadow is not the tool here and never was: a shadow is
      something darker cast onto a lighter ground, and this ground is the black
      point, so there is nothing darker to cast.
@@ -32,15 +27,15 @@
      proportionality is the point rather than a detail of the tuning. A uniform
      halo would close the gap between the loudest element and the quietest,
      which flattens the page's single point of focus — the opposite of what the
-     glow is for. Scaled, `PLATFORM` gains the most presence and the telemetry
-     stays recessive, so the existing hierarchy survives intact.
+     glow is for. Scaled, `PLATFORM` gains the most presence and the product
+     names stay recessive, so the existing hierarchy survives intact.
 
      The `glow-*` names track the `fg-*` ramp they are drawn from. There is no
      `glow-2`, because no string in the chrome is set in `fg-2`.
 
      Named `glow-*` rather than `fg-*` on purpose: `--text-shadow-fg-1` would
      collide with the `text-shadow-<color>` utility that `--color-fg-1` already
-     generates, and the colour would win. See `docs/design/chrome.md`.
+     generates, and the colour would win.
 
      Each is a tight core plus a wide bleed, and the core is what makes the
      effect visible at all. This type is 10px, so its strokes are about a pixel
@@ -51,27 +46,18 @@
      at this shipped. The core concentrates the same light instead of smearing
      it.
 
-     There is a ceiling on the core and it is not a contrast figure. Tripling it
-     moves the telemetry by about a hundredth of a contrast point, because the
-     halo brightens a thin ring around each glyph and leaves the rest of the
-     surround alone. What breaks first is the glyph: driven hard enough the core
-     stops reading as light around a letter and starts thickening the letter,
-     which is a heavier typeface by another route and the one thing this
-     treatment must not be. That is visible by about 0.95 on `fg-0`.
-
-     These values sit well below it on purpose. The headroom is deliberately
-     unspent: the telemetry is ambient framing and is supposed to stay
-     recessive, so the quiet corners are lit just enough to sit on the page
-     rather than brought up level with the one control. */
+     There is a ceiling on the core and it is not a contrast figure. What breaks
+     first is the glyph: driven hard enough the core stops reading as light
+     around a letter and starts thickening the letter, which is a heavier
+     typeface by another route and the one thing this treatment must not be.
+     That is visible by about 0.95 on `fg-0`. These values sit well below it on
+     purpose. */
   --text-shadow-glow-0:
     0 0 calc(5 * var(--chrome-unit)) rgba(234, 237, 244, 0.45),
     0 0 calc(14 * var(--chrome-unit)) rgba(234, 237, 244, 0.28);
   --text-shadow-glow-1:
     0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
     0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
-  --text-shadow-glow-3:
-    0 0 calc(3 * var(--chrome-unit)) rgba(65, 74, 86, 0.34),
-    0 0 calc(10 * var(--chrome-unit)) rgba(65, 74, 86, 0.2);
 
   /* The sign-in toggle's body. A faint white lift that gives the only action on
      the page something to be, rather than two floating words.
@@ -91,7 +77,7 @@
      a screenshot. 0.03 is what leaves the constraint some room. */
   --color-control-fill: rgba(255, 255, 255, 0.03);
 
-  /* The keyboard focus indicator for the two controls in the top-right cluster,
+  /* The keyboard focus indicator for the control in the top-right cluster,
      built from the fg-0 glow above rather than the browser's default outline so
      the page keeps one visual language. The 1px ring carries the boundary and
      the halo carries the emission; neither alone is both crisp and of a piece
@@ -110,22 +96,15 @@
      of them. See the highlight rule in `docs/design/globe.md`. */
   --color-highlight: #f2f7ff;
 
-  /* Type roles. Each carries its own letter-spacing; pair with font-sans or
+  /* Type role. Carries its own letter-spacing; pair with font-sans or
      font-mono, which Tailwind cannot fold into a text token.
 
-     The chrome's two type roles, and the only two type sizes in it. Both are
-     10 units, so the chrome still has exactly one type size — one *scaled*
-     size is still one size. They differ in tracking only: the top clusters
-     carry identity and controls at 0.2em, the bottom two carry telemetry at
-     0.14em.
-
-     Letter-spacing stays in `em` and is deliberately not multiplied by the
-     unit: `em` already scales with the font size, and scaling it again would
-     double the tracking as the window grew. */
+     The chrome's one type size: 10 units, so it scales with the window as a
+     single size. Letter-spacing stays in `em` and is deliberately not
+     multiplied by the unit: `em` already scales with the font size, and scaling
+     it again would double the tracking as the window grew. */
   --text-chrome-label: calc(10 * var(--chrome-unit));
   --text-chrome-label--letter-spacing: 0.2em;
-  --text-chrome-meta: calc(10 * var(--chrome-unit));
-  --text-chrome-meta--letter-spacing: 0.14em;
 
   /* Stage layer colours. The stage's background layers compose with gradients
      rather than flat fills, so each stop is a token of its own.
@@ -139,16 +118,13 @@
      fitting its label. See `docs/design/chrome.md`.
 
      What is *not* here is as load-bearing as what is. Borders stay 1px, the
-     focus ring's ring stays 1px, and the four corner margins keep their
+     focus ring's ring stays 1px, and the corner margins keep their
      64/40/24 tiers. A border describes an edge and a margin describes the
      window; neither describes the type sitting inside it. */
   --spacing-chrome-control: calc(34 * var(--chrome-unit));
   --spacing-chrome-touch: calc(44 * var(--chrome-unit));
   --spacing-chrome-control-pad: calc(16 * var(--chrome-unit));
-  --spacing-chrome-row-gap: calc(18 * var(--chrome-unit));
-  --spacing-chrome-row-gap-tight: calc(10 * var(--chrome-unit));
   --spacing-chrome-product-gap: calc(14 * var(--chrome-unit));
-  --spacing-chrome-meta-gap: calc(40 * var(--chrome-unit));
   --spacing-chrome-stack-gap: calc(7 * var(--chrome-unit));
 
   /* The top-left cluster's offset, derived from the top-right cluster's 56px
@@ -175,10 +151,6 @@
   --spacing-stage-margin-narrow: 40px;
   --spacing-stage-margin-tight: 24px;
 
-  /* The motif's diameter ceiling: twice the 396px radius cap in
-     `docs/design/home.md`. Below it the motif is min(width, height) x 0.88. */
-  --spacing-motif-max: 792px;
-
   /* The two width breakpoints, and they drive the margin tiers only.
 
      `stage:` is the width at or above which the horizontal margin is at its
@@ -200,7 +172,7 @@
   /* The entrance, for the two layers CSS can carry on its own.
 
      The page opens on empty space and resolves over 1.4 seconds: the starfield
-     fades up first, the four corner clusters follow it in with a 60ms stagger
+     fades up first, the corner clusters follow it in with a 60ms stagger
      and are settled by 900ms, and the globe resolves into the frame they leave.
      The globe's own share is drawn on its canvas and timed in
      `src/lib/globe/entrance.ts` — see the Entrance section of
@@ -227,7 +199,6 @@
 
   /* Transitions */
   --transition-duration-hover: 160ms;
-  --transition-duration-glow: 320ms;
 }
 
 /* `row:` — the window has room to run the chrome as rows.
@@ -240,9 +211,9 @@
    The height half exists because a phone in landscape is not narrow, it is
    short. An iPhone 15 Pro Max on its side is about 930px wide, well clear of
    640px, and a rule written against width alone hands it the desktop
-   composition with 330px of height to put it in. The bottom-left cluster is the
-   widest thing in any corner and overlapped the motif by 12px at 844 x 390
-   before this existed.
+   composition with 330px of height to put it in. The bottom-left telemetry cluster,
+   since removed, was the widest thing in any corner and overlapped the motif by
+   12px at 844 x 390 before this existed.
 
    500px is the gap between the tallest phone in landscape, 480px, and the
    shortest tablet in landscape, 744px. The phone bound is the tight side, at
