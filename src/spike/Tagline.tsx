@@ -90,18 +90,23 @@ export function Tagline({ content, mode }: TaglineProps) {
     return () => animations.forEach((animation) => animation.cancel());
   }, [lead.length]);
 
-  const word = "inline-block opacity-0 motion-reduce:opacity-100";
+  // The padding under each word opens the lines up, and gives the underline
+  // its gap below the emphasis.
+  const word = "inline-block pb-[3px] opacity-0 motion-reduce:opacity-100";
 
   return (
     <div
       data-mode={mode}
       inert={mode === "market"}
       {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
-      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] transition-opacity duration-500 data-[mode=market]:opacity-0 row:right-auto row:bottom-[calc(40px+env(safe-area-inset-bottom))] row:max-w-[26em] stage:bottom-[calc(64px+env(safe-area-inset-bottom))] [@media(max-height:499.98px)]:hidden"
+      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] transition-opacity duration-500 data-[mode=market]:opacity-0 row:right-auto row:bottom-[var(--mk-inset-bottom)] [@media(max-height:499.98px)]:hidden"
     >
+      {/* Beside the globe, the line stops 130px short of the window's middle so
+          it never runs under the centre, but not narrower than 18em, which on
+          a tall tablet would stack it into a column of two-word lines. */}
       <p
         ref={lineRef}
-        className="font-sans text-[calc(15*var(--chrome-unit))] leading-[1.55] text-pretty text-fg-1 text-shadow-glow-1"
+        className="row:max-w-[min(26em,max(18em,calc(50vw-var(--mk-inset-left)-130px)))] font-sans text-[calc(15*var(--chrome-unit))] leading-[1.55] text-pretty text-fg-1 text-shadow-glow-1"
       >
         {/* Read once, as a sentence. The word-by-word copy below is for the
             eye only. */}
@@ -130,7 +135,7 @@ export function Tagline({ content, mode }: TaglineProps) {
             ))}
             <span
               data-underline=""
-              className="absolute right-0 -bottom-0.5 left-0 h-px origin-left scale-x-0 bg-accent-bright/75 motion-reduce:scale-x-100"
+              className="absolute right-0 bottom-0 left-0 h-px origin-left scale-x-0 bg-accent-bright/75 motion-reduce:scale-x-100"
             />
           </span>
         </span>
