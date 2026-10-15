@@ -141,7 +141,7 @@ export function createGlobe(
     view.radius = motifRadius(
       width,
       visibleHeight,
-      chromeClearance(canvas, view.centreX, view.centreY),
+      chromeClearance(view.centreX, view.centreY),
     );
 
     canvas.width = Math.round(width * ratio);

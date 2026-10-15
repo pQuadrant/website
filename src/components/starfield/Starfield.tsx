@@ -117,7 +117,7 @@ export function Starfield() {
       const radius = motifRadius(
         width,
         centreY * 2,
-        chromeClearance(starsCanvas, width / 2, centreY),
+        chromeClearance(width / 2, centreY),
       );
       const stars = createStarfield(width, height, radius, centreY);
 

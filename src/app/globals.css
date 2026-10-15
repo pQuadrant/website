@@ -112,26 +112,6 @@
   --spacing-chrome-touch: calc(44 * var(--chrome-unit));
   --spacing-chrome-control-pad: calc(16 * var(--chrome-unit));
   --spacing-chrome-product-gap: calc(14 * var(--chrome-unit));
-  --spacing-chrome-stack-gap: calc(7 * var(--chrome-unit));
-
-  /* The top-left cluster's offset, derived from the top-right cluster's 56px
-     rather than chosen — which is the rule 86cbey2du established and the number
-     it said to re-derive if either cluster's height ever changed. The control
-     height now changes with the window, so both of these follow it.
-
-     Tight: the two clusters share a centre line. The top-right row is
-     `44u` tall from 56px, so its centre is `56 + 22u`; a stacked top-left
-     cluster is `88u` tall, so it starts at `56 + 22u - 44u`. At one unit that
-     is 34px, which is the value that shipped.
-
-     Roomy: the top-left is a single line of type, `15u` tall, and it sits 3.5px
-     above the centre the top-right row keeps — that lift is the 6px difference
-     between 62px and 56px, which `docs/design/home.md` records as optical and
-     says not to normalise. Holding it as a fixed 3.5px rather than scaling it
-     keeps the two edges reading together at every size; at one unit this is
-     62px, which is the value that shipped. */
-  --spacing-chrome-top-left-tight: calc(56px - 22 * var(--chrome-unit));
-  --spacing-chrome-top-left-roomy: calc(52.5px + 9.5 * var(--chrome-unit));
 
   /* Stage geometry */
   --spacing-stage-margin: 64px;
@@ -220,6 +200,10 @@
    both axes. */
 @custom-variant row (@media (width >= 640px) and (height >= 500px));
 
+/* A short window: a phone on its side. The globe fills the height, so what
+   would sit under it moves beside it instead. Never overlaps `row:`. */
+@custom-variant short (@media (height < 500px));
+
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff and the starfield's ambient light. Twice it is the document's height.
 
@@ -272,6 +256,16 @@
   --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
 }
 
+/* SPIKE. A phone held upright stacks the tagline and the Browse hint under the
+   globe, about 180px from the bottom against the bar's 100px at the top, so
+   centring on the window leaves it looking low. Halfway between the two is 40px
+   above the middle. */
+@media (width < 640px) and (height >= 500px) {
+  :root {
+    --stage-centre-y: calc(50svh - 40px);
+  }
+}
+
 /* A control shows a pointer cursor.
  *
  * One base rule for the whole page rather than a utility on each control.
@@ -315,5 +309,179 @@
     summary
   ):not(:disabled, [aria-disabled="true"]) {
     cursor: pointer;
+  }
+}
+
+/* SPIKE. Route transitions. The root crossfade is switched off: it would fade a
+ * frozen snapshot of the old page, globe included, over the live new one. Only
+ * the named elements — the panel and the home button — animate, and the stage
+ * underneath moves on its own CSS transitions.
+ *
+ * The snapshots are drawn above everything, the globe included, so whatever is
+ * leaving has to be gone before the globe reaches it. The globe's move is front-
+ * loaded (most of its travel in the first quarter second), so the old side fades
+ * in 160ms. The home Browse hint comes back only once the globe has arrived.
+ *
+ * Going home, the small globe sits right on the catalogue's top edge, so it
+ * would grow into the catalogue at once however fast that fades. The catalogue
+ * goes in 150ms and the globe waits those 150ms before it starts back (the
+ * delay is on its wrapper in `StageShell`). */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(root) {
+  display: none;
+}
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(.pq-fade) {
+  animation: 160ms ease-out both pq-fade-out;
+}
+::view-transition-new(.pq-fade) {
+  animation: 400ms ease-out 600ms both pq-fade-in;
+}
+::view-transition-old(.pq-heading) {
+  animation: 150ms ease-out both pq-fade-out;
+}
+::view-transition-new(.pq-heading) {
+  animation: 600ms ease-out 350ms both pq-fade-in;
+}
+::view-transition-old(.pq-panel) {
+  animation: 150ms ease-out both pq-panel-out;
+}
+::view-transition-new(.pq-panel) {
+  animation: 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 350ms both pq-panel-in;
+}
+@keyframes pq-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pq-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes pq-panel-in {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+@keyframes pq-panel-out {
+  to {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* SPIKE. Marketplace geometry, in one place.
+ *
+ * Every length the marketplace is laid out with: where the small globe sits, how
+ * big it is, where the heading and the catalogue start. In CSS because all of it
+ * follows the same margins, bar height and safe-area insets as the chrome, and
+ * CSS has those on the first paint.
+ *
+ * Two compositions:
+ *   - Tall (500px and up): the small globe under the wordmark, the heading
+ *     beside it, the catalogue below both at full width.
+ *   - Short (under 500px, every phone on its side): width is plentiful and
+ *     height is not, so the globe and heading form a left column under the
+ *     wordmark and the catalogue fills the rest, from just under the bar.
+ *
+ * Registered as lengths so script, and the size sweep, read pixels back. */
+@property --mk-r {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --mk-globe-x {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --mk-globe-y {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --mk-content-top {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+:root {
+  /* The page margins, insets included, matching the corner regions. One
+     variable per edge rather than a breakpoint utility per use, because a
+     custom variant such as `row:` sorts after the breakpoints and silently
+     wins over `stage:`. */
+  --mk-inset-left: calc(24px + env(safe-area-inset-left));
+  --mk-inset-right: calc(24px + env(safe-area-inset-right));
+  --mk-inset-bottom: calc(24px + env(safe-area-inset-bottom));
+  /* The bar's height, which the top offset and the small globe stack under. */
+  --mk-bar: calc(44 * var(--chrome-unit));
+  --mk-r: calc(34 * var(--chrome-unit));
+  --mk-bar-bottom: calc(56px + env(safe-area-inset-top) + var(--mk-bar));
+
+  --mk-globe-x: calc(var(--mk-inset-left) + var(--mk-r));
+  --mk-globe-y: calc(var(--mk-bar-bottom) + 24px + var(--mk-r));
+
+  /* Tall: the heading beside the globe, centred on it. */
+  --mk-heading-left: calc(var(--mk-inset-left) + 2 * var(--mk-r) + 24px);
+  --mk-heading-top: var(--mk-globe-y);
+  --mk-heading-shift: -50%;
+  --mk-heading-width: calc(
+    100vw - var(--mk-heading-left) - var(--mk-inset-right)
+  );
+
+  /* Tall: the catalogue under both, full width, its content on the margin. */
+  --mk-content-top: calc(var(--mk-globe-y) + var(--mk-r) + 12px);
+  --mk-panel-left: 0px;
+  --mk-panel-pad: var(--mk-inset-left);
+}
+@media (width >= 640px) {
+  :root {
+    --mk-inset-left: calc(40px + env(safe-area-inset-left));
+    --mk-inset-right: calc(40px + env(safe-area-inset-right));
+    --mk-inset-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+}
+@media (width >= 1100px) {
+  :root {
+    --mk-inset-left: calc(64px + env(safe-area-inset-left));
+    --mk-inset-right: calc(64px + env(safe-area-inset-right));
+    --mk-inset-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+@media (width >= 640px) and (height >= 500px) {
+  :root {
+    --mk-bar: calc(34 * var(--chrome-unit));
+    --mk-r: calc(52 * var(--chrome-unit));
+  }
+}
+@media (height < 500px) {
+  :root {
+    /* The left column: wide enough for the heading on one line. */
+    --mk-column: calc(176 * var(--chrome-unit));
+
+    --mk-globe-y: calc(var(--mk-bar-bottom) + 16px + var(--mk-r));
+
+    --mk-heading-left: var(--mk-inset-left);
+    --mk-heading-top: calc(var(--mk-globe-y) + var(--mk-r) + 16px);
+    --mk-heading-shift: 0px;
+    --mk-heading-width: var(--mk-column);
+
+    --mk-content-top: calc(var(--mk-bar-bottom) + 12px);
+    --mk-panel-left: calc(var(--mk-inset-left) + var(--mk-column) + 32px);
+    --mk-panel-pad: 0px;
   }
 }

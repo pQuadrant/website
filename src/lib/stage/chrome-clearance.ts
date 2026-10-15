@@ -31,34 +31,31 @@ export const CHROME_CORNER_ATTRIBUTE = "data-chrome-corner";
 export const CHROME_CLEARANCE = 24;
 
 /**
- * The largest radius, centred on `centreX`/`centreY` in `canvas`'s own
- * coordinates, that clears every corner region by `CHROME_CLEARANCE`.
+ * The largest radius, centred on `x`/`y` in viewport coordinates, that clears
+ * every corner region by `CHROME_CLEARANCE`.
  *
  * Returns `Infinity` when there is nothing to clear, which makes the term inert
  * rather than collapsing the motif to its floor. A globe rendered without the
  * chrome around it is a legitimate thing to do and is not a reason to shrink.
  *
- * The corner regions are `fixed`, so their boxes are in viewport coordinates
- * and the centre arrives in canvas ones. The canvas's own box is what converts
- * between them; it is read here so that both call sites pass the same two
- * numbers they already hold.
+ * Viewport coordinates, and the callers' canvas coordinates are the same
+ * numbers: every canvas on the stage is `fixed` at the viewport's top left. The
+ * canvas's own box is deliberately not read to convert between them. When the
+ * marketplace shrinks the motif, its canvas is transformed, and a transformed
+ * box would hand this a centre and a scale that are not the globe's.
  */
-export function chromeClearance(
-  canvas: Element,
-  centreX: number,
-  centreY: number,
-): number {
+export function chromeClearance(x: number, y: number): number {
   const regions = document.querySelectorAll(`[${CHROME_CORNER_ATTRIBUTE}]`);
   if (regions.length === 0) return Number.POSITIVE_INFINITY;
-
-  const origin = canvas.getBoundingClientRect();
-  const x = origin.left + centreX;
-  const y = origin.top + centreY;
 
   let nearest = Number.POSITIVE_INFINITY;
 
   for (const region of regions) {
     const box = region.getBoundingClientRect();
+
+    // A region that is not displayed reports an empty box at the viewport's
+    // origin. It is not there, so there is nothing to clear.
+    if (box.width === 0 || box.height === 0) continue;
 
     // The point of the box closest to the centre. Clamping the centre into the
     // box's own range gives it for all nine cases at once — beside the box, above

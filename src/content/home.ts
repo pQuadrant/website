@@ -9,21 +9,6 @@ import type { HomeContent } from "@/content/types";
 
 export const homeContent: HomeContent = {
   chrome: {
-    topLeft: {
-      // Two product names, held apart rather than joined, because each is its
-      // own control. Neither surface exists yet, so neither button does
-      // anything — but a button still has to say what it will do, and the
-      // product name alone does not say it.
-      productOne: {
-        label: "CONSTELLATION",
-        accessibleLabel: "Open Constellation",
-      },
-      productTwo: {
-        label: "NORTHSTAR",
-        accessibleLabel: "Open Northstar",
-      },
-    },
-
     topRight: {
       // The one control in the chrome that leaves the page. Same tab.
       platformLink: {
@@ -31,5 +16,13 @@ export const homeContent: HomeContent = {
         href: "https://app.pquadrant.com",
       },
     },
+  },
+
+  // Not final. "Operating environment" is the current choice over "software",
+  // to say a whole connected suite rather than a one-off tool; "AI-powered
+  // business platform" is the shorter alternative.
+  tagline: {
+    lead: "The AI-powered operating environment that helps businesses understand what is happening, act on it, and continuously improve.",
+    emphasis: "All autonomously.",
   },
 };
