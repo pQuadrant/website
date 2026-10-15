@@ -30,16 +30,7 @@ import {
   motifRadius,
   project,
 } from "@/lib/globe/projection";
-import {
-  type ClearZone,
-  ERROR_HOLD_SECONDS,
-  type GlobeStatus,
-  advance,
-  applyClearZone,
-  applyStatus,
-  createGlobeState,
-  snap,
-} from "@/lib/globe/state";
+import { advance, createGlobeState, snap } from "@/lib/globe/state";
 import { chromeClearance } from "@/lib/stage/chrome-clearance";
 
 /**
@@ -68,9 +59,6 @@ export interface GlobeOptions {
 }
 
 export interface GlobeHandle {
-  setStatus(status: GlobeStatus): void;
-  setFocused(focused: boolean): void;
-  setClearZone(zone: ClearZone | null): void;
   /** Recompute dimensions and backing store. Geometry is not rebuilt. */
   resize(): void;
   /** Cancel the loop and release everything. Safe to call more than once. */
@@ -103,8 +91,6 @@ export function createGlobe(
     centreX: 0,
     centreY: 0,
     radius: 0,
-    originX: 0,
-    originY: 0,
   };
 
   const reducedMotion = window.matchMedia(REDUCED_MOTION);
@@ -126,26 +112,19 @@ export function createGlobe(
   let animationFrame = 0;
   let running = false;
   let lastFrameTime = 0;
-  let errorTimer: ReturnType<typeof setTimeout> | undefined;
   let destroyed = false;
 
   function measure(): void {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-    // Where the canvas sits in the viewport, for the clear zone: the panel's
-    // footprint arrives in viewport coordinates and the projection converts it.
-    // Read here rather than per frame, which would be a layout read per frame.
-    const bounds = canvas.getBoundingClientRect();
 
     view.width = width;
     view.height = height;
-    view.originX = bounds.left;
-    view.originY = bounds.top;
     view.centreX = width / 2;
     // Not `height / 2`: the canvas is the large viewport and the visitor sees
-    // less than that. The panel, the density falloff and the ambient light all
-    // centre on this same number.
+    // less than that. The density falloff and the ambient light centre on this
+    // same number.
     view.centreY = options.centreY(height);
 
     // And not `height` either, for the same reason the line above is not
@@ -205,35 +184,6 @@ export function createGlobe(
     cancelAnimationFrame(animationFrame);
   }
 
-  function clearErrorTimer(): void {
-    if (errorTimer === undefined) return;
-    clearTimeout(errorTimer);
-    errorTimer = undefined;
-  }
-
-  /**
-   * Applies a state change when no loop is running.
-   *
-   * Under reduced motion the values still change; they are painted immediately
-   * rather than eased toward, and the error hold runs off a timer because there
-   * are no frames to count it down.
-   */
-  function settle(): void {
-    if (!reducedMotion.matches) return;
-
-    clearErrorTimer();
-    if (state.status === "error") {
-      errorTimer = setTimeout(() => {
-        errorTimer = undefined;
-        applyStatus(state, "idle");
-        settle();
-      }, ERROR_HOLD_SECONDS * 1000);
-    }
-
-    snap(state);
-    render();
-  }
-
   /**
    * Switches between the running loop and a single static frame.
    *
@@ -243,9 +193,9 @@ export function createGlobe(
   function applyMotionPreference(): void {
     if (reducedMotion.matches) {
       stopLoop();
-      settle();
+      snap(state);
+      render();
     } else {
-      clearErrorTimer();
       startLoop();
     }
   }
@@ -256,21 +206,6 @@ export function createGlobe(
   applyMotionPreference();
 
   return {
-    setStatus(status) {
-      if (destroyed) return;
-      applyStatus(state, status);
-      settle();
-    },
-    setFocused(focused) {
-      if (destroyed) return;
-      state.focused = focused;
-      settle();
-    },
-    setClearZone(zone) {
-      if (destroyed) return;
-      applyClearZone(state, zone);
-      settle();
-    },
     resize() {
       if (destroyed) return;
       measure();
@@ -281,7 +216,6 @@ export function createGlobe(
       if (destroyed) return;
       destroyed = true;
       stopLoop();
-      clearErrorTimer();
       reducedMotion.removeEventListener("change", applyMotionPreference);
     },
   };

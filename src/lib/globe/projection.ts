@@ -91,7 +91,7 @@ const EDGE_MARGIN = 24;
  * A guard against arithmetic rather than a design value: a window squashed to a
  * couple of hundred pixels — dragged there on a desktop, or a landscape phone
  * with a keyboard open — must not yield zero or a negative. It binds below
- * 144px of visible height, which is already below the point at which the four
+ * 144px of visible height, which is already below the point at which the
  * corner clusters meet each other.
  */
 const RADIUS_FLOOR = 48;
@@ -103,7 +103,6 @@ const CULL_DEPTH = -0.05;
 const ALPHA_FLOOR = 0.02;
 
 const OCEAN_ALPHA = 0.95;
-const CLEAR_ZONE_ALPHA = 0.13;
 const LAND_SIZE = 1.1;
 const OCEAN_SIZE = 0.85;
 
@@ -114,15 +113,6 @@ export interface GlobeView {
   centreX: number;
   centreY: number;
   radius: number;
-  /**
-   * Where the canvas's top left corner sits in the viewport.
-   *
-   * The clear zone arrives in viewport coordinates, because that is what the
-   * page outside can measure. This is what converts it, and it is the only
-   * reason the module knows where its canvas is.
-   */
-  originX: number;
-  originY: number;
 }
 
 /**
@@ -290,20 +280,7 @@ function projectRange(
   const cosTilt = Math.cos(state.tilt);
   const sinTilt = Math.sin(state.tilt);
 
-  const radius = view.radius * state.contract;
-  const sizeGlow = 1 + 0.3 * state.glow + 0.22 * state.dotGlow;
-  const alphaGlow = 1 + 0.5 * state.glow + 0.55 * state.dotGlow;
-
-  // The zone arrives in viewport coordinates and is compared against canvas
-  // ones, so it is converted here rather than per point.
-  const zone = state.clearZone;
-  const zoneLeft = zone === null ? 0 : zone.x - view.originX;
-  const zoneTop = zone === null ? 0 : zone.y - view.originY;
-  const zoneRight = zoneLeft + (zone === null ? 0 : zone.width);
-  const zoneBottom = zoneTop + (zone === null ? 0 : zone.height);
-  // Full strength is `CLEAR_ZONE_ALPHA`; while the zone fades in it is part of
-  // the way there.
-  const zoneAlpha = 1 - (1 - CLEAR_ZONE_ALPHA) * state.clearZoneFade;
+  const radius = view.radius;
 
   // Hoisted so the per-point branch below reads one array each rather than one
   // object property each, and so a settled globe pays a single null check.
@@ -352,8 +329,7 @@ function projectRange(
       }
     }
 
-    let alpha =
-      (0.17 + 0.83 * depth ** 1.6) * state.dim * alphaGlow * alphaScale;
+    let alpha = (0.17 + 0.83 * depth ** 1.6) * alphaScale;
 
     // Two ramps, not one: `appear` keeps a point from being switched on between
     // one frame and the next, and the eased term carries it the rest of the way
@@ -376,19 +352,9 @@ function projectRange(
       y += driftY;
     }
 
-    if (
-      zone !== null &&
-      x >= zoneLeft &&
-      x <= zoneRight &&
-      y >= zoneTop &&
-      y <= zoneBottom
-    ) {
-      alpha *= zoneAlpha;
-    }
-
     if (alpha <= ALPHA_FLOOR) continue;
 
-    const size = Math.max(0.7, (0.55 + 1.15 * depth) * sizeGlow) * sizeScale;
+    const size = Math.max(0.7, 0.55 + 1.15 * depth) * sizeScale;
     const bucket = Math.min(BUCKET_COUNT - 1, Math.floor(alpha * BUCKET_COUNT));
 
     if (settle < 1) {
@@ -418,8 +384,8 @@ function projectRange(
     buckets[bucket].push(x - half, y - half, size);
 
     // The white core, for the points near enough the front to be lit. Carried
-    // on the point's own alpha, so it dims behind the panel and scales with the
-    // glows along with everything else. It is not drawn during the entrance: an
+    // on the point's own alpha, so it fades toward the rim with everything
+    // else. It is not drawn during the entrance: an
     // unresolved point has no core, and gains one on the frame it rejoins this
     // pass.
     if (depth <= HIGHLIGHT_DEPTH) continue;

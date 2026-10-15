@@ -16,7 +16,7 @@
 /**
  * Marks a corner region as something the motif has to clear.
  *
- * On the four fixed corner regions in `Stage.tsx`, not on the clusters inside
+ * On the fixed corner regions in `Stage.tsx`, not on the clusters inside
  * them: the region carries the margin, and the margin is the part the motif has
  * to stay out of.
  */

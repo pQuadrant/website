@@ -394,7 +394,7 @@ export function createPointerResponse(
     attached = true;
     // On the window rather than on the canvas: the canvas takes no pointer
     // events, and the field goes on responding while the pointer is over the
-    // sign-in panel or the chrome above it.
+    // chrome above it.
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerout", onPointerOut, { passive: true });
   }

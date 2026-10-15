@@ -59,22 +59,9 @@
     0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
     0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
 
-  /* The sign-in toggle's body. A faint white lift that gives the only action on
-     the page something to be, rather than two floating words.
-
-     This value is a ceiling, not a preference. The toggle's own label is
-     `#59626E` while the panel is open — an accepted contrast deviation recorded
-     in `docs/design/chrome.md` — and a fill underneath it lowers that number.
-     Measured against the ground actually under the button, luminance 9.0:
-
-       alpha   body luminance   `#59626E` on it
-       0.030             17.0   3.05:1
-       0.040             19.0   3.00:1   clears by 0.005 — no headroom
-       0.050             21.9   2.93:1   fails
-       0.080             28.0   2.76:1   fails
-
-     Raising this takes the open state below 3:1, and it will not be visible in
-     a screenshot. 0.03 is what leaves the constraint some room. */
+  /* The platform link's body. A faint white lift that gives the only action on
+     the page something to be, rather than a floating word. Kept faint: it
+     should read as an object, not as a lit panel competing with the label. */
   --color-control-fill: rgba(255, 255, 255, 0.03);
 
   /* The keyboard focus indicator for the control in the top-right cluster,
