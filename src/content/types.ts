@@ -29,33 +29,15 @@ export interface ExternalLink {
   href: string;
 }
 
-/** Top-right cluster: the entry point button and the platform link. */
+/** Top-right cluster: the platform link. */
 export interface ChromeTopRightContent {
-  entryPoint: { label: string };
   platformLink: ExternalLink;
 }
 
-/** Bottom-left cluster: the core version and the transport line. */
-export interface ChromeBottomLeftContent {
-  coreVersion: string;
-  transport: string;
-}
-
-/**
- * Bottom-right cluster: the server line, then the city the clock reports. The
- * time itself is generated at runtime and is not content.
- */
-export interface ChromeBottomRightContent {
-  server: string;
-  city: string;
-}
-
-/** The four text clusters pinned at the corners of the stage. */
+/** The text clusters pinned at the top corners of the stage. */
 export interface ChromeContent {
   topLeft: ChromeTopLeftContent;
   topRight: ChromeTopRightContent;
-  bottomLeft: ChromeBottomLeftContent;
-  bottomRight: ChromeBottomRightContent;
 }
 
 /** Everything the home page says. */
