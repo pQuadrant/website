@@ -11,6 +11,10 @@ import { homeContent } from "@/content/home";
 import { motifRadius } from "@/lib/globe/projection";
 import { chromeClearance } from "@/lib/stage/chrome-clearance";
 import { stageCentreY } from "@/lib/stage/centre";
+import { BrowseHint } from "@/spike/BrowseHint";
+import { HomeSwipe } from "@/spike/HomeSwipe";
+import { MarketplaceHeading } from "@/spike/MarketplaceHeading";
+import { MarketplacePanel } from "@/spike/MarketplacePanel";
 import { SpikeTopBar } from "@/spike/SpikeTopBar";
 import { Tagline } from "@/spike/Tagline";
 
@@ -18,6 +22,11 @@ import { Tagline } from "@/spike/Tagline";
  * SPIKE. The persistent stage for the route experiment. It lives in a layout, so
  * it is never remounted when the route changes: the globe and starfield keep
  * running and only their placement follows the URL.
+ *
+ * Everything either route shows is here, home's copy and the marketplace alike,
+ * and fades on the mode with CSS transitions. Nothing uses the browser's view
+ * transitions: those freeze rendering while they snapshot the page, which
+ * stalled the spinning globe for a beat at the start of every move.
  *
  * Where the small globe goes is CSS — `--mk-globe-x`, `--mk-globe-y` and `--mk-r`
  * in `globals.css`, which know the margins, the bar height and the safe-area
@@ -83,7 +92,7 @@ export function StageShell({ children }: StageShellProps) {
       starfield={
         <div
           data-mode={mode}
-          className="transition-opacity duration-800 data-[mode=market]:opacity-40 motion-reduce:transition-none"
+          className="transition-opacity duration-800 will-change-[opacity] data-[mode=market]:opacity-40 motion-reduce:transition-none"
         >
           <Starfield />
         </div>
@@ -91,11 +100,13 @@ export function StageShell({ children }: StageShellProps) {
       motif={
         // Translated so the motif's centre lands on the small globe's, and
         // scaled about that centre. The canvas is the full stage, so 50% of its
-        // own width is the motif's x, and `--stage-centre-y` is its y.
+        // own width is the motif's x, and `--stage-centre-y` is its y. The curve
+        // starts gently and settles evenly, so no single frame carries a jump,
+        // and `will-change` has the layer ready before the first move.
         <div
           ref={motifRef}
           data-mode={mode}
-          className="fixed top-0 left-0 h-lvh w-full origin-[50%_var(--stage-centre-y)] data-ready:transition-[translate,scale] data-ready:duration-1000 data-[mode=home]:delay-150 data-ready:ease-[cubic-bezier(0.2,0.7,0.2,1)] data-[mode=market]:[scale:var(--globe-scale,0.15)] data-[mode=market]:[translate:calc(var(--mk-globe-x)-50%)_calc(var(--mk-globe-y)-var(--stage-centre-y))] motion-reduce:transition-none"
+          className="fixed top-0 left-0 h-lvh w-full origin-[50%_var(--stage-centre-y)] will-change-[translate,scale] data-ready:transition-[translate,scale] data-ready:duration-800 data-ready:ease-[cubic-bezier(0.4,0,0.2,1)] data-[mode=market]:[scale:var(--globe-scale,0.15)] data-[mode=market]:[translate:calc(var(--mk-globe-x)-50%)_calc(var(--mk-globe-y)-var(--stage-centre-y))] motion-reduce:transition-none"
         >
           <Globe />
         </div>
@@ -104,6 +115,10 @@ export function StageShell({ children }: StageShellProps) {
       topRight={<TopRightCluster content={homeContent.chrome.topRight} />}
     >
       <Tagline content={homeContent.tagline} mode={mode} />
+      <BrowseHint mode={mode} />
+      <HomeSwipe active={mode === "home"} />
+      <MarketplaceHeading mode={mode} />
+      <MarketplacePanel mode={mode} />
       {children}
     </Stage>
   );

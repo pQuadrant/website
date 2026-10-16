@@ -6,6 +6,10 @@ import { useEffect, useRef } from "react";
 import { spikeContent } from "@/spike/content";
 import { COMMIT_AT, DEAD_ZONE, RESISTANCE } from "@/spike/pull";
 
+interface MarketplacePanelProps {
+  mode: "home" | "market";
+}
+
 /**
  * SPIKE. The marketplace panel, with the pull-down-to-go-home gesture.
  *
@@ -16,6 +20,11 @@ import { COMMIT_AT, DEAD_ZONE, RESISTANCE } from "@/spike/pull";
  *
  * Only a *fresh* gesture counts: a flick that carries momentum up to the top
  * began while the scroller was not at the top, so it never becomes a pull.
+ *
+ * Part of the persistent stage, so it is mounted on home too, faded out and
+ * inert. Entering, it rises in 350ms after the globe starts to move; leaving,
+ * it clears in 100ms so the growing globe never passes under it. The pull
+ * listens only in the marketplace and starts from rest on every visit.
  */
 
 /** Wheel quiet time that starts a new gesture. */
@@ -23,7 +32,7 @@ const WHEEL_GAP_MS = 150;
 /** Wheel quiet time after which an unfinished pull springs back. */
 const WHEEL_REST_MS = 220;
 
-export function MarketplacePanel() {
+export function MarketplacePanel({ mode }: MarketplacePanelProps) {
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -31,7 +40,7 @@ export function MarketplacePanel() {
   useEffect(() => {
     const panel = panelRef.current;
     const scroller = scrollerRef.current;
-    if (panel === null || scroller === null) return;
+    if (panel === null || scroller === null || mode !== "market") return;
 
     let committed = false;
 
@@ -39,6 +48,9 @@ export function MarketplacePanel() {
       panel.dataset.settling = settling ? "true" : "false";
       panel.style.setProperty("--pull", `${pixels}px`);
     };
+
+    // A pull that went home last time left the panel where the finger let go.
+    setPull(0, false);
 
     const release = (pull: number) => {
       if (pull >= COMMIT_AT && !committed) {
@@ -155,49 +167,55 @@ export function MarketplacePanel() {
       scroller.removeEventListener("touchcancel", onTouchEnd);
       scroller.removeEventListener("wheel", onWheel);
     };
-  }, [router]);
+  }, [mode, router]);
 
   const { panel } = spikeContent;
 
   return (
     <div
-      ref={panelRef}
-      data-settling="false"
-      className="fixed right-0 bottom-0 left-[var(--mk-panel-left)] top-[var(--mk-content-top)] translate-y-[var(--pull,0px)] data-[settling=true]:transition-transform data-[settling=true]:duration-300 data-[settling=true]:ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+      data-mode={mode}
+      inert={mode === "home"}
+      className="fixed right-0 bottom-0 left-[var(--mk-panel-left)] top-[var(--mk-content-top)] [transition:opacity_800ms_cubic-bezier(0.2,0.7,0.2,1)_350ms,transform_800ms_cubic-bezier(0.2,0.7,0.2,1)_350ms,visibility_0s_linear_350ms] data-[mode=home]:invisible data-[mode=home]:[transform:translateY(24px)] data-[mode=home]:opacity-0 data-[mode=home]:[transition:opacity_100ms_ease-out,transform_100ms_ease-out,visibility_0s_linear_100ms] motion-reduce:transition-none!"
     >
-      {/* Its own scroller. No scrollbar, and the top 28px fades so rows
+      <div
+        ref={panelRef}
+        data-settling="false"
+        className="h-full translate-y-[var(--pull,0px)] data-[settling=true]:transition-transform data-[settling=true]:duration-300 data-[settling=true]:ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+      >
+        {/* Its own scroller. No scrollbar, and the top 28px fades so rows
           disappear softly under the globe. `overscroll-contain` keeps a pull
           from chaining to the document, which is what would otherwise start the
           browser's pull-to-refresh at the same moment as ours. */}
-      <div
-        ref={scrollerRef}
-        role="region"
-        aria-label={panel.regionLabel}
-        tabIndex={0}
-        className="h-full overflow-y-auto overscroll-contain pt-7 pr-[var(--mk-inset-right)] pb-[calc(48px+env(safe-area-inset-bottom))] pl-[var(--mk-panel-pad)] [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <input
-          type="search"
-          placeholder={panel.searchPlaceholder}
-          className="h-chrome-touch w-full max-w-[360px] border border-fg-2 bg-control-fill px-chrome-control-pad font-mono text-chrome-label text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden pointer-coarse:text-[16px]"
-        />
-        {panel.rows.map((row) => (
-          <section key={row} className="mt-8">
-            <h3 className="font-mono text-chrome-label text-fg-1 text-shadow-glow-1">
-              {row}
-            </h3>
-            <div className="mt-3 flex gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {Array.from({ length: 8 }, (_, index) => (
-                <div
-                  key={index}
-                  className="flex h-[calc(120*var(--chrome-unit))] w-[calc(200*var(--chrome-unit))] shrink-0 items-end border border-fg-2 bg-control-fill p-3 font-mono text-chrome-label text-fg-1"
-                >
-                  {panel.cardLabel} {index + 1}
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
+        <div
+          ref={scrollerRef}
+          role="region"
+          aria-label={panel.regionLabel}
+          tabIndex={0}
+          className="h-full overflow-y-auto overscroll-contain pt-7 pr-[var(--mk-inset-right)] pb-[calc(48px+env(safe-area-inset-bottom))] pl-[var(--mk-panel-pad)] [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <input
+            type="search"
+            placeholder={panel.searchPlaceholder}
+            className="h-chrome-touch w-full max-w-[360px] border border-fg-2 bg-control-fill px-chrome-control-pad font-mono text-chrome-label text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden pointer-coarse:text-[16px]"
+          />
+          {panel.rows.map((row) => (
+            <section key={row} className="mt-8">
+              <h3 className="font-mono text-chrome-label text-fg-1 text-shadow-glow-1">
+                {row}
+              </h3>
+              <div className="mt-3 flex gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="flex h-[calc(120*var(--chrome-unit))] w-[calc(200*var(--chrome-unit))] shrink-0 items-end border border-fg-2 bg-control-fill p-3 font-mono text-chrome-label text-fg-1"
+                  >
+                    {panel.cardLabel} {index + 1}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );
