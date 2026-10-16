@@ -1,18 +1,7 @@
-import { ViewTransition } from "react";
-
-import { MarketplaceHeading } from "@/spike/MarketplaceHeading";
-import { MarketplacePanel } from "@/spike/MarketplacePanel";
-
-/** SPIKE. The marketplace route: a panel that enters and exits as a named transition. */
+/**
+ * SPIKE. The marketplace. Its heading and catalogue live in the persistent
+ * stage in the layout, which reads the URL; the route exists for the URL itself.
+ */
 export default function MarketplacePage() {
-  return (
-    <>
-      <ViewTransition enter="pq-heading" exit="pq-heading" default="none">
-        <MarketplaceHeading />
-      </ViewTransition>
-      <ViewTransition enter="pq-panel" exit="pq-panel" default="none">
-        <MarketplacePanel />
-      </ViewTransition>
-    </>
-  );
+  return null;
 }

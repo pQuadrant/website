@@ -12,6 +12,11 @@ const FLICK_SPEED = 0.5;
 /** The shortest flick that counts, so a tap that slips does not navigate. */
 const FLICK_DISTANCE = 24;
 
+interface HomeSwipeProps {
+  /** Listening only on home; the marketplace has its own pull. */
+  active: boolean;
+}
+
 /**
  * SPIKE. Swipe up anywhere on home to open the marketplace.
  *
@@ -23,10 +28,11 @@ const FLICK_DISTANCE = 24;
  * Touch only. A wheel or trackpad scroll on a desktop is too easily an
  * accident, and there the HOME / MARKETPLACE switch is always in view.
  */
-export function HomeSwipe() {
+export function HomeSwipe({ active }: HomeSwipeProps) {
   const router = useRouter();
 
   useEffect(() => {
+    if (!active) return;
     let startX = 0;
     let startY = 0;
     let startTime = 0;
@@ -96,7 +102,7 @@ export function HomeSwipe() {
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchCancel);
     };
-  }, [router]);
+  }, [active, router]);
 
   return null;
 }
