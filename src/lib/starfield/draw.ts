@@ -71,17 +71,21 @@ export function drawAmbient(
   width: number,
   height: number,
   motifRadius: number,
+  centreX: number,
   centreY: number,
 ): void {
   context.clearRect(0, 0, width, height);
 
   if (motifRadius <= 0) return;
 
-  const centreX = width / 2;
   // The furthest corner from the centre, which is not `hypot(centreX, centreY)`
   // once the centre is off the canvas's own middle: the longer of the two
-  // vertical reaches is what the ramp has to cover.
-  const corner = Math.hypot(centreX, Math.max(centreY, height - centreY));
+  // reaches on each axis is what the ramp has to cover. In the marketplace the
+  // globe sits near the top left, and the far corner is the bottom right.
+  const corner = Math.hypot(
+    Math.max(centreX, width - centreX),
+    Math.max(centreY, height - centreY),
+  );
   const inner = AMBIENT.hole * motifRadius;
   if (corner <= inner) return;
 
@@ -126,15 +130,20 @@ export function drawAmbient(
  * a frame at rest are the same call with the stars in different places, which
  * is what makes "the field returns to exactly how it started" true by
  * construction rather than by cleanup.
+ *
+ * `mix` is how far the sky has crossed from home (0) to the marketplace (1). A
+ * star on both routes is drawn at full strength throughout; one on a single
+ * route carries that route's share.
  */
 export function drawStars(
   context: CanvasRenderingContext2D,
   stars: readonly Star[],
   width: number,
   height: number,
+  mix: number,
 ): void {
   context.clearRect(0, 0, width, height);
-  paintStars(context, stars);
+  paintStars(context, stars, mix);
 }
 
 /**
@@ -155,11 +164,15 @@ export function drawStars(
 function paintStars(
   context: CanvasRenderingContext2D,
   stars: readonly Star[],
+  mix: number,
 ): void {
   const previousOperation = context.globalCompositeOperation;
   context.globalCompositeOperation = "lighter";
 
   for (const star of stars) {
+    const presence = (star.home ? 1 - mix : 0) + (star.market ? mix : 0);
+    if (presence <= 0) continue;
+
     if (star.haloRadius !== null) {
       const [red, green, blue] = star.haloColour;
       const halo = context.createRadialGradient(
@@ -172,7 +185,7 @@ function paintStars(
       );
       halo.addColorStop(
         0,
-        `rgba(${red}, ${green}, ${blue}, ${star.haloAlpha})`,
+        `rgba(${red}, ${green}, ${blue}, ${star.haloAlpha * presence})`,
       );
       halo.addColorStop(1, `rgba(${red}, ${green}, ${blue}, 0)`);
 
@@ -185,7 +198,7 @@ function paintStars(
     // The core last, so it sits on top of its own halo. Hard-edged: the only
     // softness on a star is the halo around it.
     const [red, green, blue] = star.coreColour;
-    context.fillStyle = `rgba(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)}, ${star.coreAlpha})`;
+    context.fillStyle = `rgba(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)}, ${star.coreAlpha * presence})`;
     context.beginPath();
     context.arc(star.x, star.y, star.coreRadius, 0, TAU);
     context.fill();

@@ -94,7 +94,7 @@ export function StageShell({ children }: StageShellProps) {
           data-mode={mode}
           className="transition-opacity duration-800 will-change-[opacity] data-[mode=market]:opacity-40 motion-reduce:transition-none"
         >
-          <Starfield />
+          <Starfield mode={mode} />
         </div>
       }
       motif={

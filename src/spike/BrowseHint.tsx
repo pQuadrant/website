@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 import { spikeContent } from "@/spike/content";
 
 interface BrowseHintProps {
@@ -22,6 +23,7 @@ export function BrowseHint({ mode }: BrowseHintProps) {
       href="/marketplace"
       data-mode={mode}
       inert={mode === "market"}
+      {...{ [STAR_CLEAR_ATTRIBUTE]: "home" }}
       className="fixed bottom-[calc(40px+env(safe-area-inset-bottom))] left-1/2 flex h-chrome-touch -translate-x-1/2 items-center gap-[calc(10*var(--chrome-unit))] px-chrome-control-pad font-mono text-chrome-label text-fg-0 text-shadow-glow-0 [transition:opacity_400ms_ease-out_600ms,translate_200ms,visibility_0s_linear_600ms] hover:translate-y-0.5 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:translate-y-0.5 data-[mode=market]:invisible data-[mode=market]:opacity-0 data-[mode=market]:[transition:opacity_160ms_ease-out,translate_200ms,visibility_0s_linear_160ms] stage-narrow:right-[calc(40px+env(safe-area-inset-right))] stage-narrow:left-auto stage-narrow:translate-x-0 short:right-[calc(24px+env(safe-area-inset-right))] short:left-auto short:translate-x-0 row:hidden motion-reduce:transition-none!"
     >
       {spikeContent.browse}

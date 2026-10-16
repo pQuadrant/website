@@ -120,6 +120,15 @@ export interface PointerResponseHandle {
    * field that has just been generated, never with one mid-response.
    */
   setField(stars: readonly Star[], width: number, height: number): void;
+  /**
+   * How far the sky has crossed from home (0) to the marketplace (1).
+   *
+   * Set on every frame of a route change. This module owns the canvas, so it
+   * does the drawing: while the drag is running the next frame picks the value
+   * up, and while it is not the field is repainted here at rest. Two loops never
+   * paint the same canvas.
+   */
+  setMix(mix: number): void;
   /** Cancel the loop and release everything. Safe to call more than once. */
   destroy(): void;
 }
@@ -135,6 +144,7 @@ export function createPointerResponse(
   const hoverPointer = window.matchMedia(HOVER_POINTER);
 
   let stars: readonly Star[] = NO_STARS;
+  let mix = 0;
 
   // Parallel arrays rather than fields on the stars themselves: home is the
   // generator's business and the offset from it is this module's. Keeping them
@@ -309,7 +319,7 @@ export function createPointerResponse(
     previousY = pointerY;
 
     const home = coast(seconds);
-    drawStars(context, stars, width, height);
+    drawStars(context, stars, width, height, mix);
 
     // Both halves are required. Stars still moving under a still cursor have
     // not finished, and a cursor still moving will disturb them again.
@@ -353,7 +363,7 @@ export function createPointerResponse(
     }
 
     if (stars.length > 0) {
-      drawStars(context, stars, width, height);
+      drawStars(context, stars, width, height, mix);
     }
   }
 
@@ -432,6 +442,12 @@ export function createPointerResponse(
   applyPreference();
 
   return {
+    setMix(nextMix) {
+      mix = nextMix;
+      if (!running && !destroyed && stars.length > 0) {
+        drawStars(context, stars, width, height, mix);
+      }
+    },
     setField(nextStars, nextWidth, nextHeight) {
       if (destroyed) return;
 

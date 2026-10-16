@@ -4,7 +4,8 @@
  *
  * This module is the single definition of where a star sits and how bright it
  * is. It touches no canvas and no DOM: it is handed the
- * stage's dimensions and the motif radius, and returns an array. `draw.ts`
+ * stage's dimensions and, for each route, where the globe sits and the boxes the
+ * type occupies, and returns an array. `draw.ts`
  * turns that array into fills.
  *
  * Every tunable number lives in `STARFIELD` below.
@@ -42,6 +43,15 @@ export interface Star {
   haloAlpha: number;
   /** The star's own colour, undesaturated. The tint lives out here. */
   haloColour: readonly [number, number, number];
+  /**
+   * Which routes the star is part of the sky on.
+   *
+   * Most stars are on both and never change. The rest fill the ground one
+   * route's globe or type leaves and the other's does not, and fade in or out
+   * as the route changes — see the Routes section of `starfield.md`.
+   */
+  home: boolean;
+  market: boolean;
 }
 
 export const STARFIELD = {
@@ -84,6 +94,21 @@ export const STARFIELD = {
    */
   falloffInner: 1.0,
   falloffOuter: 1.7,
+
+  /**
+   * Text clearance, in CSS pixels from the edge of a box of type. Nothing
+   * survives within `textClearInner`; everything survives beyond
+   * `textClearOuter`; between them the keep probability is a smoothstep, for
+   * the same reason as the radial falloff — a hard edge would leave a visible
+   * rectangular hole around every line.
+   *
+   * The inner distance is set by the largest glow, not by the core. A bloom
+   * reaches `bloomScale` times the largest core radius, about 20px, and a bloom
+   * that clears the type with its core and not with its glow still lays a haze
+   * over the letters.
+   */
+  textClearInner: 24,
+  textClearOuter: 48,
 
   /**
    * `magnitude = uniform ** exponent`. Raise it for a fainter field, lower it
@@ -180,26 +205,59 @@ export const STARFIELD = {
   seed: 0x9e3779b9,
 } as const;
 
+/** The two arrangements the stage has, one per route. */
+export type StageMode = "home" | "market";
+
+/**
+ * A box of type the field keeps clear of, in the same coordinates as the stars:
+ * CSS pixels from the stage's top left.
+ */
+export interface ClearRect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * What one route's sky keeps clear of: its globe, as a centre and the motif
+ * radius it is drawn at there, and its type.
+ */
+export interface FieldLayout {
+  centreX: number;
+  centreY: number;
+  radius: number;
+  clear: readonly ClearRect[];
+}
+
 /** Pure white: what a bright core desaturates toward. */
 const WHITE_POINT = 255;
 
 /**
- * Builds the field.
+ * Builds the field, for both routes at once.
  *
- * Pure: same arguments in, same array out, every time. `radius` is the motif
- * radius as `home.md` computes it, which the caller passes in rather than this
- * module deriving a second copy of it.
+ * Pure: same arguments in, same array out, every time. Each layout's `radius`
+ * is the motif radius as `home.md` computes it, or the small globe's in the
+ * marketplace, which the caller passes in rather than this module deriving a
+ * second copy of it. `clear` is that route's type, which the caller measures;
+ * see `text-clearance.ts`.
+ *
+ * One stream of candidates serves both routes, and each candidate is judged
+ * against both with the same draw. A star where both routes have open sky is
+ * therefore in both, at the same place — which is most of the field, and is why
+ * changing route moves nothing that does not have to move.
  */
 export function createStarfield(
   width: number,
   height: number,
-  radius: number,
-  centreY: number,
+  home: FieldLayout,
+  market: FieldLayout,
 ): Star[] {
-  if (width <= 0 || height <= 0 || radius <= 0) return [];
+  if (width <= 0 || height <= 0 || home.radius <= 0 || market.radius <= 0) {
+    return [];
+  }
 
   const random = mulberry32(STARFIELD.seed);
-  const centreX = width / 2;
 
   const count = clamp(
     Math.round((width * height) / STARFIELD.countDivisor),
@@ -208,26 +266,59 @@ export function createStarfield(
   );
 
   const stars: Star[] = [];
-  const limit = count * STARFIELD.maxCandidatesPerStar;
+  let homeCount = 0;
+  let marketCount = 0;
+  // Twice the single-route ceiling: the loop runs until both routes are full,
+  // and the second one to fill is fed only by the candidates the first no
+  // longer needs.
+  const limit = count * STARFIELD.maxCandidatesPerStar * 2;
 
   for (
     let candidate = 0;
-    stars.length < count && candidate < limit;
+    (homeCount < count || marketCount < count) && candidate < limit;
     candidate += 1
   ) {
     const x = random() * width;
     const y = random() * height;
 
     // Rejected candidates are discarded rather than repositioned; the loop goes
-    // back for another one, because `count` is a target of survivors.
-    const distance = Math.hypot(x - centreX, y - centreY) / radius;
-    if (random() >= keepProbability(distance)) continue;
+    // back for another one, because `count` is a target of survivors on each
+    // route. A route that is already full takes no more.
+    const draw = random();
+    const inHome =
+      homeCount < count && draw < layoutKeepProbability(x, y, home);
+    const inMarket =
+      marketCount < count && draw < layoutKeepProbability(x, y, market);
+    if (!inHome && !inMarket) continue;
+
+    if (inHome) homeCount += 1;
+    if (inMarket) marketCount += 1;
 
     const magnitude = Math.pow(random(), STARFIELD.magnitudeExponent);
-    stars.push(describe(x, y, magnitude, pickColour(random())));
+    stars.push({
+      ...describe(x, y, magnitude, pickColour(random())),
+      home: inHome,
+      market: inMarket,
+    });
   }
 
   return stars;
+}
+
+/**
+ * How likely a candidate is to survive one route's globe and type together.
+ *
+ * Multiplied, against a single draw, so a candidate the type rejects costs the
+ * generator exactly what one the globe rejects does.
+ */
+function layoutKeepProbability(
+  x: number,
+  y: number,
+  layout: FieldLayout,
+): number {
+  const distance =
+    Math.hypot(x - layout.centreX, y - layout.centreY) / layout.radius;
+  return keepProbability(distance) * textKeepProbability(x, y, layout.clear);
 }
 
 /**
@@ -248,6 +339,34 @@ function keepProbability(distance: number): number {
 }
 
 /**
+ * How likely a candidate at `x`/`y` is to survive the type around it: the
+ * nearest box decides.
+ *
+ * Distance is to the box's edge, not its centre, so a long line is cleared
+ * along its whole length rather than as a circle around its middle.
+ */
+function textKeepProbability(
+  x: number,
+  y: number,
+  clear: readonly ClearRect[],
+): number {
+  const { textClearInner, textClearOuter } = STARFIELD;
+  let nearest = Number.POSITIVE_INFINITY;
+
+  for (const box of clear) {
+    const dx = Math.max(box.left - x, 0, x - box.right);
+    const dy = Math.max(box.top - y, 0, y - box.bottom);
+    nearest = Math.min(nearest, Math.hypot(dx, dy));
+  }
+
+  if (nearest <= textClearInner) return 0;
+  if (nearest >= textClearOuter) return 1;
+
+  const t = (nearest - textClearInner) / (textClearOuter - textClearInner);
+  return t * t * (3 - 2 * t);
+}
+
+/**
  * Derives everything about a star's appearance from its magnitude.
  *
  * Split out from the loop because this, not the placement above it, is what the
@@ -258,7 +377,7 @@ function describe(
   y: number,
   magnitude: number,
   colour: readonly [number, number, number],
-): Star {
+): Omit<Star, StageMode> {
   let coreRadius = STARFIELD.radiusFloor + magnitude * STARFIELD.radiusRange;
   let coreAlpha =
     STARFIELD.alphaFloor +
