@@ -5,8 +5,20 @@ import { useEffect, useRef } from "react";
 import { motifRadius } from "@/lib/globe/projection";
 import { chromeClearance } from "@/lib/stage/chrome-clearance";
 import { drawAmbient, drawStars } from "@/lib/starfield/draw";
-import { createPointerResponse } from "@/lib/starfield/pointer-response";
-import { createStarfield } from "@/lib/starfield/starfield-points";
+import {
+  createPointerResponse,
+  type PointerResponseHandle,
+} from "@/lib/starfield/pointer-response";
+import { ROUTE_MIX_MS, routeEase } from "@/lib/starfield/route-mix";
+import {
+  createStarfield,
+  type FieldLayout,
+  type StageMode,
+} from "@/lib/starfield/starfield-points";
+import {
+  clearElements,
+  measureClearRects,
+} from "@/lib/starfield/text-clearance";
 import { stageCentreY } from "@/lib/stage/centre";
 
 /**
@@ -15,8 +27,9 @@ import { stageCentreY } from "@/lib/stage/centre";
  * The field is specified in `docs/design/starfield.md`; where it sits in the
  * layer stack is in `docs/design/home.md`. Generation and the pointer response
  * are pure modules in `src/lib/starfield/`, and this component's whole job is
- * to give them an element, a size, and a regenerated field when that size
- * changes.
+ * to give them an element, a size, the globe and type each route keeps clear
+ * of, a regenerated field when any of those changes, and the crossfade between
+ * the routes' skies.
  *
  * **Nothing runs until the pointer moves.** The field is static: the only
  * motion on this page is the drag, and its loop is started by a pointer event
@@ -43,26 +56,65 @@ const MAX_PIXEL_RATIO = 2;
  */
 const RESIZE_DEBOUNCE_MS = 150;
 
-export function Starfield() {
-  const ambientRef = useRef<HTMLCanvasElement>(null);
+/**
+ * Where the small globe sits in the marketplace, and its radius.
+ *
+ * CSS decides it — `--mk-globe-x`, `--mk-globe-y` and `--mk-r` in
+ * `globals.css` — and the motif is moved there by a transform, so it is read
+ * from the same properties rather than from the motif's canvas, whose box the
+ * transform would distort.
+ */
+function marketGlobe(): Omit<FieldLayout, "clear"> {
+  const style = getComputedStyle(document.documentElement);
+  const read = (name: string) =>
+    Number.parseFloat(style.getPropertyValue(name)) || 0;
+  return {
+    centreX: read("--mk-globe-x"),
+    centreY: read("--mk-globe-y"),
+    radius: read("--mk-r"),
+  };
+}
+
+interface StarfieldProps {
+  mode: StageMode;
+}
+
+export function Starfield({ mode }: StarfieldProps) {
+  const homeAmbientRef = useRef<HTMLCanvasElement>(null);
+  const marketAmbientRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<HTMLCanvasElement>(null);
+  const responseRef = useRef<PointerResponseHandle | null>(null);
+  /** Where the crossfade stands: 0 is home's sky, 1 the marketplace's. */
+  const mixRef = useRef(mode === "market" ? 1 : 0);
 
   useEffect(() => {
-    const ambientCanvas = ambientRef.current;
+    const homeAmbientCanvas = homeAmbientRef.current;
+    const marketAmbientCanvas = marketAmbientRef.current;
     const starsCanvas = starsRef.current;
-    if (ambientCanvas === null || starsCanvas === null) return;
+    if (
+      homeAmbientCanvas === null ||
+      marketAmbientCanvas === null ||
+      starsCanvas === null
+    ) {
+      return;
+    }
 
-    const ambient = ambientCanvas.getContext("2d");
+    const homeAmbient = homeAmbientCanvas.getContext("2d");
+    const marketAmbient = marketAmbientCanvas.getContext("2d");
     const field = starsCanvas.getContext("2d");
-    if (ambient === null || field === null) return;
+    if (homeAmbient === null || marketAmbient === null || field === null) {
+      return;
+    }
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     let drawnWidth = 0;
     let drawnHeight = 0;
+    let drawnClear = "";
 
     // Created before the first draw, so no pointer event can arrive while the
     // canvas has a field on it that nothing is holding the homes of.
     const response = createPointerResponse(starsCanvas, field);
+    responseRef.current = response;
 
     /**
      * Regenerates the field at the canvas's current size and paints it.
@@ -79,22 +131,40 @@ export function Starfield() {
       const height = starsCanvas.clientHeight;
 
       if (width === 0 || height === 0) return;
+
+      const homeClear = measureClearRects("home");
+      const marketClear = measureClearRects("market");
+      const small = marketGlobe();
+      const clearKey = JSON.stringify([homeClear, marketClear, small]);
+
       // The ResizeObserver fires once when it starts observing, and a mobile
       // browser retracting its address bar can fire it again at an unchanged
       // size. Neither is a reason to redraw.
-      if (width === drawnWidth && height === drawnHeight) return;
+      if (
+        width === drawnWidth &&
+        height === drawnHeight &&
+        clearKey === drawnClear
+      ) {
+        return;
+      }
 
       drawnWidth = width;
       drawnHeight = height;
+      drawnClear = clearKey;
 
       const ratio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-      for (const canvas of [ambientCanvas, starsCanvas]) {
+      for (const canvas of [
+        homeAmbientCanvas,
+        marketAmbientCanvas,
+        starsCanvas,
+      ]) {
         canvas.width = Math.round(width * ratio);
         canvas.height = Math.round(height * ratio);
       }
 
       // Draw in CSS pixels; the backing store scale is the context's problem.
-      ambient.setTransform(ratio, 0, 0, ratio, 0, 0);
+      homeAmbient.setTransform(ratio, 0, 0, ratio, 0, 0);
+      marketAmbient.setTransform(ratio, 0, 0, ratio, 0, 0);
       field.setTransform(ratio, 0, 0, ratio, 0, 0);
 
       // The same centre the motif draws on, from the same declaration. If these
@@ -119,14 +189,28 @@ export function Starfield() {
         centreY * 2,
         chromeClearance(width / 2, centreY),
       );
-      const stars = createStarfield(width, height, radius, centreY);
+      const stars = createStarfield(
+        width,
+        height,
+        { centreX: width / 2, centreY, radius, clear: homeClear },
+        { ...small, clear: marketClear },
+      );
 
-      drawAmbient(ambient, width, height, radius, centreY);
-      drawStars(field, stars, width, height);
+      drawAmbient(homeAmbient, width, height, radius, width / 2, centreY);
+      drawAmbient(
+        marketAmbient,
+        width,
+        height,
+        small.radius,
+        small.centreX,
+        small.centreY,
+      );
+      drawStars(field, stars, width, height, mixRef.current);
 
       // Handed the field as generated, which is to say at rest: these positions
       // are the homes every star is drifted back to and snapped to.
       response.setField(stars, width, height);
+      response.setMix(mixRef.current);
     };
 
     draw();
@@ -136,6 +220,10 @@ export function Starfield() {
       timer = setTimeout(draw, RESIZE_DEBOUNCE_MS);
     });
     observer.observe(starsCanvas);
+    // The type can change size without the stage doing so — most often when the
+    // web font arrives and every line rewraps — and the field has to follow it
+    // or the clearance is left around where the fallback font was.
+    for (const element of clearElements()) observer.observe(element);
 
     return () => {
       observer.disconnect();
@@ -144,8 +232,38 @@ export function Starfield() {
       // then the effect again, and a response that outlived it would leave a
       // second loop and a second pointer listener on the same canvas.
       response.destroy();
+      responseRef.current = null;
     };
   }, []);
+
+  // The crossfade. Runs on the motif's clock and curve, so the stars filling
+  // the ground the big globe leaves arrive as it leaves it. From wherever the
+  // last one stood, so reversing part way does not jump.
+  useEffect(() => {
+    const target = mode === "market" ? 1 : 0;
+    const from = mixRef.current;
+    if (from === target) return;
+
+    const apply = (mix: number) => {
+      mixRef.current = mix;
+      responseRef.current?.setMix(mix);
+    };
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      apply(target);
+      return;
+    }
+
+    const duration = ROUTE_MIX_MS * Math.abs(target - from);
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(time) {
+      const t = Math.min((time - start) / duration, 1);
+      apply(from + (target - from) * routeEase(t));
+      if (t < 1) frame = requestAnimationFrame(step);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [mode]);
 
   return (
     /* Two canvases, not one, and the order of them is the layer order: the
@@ -173,11 +291,29 @@ export function Starfield() {
        of `docs/design/globe.md`, which owns the whole sequence. Under reduced
        motion there is no fade and the field is simply there. */
     <>
-      <canvas
-        ref={ambientRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 h-lvh w-full animate-stars-in motion-reduce:animate-none"
-      />
+      {/* One ambient canvas per route, each with its dark hole under that
+          route's globe, crossfaded on the motif's own curve. Each is still drawn
+          once per size and never moves; only its opacity changes. */}
+      <div
+        data-mode={mode}
+        className="transition-opacity duration-800 ease-[cubic-bezier(0.4,0,0.2,1)] data-[mode=market]:opacity-0 motion-reduce:transition-none"
+      >
+        <canvas
+          ref={homeAmbientRef}
+          aria-hidden="true"
+          className="pointer-events-none fixed top-0 left-0 h-lvh w-full animate-stars-in motion-reduce:animate-none"
+        />
+      </div>
+      <div
+        data-mode={mode}
+        className="opacity-0 transition-opacity duration-800 ease-[cubic-bezier(0.4,0,0.2,1)] data-[mode=market]:opacity-100 motion-reduce:transition-none"
+      >
+        <canvas
+          ref={marketAmbientRef}
+          aria-hidden="true"
+          className="pointer-events-none fixed top-0 left-0 h-lvh w-full animate-stars-in motion-reduce:animate-none"
+        />
+      </div>
       <canvas
         ref={starsRef}
         aria-hidden="true"

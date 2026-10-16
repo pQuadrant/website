@@ -116,6 +116,95 @@ Rejected candidates are discarded, not repositioned — the generator draws anot
 rather than moving the one it rejected, which is what makes the count above a count of
 survivors.
 
+### Text clearance
+
+No star sits on type. A star landing inside a line of the tagline or between the letters
+of a label reads as a speck on the glyph, not as sky behind it, and at the size the chrome
+is set a bright one can be mistaken for punctuation.
+
+**This is a rule about where the type is, not a list of places.** Lowering the count does
+not solve it: placement is uniform, so fewer stars make an overlap rarer without making it
+stop. At 1440 × 900 about a dozen stars land in the tagline's box on average, and halving
+the field still leaves half a dozen. Hand-placing or removing particular stars does not
+survive the next change to the layout either. So the field measures the type on the page
+and stays off it, wherever the type happens to be.
+
+Any element carrying `data-star-clear` holds type the field clears. Its value is the route
+the type is shown on — `home` or `market` — or empty for type on both, and each route's sky
+is cleared only of its own type (see _Routes_). A new piece of type is cleared by carrying
+the attribute, with nothing else to change.
+
+What is measured is the **lines of text** inside the element, not the element's box. A box is
+as wide as its layout makes it: the marketplace heading's block runs to the right margin, and
+clearing it emptied a band across the whole top of the stage with nothing in it. Each text
+node is measured on its own, because a range over an element's whole contents reports the
+full box of every block inside it — the same band again. Text kept for screen readers only
+is skipped: it sits in a clipped 1px box, but its words are still laid out in a column
+running down the page.
+
+Let `e` be a candidate's distance in CSS pixels from the edge of the nearest line of marked
+type (zero inside it). The probability it is kept is:
+
+| `e`       | Keep probability       |
+| --------- | ---------------------- |
+| ≤ 24px    | 0                      |
+| 24 → 48px | smoothstep from 0 to 1 |
+| ≥ 48px    | 1                      |
+
+It multiplies the radial falloff above; one random draw is made against the product. The
+inner distance is set by the largest glow, not the core: a bloom reaches about 20px, and a
+star whose core clears the type but whose glow does not still lays a haze over the letters.
+The smoothstep is there for the same reason as the radial one — a hard cut would leave a
+visible rectangle of empty sky around every line.
+
+Rejected candidates are redrawn like any other, so `count` is still a count of survivors
+and the density everywhere else is unchanged.
+
+Distance is to the line's edge rather than its centre, so a long line is cleared along its
+whole length. Type that is not displayed at this window size clears nothing. Type belonging
+to the other route is measured while it is hidden, so that route's sky is ready before the
+type fades in — but it clears only that route's sky, never the one on screen.
+
+The lines are measured when the field is generated, and the field is regenerated when any
+marked element changes size, which is what catches the web font arriving and rewrapping
+the lines. The pointer drag can still carry a star across type for the moment it is moving;
+it settles back outside the clearance, and only the field at rest is held to this rule.
+
+### Routes
+
+The stage has two arrangements, home and the marketplace, and the globe moves between them:
+centred and large at home, small in the top-left corner in the marketplace. Each needs its
+own sky. Home's has an empty disc where the big globe is; the marketplace's has its empty
+disc under the small globe, and the ground the big globe left is ordinary sky. Each route
+is also cleared of its own type and only its own.
+
+So the field is generated **for both routes at once**, from one stream of candidates. Each
+candidate is judged against both routes' keep probabilities with the same random draw, and
+carries a flag for each route it survived. A candidate where both routes have open sky
+survives both together and is one star, at one place, on both — which is most of the field.
+Only the stars near one route's globe or type differ, and only those change when the route
+does. Each route is filled to `count` survivors independently; once a route is full,
+further candidates serve only the other.
+
+The marketplace's globe is read from `--mk-globe-x`, `--mk-globe-y` and `--mk-r` in
+`globals.css`, the same properties that place the small globe, with the same falloff
+multiples of its radius as home's.
+
+**The crossfade.** When the route changes, a star on only the route being left fades out and
+a star on only the route arriving fades in. A star on both stays at full strength
+throughout. It runs over **800ms on `cubic-bezier(0.4, 0, 0.2, 1)`**, the motif's own
+duration and curve, so the old disc fills as the globe leaves it rather than before or after.
+The motif's move is a CSS transition and the stars are on one canvas, so the curve is
+repeated in `route-mix.ts`; the two must be kept in step. A route change part way through
+reverses from wherever the fade stood. Under reduced motion the sky switches at once.
+
+The ambient light follows the same rule: it is drawn twice, once per route with its hole
+under that route's globe, and the two canvases crossfade on the same duration and curve.
+Each is still drawn once per size and never moves.
+
+The marketplace's dimming of the whole layer (to 40%) is the stage's, not this file's, and
+is unchanged.
+
 ### How they look
 
 Each surviving star is assigned a **magnitude** and a colour. Everything else about its
@@ -526,23 +615,25 @@ Touch devices get the static field, which is the whole of this ticket's field an
 
 The window sizes from `home.md` apply here unchanged. In addition:
 
-| Check                      | What to look for                                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                     |
-| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                  |
-| Reload twice               | Identical field both times                                                                              |
-| Retina display             | Stars are crisp dots, not fuzzy squares                                                                 |
-| Idle for 30 seconds        | No animation frames running, CPU at zero                                                                |
-| Slow pointer sweep         | Stars are carried along the line the cursor crossed and drift back; no jitter, no wobble as they arrive |
-| Fast diagonal flick        | No star thrown far, no trail or haze behind them, field recovers to its exact arrangement               |
-| Background during a sweep  | The dark space does not move at all. Anything shimmering on it is a bug, not an effect                  |
-| Reduced motion on          | Field renders at full opacity immediately, nothing fades, nothing moves, no loop starts                 |
-| Hard reload                | The field fades up over the first 400ms rather than appearing at once                                   |
-| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                             |
-| Click chrome and sign-in   | Canvas does not block any pointer target                                                                |
-| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere         |
-| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                       |
-| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits   |
+| Check                      | What to look for                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Load at 1440 × 900         | Stars across the whole window, thinning to nothing behind the globe                                                                                           |
+| Look at the falloff edge   | No visible ring or hard boundary where density changes                                                                                                        |
+| Reload twice               | Identical field both times                                                                                                                                    |
+| Retina display             | Stars are crisp dots, not fuzzy squares                                                                                                                       |
+| Idle for 30 seconds        | No animation frames running, CPU at zero                                                                                                                      |
+| Slow pointer sweep         | Stars are carried along the line the cursor crossed and drift back; no jitter, no wobble as they arrive                                                       |
+| Fast diagonal flick        | No star thrown far, no trail or haze behind them, field recovers to its exact arrangement                                                                     |
+| Background during a sweep  | The dark space does not move at all. Anything shimmering on it is a bug, not an effect                                                                        |
+| Reduced motion on          | Field renders at full opacity immediately, nothing fades, nothing moves, no loop starts                                                                       |
+| Hard reload                | The field fades up over the first 400ms rather than appearing at once                                                                                         |
+| Resize slowly              | Field regenerates, no stretched or oval stars, no empty gap                                                                                                   |
+| Stars and type             | No star within 24px of a line of type shown on the current route, on both routes, at every size in `home.md`. Read the star canvas's pixels, not a screenshot |
+| Route round trip           | Home, marketplace, home: the old globe disc fills in the marketplace, nothing sits behind the small globe, and home returns to exactly its field              |
+| Click chrome and sign-in   | Canvas does not block any pointer target                                                                                                                      |
+| Ambient, globe rim outward | Brightness rises monotonically to the corner. Any rise-then-fall is a halo welded to the sphere                                                               |
+| Ambient, amplified         | Multiply the background layers by nine and look: a smooth field, no ring, no band                                                                             |
+| Globe local contrast       | Bright points against the gaps between them, measured inside the disc. Tens to one, not single digits                                                         |
 
 ---
 

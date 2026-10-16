@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 import { spikeContent } from "@/spike/content";
 
 /**
@@ -22,6 +23,7 @@ export function SpikeTopBar({ mode }: SpikeTopBarProps) {
       <Link
         href="/"
         aria-label={wordmark.accessibleLabel}
+        {...{ [STAR_CLEAR_ATTRIBUTE]: "" }}
         className={`${LINK} font-sans text-[calc(17*var(--chrome-unit))] text-fg-0 text-shadow-glow-0`}
       >
         {wordmark.label}
@@ -30,7 +32,10 @@ export function SpikeTopBar({ mode }: SpikeTopBarProps) {
         aria-hidden="true"
         className="hidden h-[60%] w-px bg-separator row:block"
       />
-      <nav className="hidden items-center gap-chrome-product-gap row:flex">
+      <nav
+        {...{ [STAR_CLEAR_ATTRIBUTE]: "" }}
+        className="hidden items-center gap-chrome-product-gap row:flex"
+      >
         <Link
           href="/"
           aria-current={mode === "home" ? "page" : undefined}

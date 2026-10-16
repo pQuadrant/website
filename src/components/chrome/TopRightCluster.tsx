@@ -1,4 +1,5 @@
 import type { ChromeTopRightContent } from "@/content/types";
+import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 
 /**
  * The top-right cluster: the platform link.
@@ -36,6 +37,7 @@ export function TopRightCluster({ content }: TopRightClusterProps) {
           is briefly not there. */}
       <a
         href={content.platformLink.href}
+        {...{ [STAR_CLEAR_ATTRIBUTE]: "" }}
         className="pointer-events-auto flex items-center border border-fg-2 bg-control-fill px-chrome-control-pad text-fg-0 text-shadow-glow-0 transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0"
       >
         {content.platformLink.label}
