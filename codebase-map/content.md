@@ -60,5 +60,7 @@ API client, environment variable or data contract; all marketplace content is st
 this repository. Planning that integration has to settle, and record here: the
 authoritative source, producer and consumer, the interface contract, failure and
 loading behaviour, how a change on either side affects the other, and the
-[public-data boundary](../AGENTS.md#public-repository-and-published-data). Nothing here
+[public-data boundary](../AGENTS.md#public-repository-and-published-data), and whether
+routes kept in the client cache indefinitely
+([route structure](routes.md#route-structure)) would show stale data. Nothing here
 authorizes building it.
