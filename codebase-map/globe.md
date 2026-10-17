@@ -73,7 +73,9 @@ globe lands at the wrong size.
 
 **What feeds the corner term.** Three elements carry `data-chrome-corner`: the two top
 corner regions in `Stage`, and the tagline wrapper. Hidden elements report empty boxes
-and are skipped.
+and are skipped. The top-right region holds PLATFORM and APPLY NOW; the apply panel
+and its backdrop are `fixed`, so they never add to that box
+([apply flow](apply.md#connections)).
 
 The tagline is usually the nearest corner, so **its wording, size and position set the
 globe's size on most windows**, desktop included; on some phone sizes the size factor

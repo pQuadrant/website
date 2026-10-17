@@ -27,7 +27,7 @@ export interface ChromeTopLeftContent {
   };
 }
 
-/** Top-right cluster: the platform link. */
+/** Top-right cluster: the platform link. APPLY NOW's copy is in `ApplyContent`. */
 export interface ChromeTopRightContent {
   platformLink: ExternalLink;
 }

@@ -15,6 +15,8 @@ here.
 | One question: label, control, its message               | `ApplyField` in [src/components/apply/ApplyField.tsx](../src/components/apply/ApplyField.tsx)                         |
 | Primary and secondary button styles                     | [src/components/apply/action-styles.ts](../src/components/apply/action-styles.ts)                                     |
 | The questions, which are optional, length limits, rules | `APPLICATION_STEPS`, `MAX_LENGTH`, `answerProblem` in [src/lib/apply/application.ts](../src/lib/apply/application.ts) |
+| Tidying answers                                         | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                       |
+| Where focus goes, on touch screens and otherwise        | `focusStart`, `focusProblem` in [src/lib/apply/focus.ts](../src/lib/apply/focus.ts)                                   |
 | Every word, including each field's messages             | `applyContent` in [src/content/apply.ts](../src/content/apply.ts), typed by `ApplyContent`                            |
 | Panel, field, error and accent colours and glows        | The apply panel and primary action tokens in [globals.css](../src/app/globals.css)                                    |
 

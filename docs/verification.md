@@ -107,8 +107,8 @@ Check layout changes at these viewport sizes, with a fine pointer and with a coa
 | 1920 × 1080 | Common monitor                                                     |
 | 2560 × 1440 | Globe cap and chrome scale ceiling                                 |
 
-The layout switches at 640px wide, 500px tall and 1100px wide, and the top-right
-controls tighten below 380px wide. For a change near one of
+The layout switches at 640px wide, 500px tall and 1100px wide. The top-right controls
+also tighten below 380px wide, and the apply panel below 600px tall. For a change near one of
 those, also check a pixel either side. A phone's landscape viewport is shorter than its
 screen while the browser toolbar shows; check both states, and do not rely on an
 emulator to reproduce the toolbar.
