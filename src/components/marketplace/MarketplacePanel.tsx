@@ -3,15 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { spikeContent } from "@/spike/content";
-import { COMMIT_AT, DEAD_ZONE, RESISTANCE } from "@/spike/pull";
+import type { MarketplaceContent } from "@/content/types";
+import type { StageMode } from "@/lib/stage/mode";
+import { COMMIT_AT, DEAD_ZONE, RESISTANCE } from "@/lib/stage/route-gesture";
 
 interface MarketplacePanelProps {
-  mode: "home" | "market";
+  content: MarketplaceContent["catalogue"];
+  mode: StageMode;
 }
 
 /**
- * SPIKE. The marketplace panel, with the pull-down-to-go-home gesture.
+ * The marketplace panel, with the pull-down-to-go-home gesture.
  *
  * The panel is a fixed box holding its own scroller, so the document never
  * scrolls and every layer stays pinned. A pull that starts with the scroller
@@ -32,7 +34,7 @@ const WHEEL_GAP_MS = 150;
 /** Wheel quiet time after which an unfinished pull springs back. */
 const WHEEL_REST_MS = 220;
 
-export function MarketplacePanel({ mode }: MarketplacePanelProps) {
+export function MarketplacePanel({ content, mode }: MarketplacePanelProps) {
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -169,8 +171,6 @@ export function MarketplacePanel({ mode }: MarketplacePanelProps) {
     };
   }, [mode, router]);
 
-  const { panel } = spikeContent;
-
   return (
     <div
       data-mode={mode}
@@ -189,16 +189,16 @@ export function MarketplacePanel({ mode }: MarketplacePanelProps) {
         <div
           ref={scrollerRef}
           role="region"
-          aria-label={panel.regionLabel}
+          aria-label={content.regionLabel}
           tabIndex={0}
-          className="h-full overflow-y-auto overscroll-contain pt-7 pr-[var(--mk-inset-right)] pb-[calc(48px+env(safe-area-inset-bottom))] pl-[var(--mk-panel-pad)] [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="h-full overflow-y-auto overscroll-contain pt-7 pr-[var(--stage-inset-right)] pb-[calc(48px+env(safe-area-inset-bottom))] pl-[var(--mk-panel-pad)] [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <input
             type="search"
-            placeholder={panel.searchPlaceholder}
+            placeholder={content.searchPlaceholder}
             className="h-chrome-touch w-full max-w-[360px] border border-fg-2 bg-control-fill px-chrome-control-pad font-mono text-chrome-label text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden pointer-coarse:text-[16px]"
           />
-          {panel.rows.map((row) => (
+          {content.rows.map((row) => (
             <section key={row} className="mt-8">
               <h3 className="font-mono text-chrome-label text-fg-1 text-shadow-glow-1">
                 {row}
@@ -209,7 +209,7 @@ export function MarketplacePanel({ mode }: MarketplacePanelProps) {
                     key={index}
                     className="flex h-[calc(120*var(--chrome-unit))] w-[calc(200*var(--chrome-unit))] shrink-0 items-end border border-fg-2 bg-control-fill p-3 font-mono text-chrome-label text-fg-1"
                   >
-                    {panel.cardLabel} {index + 1}
+                    {content.cardLabel} {index + 1}
                   </div>
                 ))}
               </div>

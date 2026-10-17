@@ -62,11 +62,11 @@ to the nearest displayed `[data-chrome-corner]` box, less `CHROME_CLEARANCE` (24
 
 **Three callers must pass the same arguments:**
 
-| Caller                                                                    | Uses the radius for                                                              |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `measure` in `globe.ts`                                                   | Drawing the globe                                                                |
-| `draw` in [Starfield.tsx](../src/components/starfield/Starfield.tsx)      | The star-free disc and the ambient hole ([field](starfield.md#field-generation)) |
-| `measureScale` in [src/spike/StageShell.tsx](../src/spike/StageShell.tsx) | `--globe-scale` for the marketplace move                                         |
+| Caller                                                                     | Uses the radius for                                                              |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `measure` in `globe.ts`                                                    | Drawing the globe                                                                |
+| `draw` in [Starfield.tsx](../src/components/starfield/Starfield.tsx)       | The star-free disc and the ambient hole ([field](starfield.md#field-generation)) |
+| `measureScale` in [StageShell.tsx](../src/components/stage/StageShell.tsx) | `--globe-scale` for the marketplace move                                         |
 
 If one diverges, stars appear inside the sphere, a halo sits on its rim, or the small
 globe lands at the wrong size.

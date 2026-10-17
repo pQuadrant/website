@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { DEAD_ZONE } from "@/spike/pull";
+import { DEAD_ZONE } from "@/lib/stage/route-gesture";
 
 /** Finger travel upward, in pixels, that opens the marketplace on release. */
 const SWIPE_DISTANCE = 60;
@@ -18,7 +18,7 @@ interface HomeSwipeProps {
 }
 
 /**
- * SPIKE. Swipe up anywhere on home to open the marketplace.
+ * Swipe up anywhere on home to open the marketplace.
  *
  * Nothing on the page moves with the finger. The stage is anchored, and a copy
  * that lifted with the swipe slid over the globe; the gesture is read, not

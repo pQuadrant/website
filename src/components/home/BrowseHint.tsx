@@ -1,14 +1,15 @@
 import Link from "next/link";
 
+import type { StageMode } from "@/lib/stage/mode";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
-import { spikeContent } from "@/spike/content";
 
 interface BrowseHintProps {
-  mode: "home" | "market";
+  label: string;
+  mode: StageMode;
 }
 
 /**
- * SPIKE. `BROWSE AI SYSTEMS ↓`, the way into the marketplace wherever the
+ * `BROWSE AI SYSTEMS ↓`, the way into the marketplace wherever the
  * HOME / MARKETPLACE switch is not shown.
  *
  * Part of the persistent stage, so it fades on the mode rather than mounting
@@ -17,7 +18,7 @@ interface BrowseHintProps {
  * arrive. Visibility rides along so it is hidden once faded, and `inert` keeps
  * it out of the tab order in the marketplace.
  */
-export function BrowseHint({ mode }: BrowseHintProps) {
+export function BrowseHint({ label, mode }: BrowseHintProps) {
   return (
     <Link
       href="/marketplace"
@@ -26,7 +27,7 @@ export function BrowseHint({ mode }: BrowseHintProps) {
       {...{ [STAR_CLEAR_ATTRIBUTE]: "home" }}
       className="fixed bottom-[calc(40px+env(safe-area-inset-bottom))] left-1/2 flex h-chrome-touch -translate-x-1/2 items-center gap-[calc(10*var(--chrome-unit))] px-chrome-control-pad font-mono text-chrome-label text-fg-0 text-shadow-glow-0 [transition:opacity_400ms_ease-out_600ms,translate_200ms,visibility_0s_linear_600ms] hover:translate-y-0.5 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:translate-y-0.5 data-[mode=market]:invisible data-[mode=market]:opacity-0 data-[mode=market]:[transition:opacity_160ms_ease-out,translate_200ms,visibility_0s_linear_160ms] stage-narrow:right-[calc(40px+env(safe-area-inset-right))] stage-narrow:left-auto stage-narrow:translate-x-0 short:right-[calc(24px+env(safe-area-inset-right))] short:left-auto short:translate-x-0 row:hidden motion-reduce:transition-none!"
     >
-      {spikeContent.browse}
+      {label}
       <span aria-hidden="true">↓</span>
     </Link>
   );

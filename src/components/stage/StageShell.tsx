@@ -3,25 +3,28 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 
+import { TopLeftCluster } from "@/components/chrome/TopLeftCluster";
 import { TopRightCluster } from "@/components/chrome/TopRightCluster";
 import { Globe } from "@/components/globe/Globe";
+import { BrowseHint } from "@/components/home/BrowseHint";
+import { HomeSwipe } from "@/components/home/HomeSwipe";
+import { Tagline } from "@/components/home/Tagline";
+import { MarketplaceHeading } from "@/components/marketplace/MarketplaceHeading";
+import { MarketplacePanel } from "@/components/marketplace/MarketplacePanel";
 import { Stage } from "@/components/stage/Stage";
 import { Starfield } from "@/components/starfield/Starfield";
+import { chromeContent } from "@/content/chrome";
 import { homeContent } from "@/content/home";
+import { marketplaceContent } from "@/content/marketplace";
 import { motifRadius } from "@/lib/globe/projection";
 import { chromeClearance } from "@/lib/stage/chrome-clearance";
 import { stageCentreY } from "@/lib/stage/centre";
-import { BrowseHint } from "@/spike/BrowseHint";
-import { HomeSwipe } from "@/spike/HomeSwipe";
-import { MarketplaceHeading } from "@/spike/MarketplaceHeading";
-import { MarketplacePanel } from "@/spike/MarketplacePanel";
-import { SpikeTopBar } from "@/spike/SpikeTopBar";
-import { Tagline } from "@/spike/Tagline";
+import { stageModeFor } from "@/lib/stage/mode";
 
 /**
- * SPIKE. The persistent stage for the route experiment. It lives in a layout, so
- * it is never remounted when the route changes: the globe and starfield keep
- * running and only their placement follows the URL.
+ * The persistent stage for both routes, mapped in `codebase-map/routes.md`. It
+ * lives in a layout, so it is never remounted when the route changes: the globe
+ * and starfield keep running and only their placement follows the URL.
  *
  * Everything either route shows is here, home's copy and the marketplace alike,
  * and fades on the mode with CSS transitions. Nothing uses the browser's view
@@ -55,7 +58,7 @@ interface StageShellProps {
 export function StageShell({ children }: StageShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const mode = pathname.startsWith("/marketplace") ? "market" : "home";
+  const mode = stageModeFor(pathname);
   const motifRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -111,14 +114,18 @@ export function StageShell({ children }: StageShellProps) {
           <Globe />
         </div>
       }
-      topLeft={<SpikeTopBar mode={mode} />}
-      topRight={<TopRightCluster content={homeContent.chrome.topRight} />}
+      topLeft={<TopLeftCluster content={chromeContent.topLeft} mode={mode} />}
+      topRight={<TopRightCluster content={chromeContent.topRight} />}
     >
       <Tagline content={homeContent.tagline} mode={mode} />
-      <BrowseHint mode={mode} />
+      <BrowseHint label={homeContent.browse} mode={mode} />
       <HomeSwipe active={mode === "home"} />
-      <MarketplaceHeading mode={mode} />
-      <MarketplacePanel mode={mode} />
+      <MarketplaceHeading
+        heading={marketplaceContent.heading}
+        subline={marketplaceContent.subline}
+        mode={mode}
+      />
+      <MarketplacePanel content={marketplaceContent.catalogue} mode={mode} />
       {children}
     </Stage>
   );

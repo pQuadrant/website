@@ -12,6 +12,7 @@
  */
 
 import { mulberry32 } from "@/lib/random";
+import type { StageMode } from "@/lib/stage/mode";
 
 /** A single star, in CSS pixels, positioned relative to the stage's top left. */
 export interface Star {
@@ -204,9 +205,6 @@ export const STARFIELD = {
    */
   seed: 0x9e3779b9,
 } as const;
-
-/** The two arrangements the stage has, one per route. */
-export type StageMode = "home" | "market";
 
 /**
  * A box of type the field keeps clear of, in the same coordinates as the stars:

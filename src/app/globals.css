@@ -257,7 +257,7 @@
   --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
 }
 
-/* SPIKE. A phone held upright stacks the tagline and the Browse hint under the
+/* A phone held upright stacks the tagline and the Browse hint under the
    globe, about 180px from the bottom against the bar's 100px at the top, so
    centring on the window leaves it looking low. Halfway between the two is 40px
    above the middle. */
@@ -313,7 +313,45 @@
   }
 }
 
-/* SPIKE. Marketplace geometry, in one place.
+/* Stage insets and the chrome bar.
+ *
+ * The page margins, insets included, matching the corner regions. One variable
+ * per edge rather than a breakpoint utility per use, because a custom variant
+ * such as `row:` sorts after the breakpoints and silently wins over `stage:`.
+ * The tagline, the catalogue and the marketplace geometry below lay out on them.
+ *
+ * The bar is the top chrome row: its height, and its bottom edge, which the
+ * marketplace stacks under. */
+:root {
+  --stage-inset-left: calc(24px + env(safe-area-inset-left));
+  --stage-inset-right: calc(24px + env(safe-area-inset-right));
+  --stage-inset-bottom: calc(24px + env(safe-area-inset-bottom));
+  --chrome-bar: calc(44 * var(--chrome-unit));
+  --chrome-bar-bottom: calc(
+    56px + env(safe-area-inset-top) + var(--chrome-bar)
+  );
+}
+@media (width >= 640px) {
+  :root {
+    --stage-inset-left: calc(40px + env(safe-area-inset-left));
+    --stage-inset-right: calc(40px + env(safe-area-inset-right));
+    --stage-inset-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+}
+@media (width >= 1100px) {
+  :root {
+    --stage-inset-left: calc(64px + env(safe-area-inset-left));
+    --stage-inset-right: calc(64px + env(safe-area-inset-right));
+    --stage-inset-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+@media (width >= 640px) and (height >= 500px) {
+  :root {
+    --chrome-bar: calc(34 * var(--chrome-unit));
+  }
+}
+
+/* Marketplace geometry, in one place.
  *
  * Every length the marketplace is laid out with: where the small globe sits, how
  * big it is, where the heading and the catalogue start. In CSS because all of it
@@ -349,51 +387,26 @@
   initial-value: 0px;
 }
 :root {
-  /* The page margins, insets included, matching the corner regions. One
-     variable per edge rather than a breakpoint utility per use, because a
-     custom variant such as `row:` sorts after the breakpoints and silently
-     wins over `stage:`. */
-  --mk-inset-left: calc(24px + env(safe-area-inset-left));
-  --mk-inset-right: calc(24px + env(safe-area-inset-right));
-  --mk-inset-bottom: calc(24px + env(safe-area-inset-bottom));
-  /* The bar's height, which the top offset and the small globe stack under. */
-  --mk-bar: calc(44 * var(--chrome-unit));
   --mk-r: calc(34 * var(--chrome-unit));
-  --mk-bar-bottom: calc(56px + env(safe-area-inset-top) + var(--mk-bar));
 
-  --mk-globe-x: calc(var(--mk-inset-left) + var(--mk-r));
-  --mk-globe-y: calc(var(--mk-bar-bottom) + 24px + var(--mk-r));
+  --mk-globe-x: calc(var(--stage-inset-left) + var(--mk-r));
+  --mk-globe-y: calc(var(--chrome-bar-bottom) + 24px + var(--mk-r));
 
   /* Tall: the heading beside the globe, centred on it. */
-  --mk-heading-left: calc(var(--mk-inset-left) + 2 * var(--mk-r) + 24px);
+  --mk-heading-left: calc(var(--stage-inset-left) + 2 * var(--mk-r) + 24px);
   --mk-heading-top: var(--mk-globe-y);
   --mk-heading-shift: -50%;
   --mk-heading-width: calc(
-    100vw - var(--mk-heading-left) - var(--mk-inset-right)
+    100vw - var(--mk-heading-left) - var(--stage-inset-right)
   );
 
   /* Tall: the catalogue under both, full width, its content on the margin. */
   --mk-content-top: calc(var(--mk-globe-y) + var(--mk-r) + 12px);
   --mk-panel-left: 0px;
-  --mk-panel-pad: var(--mk-inset-left);
-}
-@media (width >= 640px) {
-  :root {
-    --mk-inset-left: calc(40px + env(safe-area-inset-left));
-    --mk-inset-right: calc(40px + env(safe-area-inset-right));
-    --mk-inset-bottom: calc(40px + env(safe-area-inset-bottom));
-  }
-}
-@media (width >= 1100px) {
-  :root {
-    --mk-inset-left: calc(64px + env(safe-area-inset-left));
-    --mk-inset-right: calc(64px + env(safe-area-inset-right));
-    --mk-inset-bottom: calc(64px + env(safe-area-inset-bottom));
-  }
+  --mk-panel-pad: var(--stage-inset-left);
 }
 @media (width >= 640px) and (height >= 500px) {
   :root {
-    --mk-bar: calc(34 * var(--chrome-unit));
     --mk-r: calc(52 * var(--chrome-unit));
   }
 }
@@ -402,15 +415,15 @@
     /* The left column: wide enough for the heading on one line. */
     --mk-column: calc(176 * var(--chrome-unit));
 
-    --mk-globe-y: calc(var(--mk-bar-bottom) + 16px + var(--mk-r));
+    --mk-globe-y: calc(var(--chrome-bar-bottom) + 16px + var(--mk-r));
 
-    --mk-heading-left: var(--mk-inset-left);
+    --mk-heading-left: var(--stage-inset-left);
     --mk-heading-top: calc(var(--mk-globe-y) + var(--mk-r) + 16px);
     --mk-heading-shift: 0px;
     --mk-heading-width: var(--mk-column);
 
-    --mk-content-top: calc(var(--mk-bar-bottom) + 12px);
-    --mk-panel-left: calc(var(--mk-inset-left) + var(--mk-column) + 32px);
+    --mk-content-top: calc(var(--chrome-bar-bottom) + 12px);
+    --mk-panel-left: calc(var(--stage-inset-left) + var(--mk-column) + 32px);
     --mk-panel-pad: 0px;
   }
 }

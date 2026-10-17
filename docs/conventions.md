@@ -9,7 +9,8 @@ Where the current code departs from a rule, the departure is recorded in the rel
 ```
 src/
   app/           Routes only. A folder is a URL segment; (stage) is a route group.
-  components/    One folder per surface, named after it (chrome, globe, stage, starfield).
+  components/    One folder per surface, named after it (chrome, globe, home, marketplace,
+                 stage, starfield).
     ui/          Generic primitives, once one exists.
   content/       Page copy, as typed objects.
   lib/           TypeScript modules that are not React components.
