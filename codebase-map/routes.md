@@ -13,6 +13,15 @@ platform data, are in [content](content.md#marketplace-copy-and-platform-data).
 - [src/app/(stage)/page.tsx](<../src/app/(stage)/page.tsx>) and
   [marketplace/page.tsx](<../src/app/(stage)/marketplace/page.tsx>) return `null`. They
   exist for the URLs; all visible content is in the persistent stage.
+- `next/link` prefetches each route once its link is on screen, and
+  `experimental.staleTimes.static: Infinity` in [next.config.ts](../next.config.ts)
+  keeps that copy for as long as the page is open. Otherwise it expires after 5 minutes
+  and a later switch waits on a server round trip before `mode` changes, so nothing
+  moves for that time. The setting is safe only while the route pages render nothing;
+  it needs revisiting if one starts rendering server content.
+- If the site has been republished since the page loaded, Next.js turns the next
+  navigation into a full page load to avoid mixing versions. The marketplace then opens
+  like a deep link, with no globe move.
 - [StageShell.tsx](../src/components/stage/StageShell.tsx), `StageShell`, derives
   `mode` from `usePathname()` with `stageModeFor` in
   [src/lib/stage/mode.ts](../src/lib/stage/mode.ts): `"market"` when the path starts
