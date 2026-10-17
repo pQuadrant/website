@@ -1,21 +1,21 @@
-## What changed
+## What changed and why
 
-<!-- One or two sentences. What does this do? -->
+<!-- What a visitor or maintainer will notice, and the reason. -->
 
-## Why
+Related ticket, if any:
 
-<!-- Link the ticket. If there is no ticket, explain why not. -->
+## Verification
 
-## How to test
+<!-- Results of the required checks in docs/verification.md, with static checks
+     kept apart from runtime checks. If the change can affect layout, motion or
+     input, add the visual and interaction checks that procedure calls for.
+     Brief steps to reproduce a check are welcome when they would help someone
+     repeat it later. -->
 
-<!-- Steps to verify this change. Be specific enough that someone
-     who did not write this can check it. -->
+## Limitations
 
-## Checklist
+<!-- What was not verified, known gaps, follow-ups. "None" is fine. -->
 
-- [ ] Ran `format`, `lint`, `typecheck`, `build` locally
-- [ ] Checked the change visually, including on mobile and during transitions
-- [ ] Acceptance criteria from the ticket are met
-- [ ] No copy hardcoded in `.tsx` files
-- [ ] No new dependencies added without discussion
-- [ ] Codebase maps reviewed and updated where affected
+## Maps
+
+<!-- Which codebase-map files were updated, or why none needed to be. -->
