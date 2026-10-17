@@ -184,7 +184,7 @@ Each layer handles `prefers-reduced-motion` itself:
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | CSS fades and transitions   | `motion-reduce:animate-none` / `motion-reduce:transition-none` on most layers; exceptions below                                                            | Yes                                                      |
 | Globe move between routes   | `motion-reduce:transition-none!` on the motif wrapper in `StageShell`, so the globe jumps to its new size and position                                     | Yes                                                      |
-| Tagline fade between routes | Still runs: the wrapper's opacity transition has no reduced-motion variant                                                                                 | Not applicable                                           |
+| Tagline fade between routes | Still runs, by design: the wrapper's brief opacity fade has no reduced-motion variant                                                                      | Not applicable                                           |
 | Globe                       | `applyMotionPreference` in `globe.ts` stops the loop, `snap`s state and paints one frame                                                                   | Yes (`change` listener)                                  |
 | Star pointer response       | `applyPreference` in [pointer-response.ts](../src/lib/starfield/pointer-response.ts)                                                                       | Yes                                                      |
 | Star route crossfade        | `Starfield` jumps straight to the target mix                                                                                                               | Checked on each route change                             |
@@ -194,8 +194,12 @@ A transition set through a data-attribute variant (`data-ready:`, `data-[mode=â€
 compiles to a more specific selector than the plain `motion-reduce:transition-none`, so
 it would keep running under reduced motion. Those layers (the globe move, the
 marketplace panel and heading, the browse hint) use the important form,
-`motion-reduce:transition-none!`. **Open:** whether the tagline's opacity fade should
-also stop under reduced motion.
+`motion-reduce:transition-none!`.
+
+**Design constraint:** the tagline's fade between routes keeps running under reduced
+motion. It is brief and only changes opacity, so nothing moves across the screen; the
+reason is recorded beside the wrapper in `Tagline`. Adding a reduced-motion variant to
+it is a product decision, not a fix.
 
 ## Verification
 
