@@ -38,12 +38,12 @@ that calls `resize()`, and calls `destroy()` on unmount.
 | [point-set.ts](../src/lib/globe/point-set.ts)               | `createGlobePointSet` decodes the generated indices                                         |
 | [fibonacci-sphere.ts](../src/lib/globe/fibonacci-sphere.ts) | `writeSpherePoint`, the single definition of point placement                                |
 
-Boundaries (design constraint, implemented): no React, nothing imported from
-`src/components/`, state separated from drawing. The engine reads the DOM in two ways:
-the canvas and motion preference, and the corner boxes through `chromeClearance`
-([motif radius](#motif-radius)).
+Boundaries, as the `globe.ts` header states them: no React, nothing imported from
+`src/components/`, no colour values, state separated from drawing. The engine reads the
+DOM in two ways: the canvas and motion preference, and the corner boxes through
+`chromeClearance` ([motif radius](#motif-radius)).
 
-Performance constraints (design constraint): typed arrays allocated once, no per-point
+Performance techniques: typed arrays allocated once, no per-point
 allocation in the loop, about 24 fills per frame through opacity bucketing
 (`BUCKET_COUNT` 10 per class, `HIGHLIGHT_BUCKET_COUNT` 4), and far-side points
 (`CULL_DEPTH`) drawn only at even indices. Points are axis-aligned squares once
@@ -73,20 +73,12 @@ globe lands at the wrong size.
 
 **What feeds the corner term.** Three elements carry `data-chrome-corner`: the two top
 corner regions in `Stage`, and the tagline wrapper. Hidden elements report empty boxes
-and are skipped. Measured on 2026-10-17 in a production build (corner distance minus
-24, against the factor):
+and are skipped.
 
-| Window     | Tagline | Top corners | Factor | Limiting term |
-| ---------- | ------- | ----------- | ------ | ------------- |
-| 1440 × 900 | 327     | 452 / 621   | 396    | tagline       |
-| 1100 × 650 | 198     | 278 / 426   | 286    | tagline       |
-| 390 × 844  | 259     | 267         | 172    | factor        |
-| 320 × 568  | 95      | 125         | 141    | tagline       |
-| 932 × 430  | 236     | 322         | 189    | factor / edge |
-| 667 × 375  | 101     | 189         | 165    | tagline       |
-
-So **the tagline's wording, size and position set the globe's size on most windows**,
-desktop included. A copy change can resize the globe.
+The tagline is usually the nearest corner, so **its wording, size and position set the
+globe's size on most windows**, desktop included; on some phone sizes the size factor
+or the edge margin limits it instead. A copy change can resize the globe. Measure the terms at the
+[window sizes](../docs/verification.md#window-sizes) to see which one applies.
 
 **Changes that disturb it:** adding, removing, resizing or moving any
 `data-chrome-corner` element; changing the corner margins or chrome scale; changing
@@ -113,15 +105,14 @@ ocean by a regular stride, then writes
 [point-set.generated.ts](../src/lib/globe/point-set.generated.ts). Never edit the
 generated file by hand.
 
-Design constraints:
-
-- **Generated at build time, shipped as data.** No geometry fetch and no mapping
-  library in the browser.
-- **15,000 points.** Changing the count re-rolls every point (`total` is fixed at 34,063
-  for this count) and changes which small islands exist. Measure frame time before
-  changing it. If density or cost ever has to give, scale point size before cutting the
-  count.
-- The land class is never thinned (thinning a dense lattice punches visible holes).
+- **Generated ahead of time, shipped as data.** No geometry fetch and no mapping library
+  in the browser; the script header explains this.
+- **The land class is never thinned** (design constraint, `LAND_SHARE_FLOOR` in the
+  script): thinning a dense lattice punches visible holes.
+- **15,000 points** is the default count. Changing it re-rolls every point (`total` is
+  fixed at 34,063 for this count) and changes which small islands exist. Measure frame
+  time before changing it. Earlier design documents preferred scaling point size over
+  cutting the count if cost ever had to give (not confirmed).
 - Far-side culling uses the point's slot, so a regenerated set changes which far-side
   points are drawn. That shows in a pixel diff without being visible.
 

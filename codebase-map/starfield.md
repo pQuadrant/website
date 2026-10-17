@@ -48,9 +48,9 @@ the same field on every load. All tuning is in `STARFIELD`.
   routes.
 - **Appearance:** magnitude `u ** magnitudeExponent`; most stars are faint bare cores;
   halos only above `haloThreshold`; bloom above `bloomThreshold`; additive compositing;
-  sub-pixel cores held at `radiusMin` with the shortfall paid in alpha. The colour shares
-  in `STARFIELD.colours` and `colourShares` are provisional (open: the retired spec
-  marked the amber share "under review").
+  sub-pixel cores held at `radiusMin` with the shortfall paid in alpha. The colours are
+  in `STARFIELD.colours` and `colourShares`. **Open:** the amber star colour is marked
+  "under review" in its comment.
 
 ## Text clearance
 
@@ -72,8 +72,8 @@ The value says which route's sky it clears: `""` for both, `"home"` or `"market"
 
 **New text must carry the attribute, or stars can land on it.** The marketplace
 catalogue (search field, row titles, cards) is not marked today. It sits over a panel
-of its own, but nothing keeps stars out from behind its text. Observed from the code;
-not judged as a defect.
+of its own, but nothing keeps stars out from behind its text. Whether it should be
+marked has not been decided.
 
 ## Ambient light
 

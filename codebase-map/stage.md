@@ -22,7 +22,7 @@ navigation. See [route structure](routes.md#route-structure).
 [globals.css](../src/app/globals.css), `viewport.themeColor` in `layout.tsx`, and
 `background_color`/`theme_color` in [src/app/manifest.ts](../src/app/manifest.ts),
 because a meta tag and a manifest cannot read a CSS property. Change all three
-together (implemented; each file's comment says so).
+together; each file's comment says so.
 
 ## Layer order
 
@@ -43,11 +43,16 @@ regions (`topLeft`, `topRight`). Layer 1, the fill, is on `<html>`.
 - Decorative layers are `pointer-events-none`; the corner regions are too, and each
   control inside opts back in with `pointer-events-auto`.
 
-**Design constraints** carried from the retired specs and still followed: square
-corners and 1px borders only; no border radius, backdrop blur, frosted glass, noise,
-scanlines, SVG/displacement filters, or curvature on the stage. Glow is allowed only
-as emission of an element's own colour (the chrome text halos, the focus ring, star
-halos drawn on canvas), never a drop shadow or a wash of another colour.
+**Design constraint:** glow is emission of an element's own colour (the chrome text
+halos, the focus ring, star halos drawn on canvas), never a drop shadow; star halos are
+canvas gradients, not `box-shadow` or a blur filter. The reasons are in the glow
+comment in `globals.css` and the header of
+[src/lib/starfield/draw.ts](../src/lib/starfield/draw.ts).
+
+**Not confirmed:** the stage also uses only square corners and 1px borders, with no
+border radius, backdrop blur, frosted glass, noise, scanlines, SVG or displacement
+filters, or curvature. Earlier design documents excluded these; nothing current
+confirms the exclusion is still intended.
 
 ## Stage centre
 
@@ -94,11 +99,11 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   `TopRightCluster`. The platform link is a real `<a href>` (modified/middle click and
   context menu work; same tab, no `target`). Row height is `h-chrome-touch` (44 units)
   below `row:` and `h-chrome-control` (34 units) at `row:` and up; the link stretches to
-  it. Border `fg-2` was chosen as the first ramp value clearing 3:1 non-text contrast
-  against the corner ground (design constraint; 3.20:1 or better was measured at
-  1440×900, 1920×1080 and 2560×1440 before the bottom corners were removed). The fill
-  `--color-control-fill` stays at or below about 0.03–0.05 alpha or it reads as a grey
-  card.
+  it. The border is `fg-2`; earlier design documents chose it as the first ramp value
+  clearing 3:1 non-text contrast against the corner ground (not confirmed; measure
+  before changing the border, fill or background). The fill `--color-control-fill` is
+  kept faint so the control reads as an object rather than a lit panel (its comment in
+  `globals.css`).
 - **Top left:** `SpikeTopBar` in [src/spike/SpikeTopBar.tsx](../src/spike/SpikeTopBar.tsx):
   the wordmark (link to `/`) and, from `row:` up, the HOME / MARKETPLACE switch. See
   [navigation and gestures](routes.md#navigation-and-gestures).
@@ -125,7 +130,8 @@ reasoning; read it before changing values.
   `clamp(1px, 1px + (100vw − 1024px) × 0.00045573, 1.7px)`: exactly 1px at 1024px and
   below, 1.7px from 2560px. Chrome type, control heights, padding, gaps and glow radii
   are counts of this unit. Borders, the focus ring's 1px ring, letter-spacing (in `em`)
-  and the corner margins do not scale (design constraint).
+  and the corner margins do not scale (design constraint, explained beside the chrome
+  dimensions in `globals.css`).
 - **Breakpoints:** `--breakpoint-stage: 1100px` and `--breakpoint-stage-narrow: 640px`
   drive only the margin tiers, by width.
 - **Variants:** `row:` is `(width >= 640px) and (height >= 500px)`, the roomy layout;
@@ -178,9 +184,11 @@ Each layer handles `prefers-reduced-motion` itself:
 | Star route crossfade      | `Starfield` jumps straight to the target mix                                                                       | Checked on each route change   |
 | Tagline words             | `Tagline` skips its animations if the preference matches at mount; CSS `motion-reduce:opacity-100` shows the words | **No**                         |
 
-**Observed defect (2026-10-17, production build, headless Chrome):** load with reduced
-motion on, then turn it off. The tagline words fall back to `opacity-0` and the tagline
-disappears, because its effect never ran. Not fixed; recorded for a follow-up.
+**Known defect,
+[issue #54](https://github.com/pQuadrant/website/issues/54):** load with reduced motion
+on, then turn it off, and the tagline disappears. Its words fall back to `opacity-0`
+because the effect that would show them never ran. A change to the tagline's motion
+should fix this or keep it in mind.
 
 ## Verification
 

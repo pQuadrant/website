@@ -18,7 +18,8 @@ input behaviour.
 
 ## GitHub rules
 
-Verified with the GitHub API on 2026-10-17:
+These settings live in GitHub, not in this repository, so they can change without a
+commit. Check them with `gh api` when a task depends on them.
 
 - Ruleset **main protection** (active) on `main`: changes arrive by pull request, 0
   approvals required, required status check `check`, no force-push, no deletion. Merge,
@@ -39,8 +40,7 @@ What is verified, and what is not:
 
 | Claim                                                                                           | Status                                                                                                                                 |
 | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| An Amplify webhook (`amplify-webhooks.eu-north-1.amazonaws.com`) is installed on the repository | Verified (GitHub API, 2026-10-17)                                                                                                      |
-| Production serves the latest merged `main` (markup from #53 is live)                            | Observed (2026-10-17)                                                                                                                  |
+| An Amplify webhook (`amplify-webhooks.eu-north-1.amazonaws.com`) is installed on the repository | Verified with the GitHub API                                                                                                           |
 | Every merge to `main` triggers a production build, including documentation-only merges          | **Unverified.** The build settings and branch triggers live in the Amplify console, not in this repository, and could not be inspected |
 | Pull-request previews                                                                           | Unverified. The previous README said they were configured but not working                                                              |
 

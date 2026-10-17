@@ -26,7 +26,7 @@ Changing the words changes layout and motion, not only text:
 - **Tagline length moves the globe.** The tagline wrapper is a chrome corner, and on
   most windows it is what limits the globe's size
   ([motif radius](globe.md#motif-radius)). Longer or wider copy can make the globe
-  smaller, at 1440×900 included. That is a visible change; report it with the copy
+  smaller, on desktop windows too. That is a visible change; report it with the copy
   change rather than letting it pass as a text edit.
 - **Tagline timing scales with word count.** Each word animates on its own delay, and
   the emphasis starts after `FIRST_WORD_MS + words × STAGGER_MS + EMPHASIS_HOLD_MS`

@@ -21,8 +21,7 @@ platform data, are in [content](content.md#marketplace-copy-and-platform-data).
   [starfield-points.ts](../src/lib/starfield/starfield-points.ts), although it is not a
   starfield concept.
 - Because nothing remounts, marketplace scroll position and search text survive a trip
-  home and back (implemented; stated in commit #52). The pull gesture resets on each
-  visit.
+  home and back. The pull gesture resets on each visit.
 - A deep link to `/marketplace` opens in place. `StageShell` sets `data-ready` on the
   motif wrapper only after the first scale is measured, so the globe starts small
   rather than animating from full size.
@@ -46,7 +45,7 @@ itself to clear it, and on most windows the tagline is what limits the globe's s
 (see [motif radius](globe.md#motif-radius)). It stays mounted on the marketplace for that
 reason: a corner that came and went would change the globe's size between routes.
 
-**Current responsive behaviour (implemented, not a confirmed design rule):**
+**Current responsive behaviour** (not confirmed as design rules):
 
 - Tall windows (`row:`): tagline bottom-left, its width limited to stay about 130px short
   of the window's middle.
@@ -66,8 +65,9 @@ The motif wrapper in `StageShell` translates and scales the globe canvas with CS
   by the motif's radius from `motifRadius`, with the same arguments the globe uses, on
   mount and on `resize`. If those arguments drift from the globe's, the small globe
   lands at the wrong size ([motif radius](globe.md#motif-radius)).
-- The globe keeps rotating during the move. View transitions were removed because they
-  froze rendering while snapshotting (commit #52); do not reintroduce them.
+- The globe keeps rotating during the move. The move deliberately does not use view
+  transitions, which freeze rendering while they snapshot the page and would stop the
+  globe mid-move.
 
 ## Route transition timing
 
@@ -85,9 +85,7 @@ These are kept in step by hand; nothing ties them together in code.
 | Marketplace panel          | rises 24px and fades in over 800ms after 350ms                                 | out in 100ms                | `MarketplacePanel` classes                                                         |
 
 **The shared outcome:** outgoing content is gone before the moving globe passes under
-it, and incoming content waits until the globe has nearly arrived. Observed on
-2026-10-17 at 1440×900 in a production build: the tagline is at 0 opacity by 120ms, the
-heading begins appearing after 350ms, and the globe settles at 800ms.
+it, and incoming content waits until the globe has nearly arrived.
 
 **Changes that disturb it:** changing the globe's duration or curve without
 `route-mix.ts` and the ambient wrappers; lengthening an outgoing fade; moving content
@@ -152,9 +150,10 @@ as literals ([tokens](stage.md#tokens-breakpoints-and-variants)).
   iOS does not zoom on focus.
 - The tagline renders its full sentence in an `sr-only` span and the animated words
   `aria-hidden`.
-- **Focus is not moved on a route change.** Observed on 2026-10-17: activating
-  MARKETPLACE with the keyboard and then pressing Esc leaves focus on the MARKETPLACE
-  link on both routes. Whether that is the intended behaviour has not been decided.
+- **Focus is not moved on a route change.** Nothing in the code moves it, so after
+  activating MARKETPLACE with the keyboard, focus stays on that link on the marketplace
+  and again after Esc returns home. **Open:** whether this is the intended behaviour
+  has not been decided. It is a design question, not a known defect.
 
 ## Status of the spike folder
 

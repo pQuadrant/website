@@ -26,14 +26,20 @@ in [docs/verification.md](../docs/verification.md).
 
 ## How statements are labelled
 
-- Unlabelled statements about files and symbols were read in the code.
-- **Observed** means measured in a running build, with a date. It can drift.
-- **Design constraint** means an intended rule that was recorded when the earlier design
-  specs were approved and that the code still follows. Changing one is a product
-  decision, not a refactor.
-- Current behaviour with no such label is what the code does, not a confirmed design
-  requirement.
-- **Open** marks an unresolved question.
+Unlabelled statements describe what the code and configuration do. That is current
+behaviour, not proof of design intent. Labels are used only where they settle
+uncertainty:
+
+- **Design constraint:** an intentional requirement with current evidence, normally a
+  comment beside the implementation that states the rule and its reason. Changing one
+  is a product decision, not a refactor.
+- **Not confirmed:** a rule the code follows that nothing current confirms as
+  intentional. Ask before relying on it or changing it.
+- **Open:** an unresolved question. **Unverified:** a claim about a system outside this
+  repository that has not been checked.
+
+Measurements and the results of a task's verification belong in its pull request, not
+here.
 
 ## Maintenance
 
@@ -45,5 +51,6 @@ in [docs/verification.md](../docs/verification.md).
   entries. Use paths and symbol names, not line numbers.
 - Add new areas to this index. Split a map when it forces readers through unrelated
   detail; merge or remove maps when responsibilities converge or disappear.
-- Keep detailed reasoning in code comments, and task results in the PR. Planning and
-  history do not belong here.
+- Keep detailed reasoning in code comments, and measurements and task results in the
+  PR. Planning and history do not belong here.
+- Track confirmed defects as GitHub issues and link them from the section they affect.
