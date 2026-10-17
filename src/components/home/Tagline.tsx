@@ -126,6 +126,9 @@ export function Tagline({ content, mode }: TaglineProps) {
   // its gap below the emphasis.
   const word = "inline-block pb-[3px] opacity-0 motion-reduce:opacity-100";
 
+  // Unlike the other route transitions, the wrapper's fade keeps running under
+  // reduced motion, by decision: it is brief and only changes opacity, so
+  // nothing moves across the screen.
   return (
     <div
       data-mode={mode}
