@@ -31,21 +31,22 @@ commit. Check them with `gh api` when a task depends on them.
 ## Publishing
 
 [pquadrant.com](https://pquadrant.com) is served from AWS, and the evidence below points
-to AWS Amplify. What can be checked from outside AWS is verified; what lives in the
-Amplify console has not been inspected.
+to AWS Amplify. What can be checked from outside AWS is verified; what requires access
+to the relevant AWS configuration has not been inspected.
 
-| Claim                                                                                                        | Status                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The domain is registered at GoDaddy, with Route 53 (`awsdns`) nameservers                                    | Verified with WHOIS and DNS                                                                                                                         |
-| `pquadrant.com` and `www` are served through CloudFront, with an Amazon-issued `*.pquadrant.com` certificate | Verified with DNS, the TLS certificate and response headers                                                                                         |
-| An active Amplify webhook (`amplify-webhooks.eu-north-1.amazonaws.com`) receives the repository's pushes     | Verified with the GitHub API                                                                                                                        |
-| The site is Amplify app `pquadrant-website` in `eu-north-1`, and Amplify manages the certificate             | **Unverified.** The webhook points to Amplify in that region, but the app name, its domain setup and who manages the certificate were not inspected |
-| Every merge to `main` triggers a production build, including documentation-only merges                       | **Unverified.** The build settings and branch triggers live in the Amplify console, not in this repository, and could not be inspected              |
-| Pull-request previews                                                                                        | **Unverified.** Whether any are configured, and whether they work, is unknown                                                                       |
+| Claim                                                                                                        | Status                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The domain is registered at GoDaddy, with Route 53 (`awsdns`) nameservers                                    | Verified with WHOIS and DNS                                                                                                                          |
+| `pquadrant.com` and `www` are served through CloudFront, with an Amazon-issued `*.pquadrant.com` certificate | Verified with DNS, the TLS certificate and response headers                                                                                          |
+| An active Amplify webhook (`amplify-webhooks.eu-north-1.amazonaws.com`) receives the repository's pushes     | Verified with the GitHub API                                                                                                                         |
+| The site is Amplify app `pquadrant-website` in `eu-north-1`, and Amplify manages the certificate             | **Unverified.** The webhook points to Amplify in that region, but the app name, its domain setup and who manages the certificate were not inspected  |
+| Every merge to `main` triggers a production build, including documentation-only merges                       | **Unverified.** The build settings and branch triggers are not in this repository; confirming them requires access to the relevant AWS configuration |
+| Pull-request previews                                                                                        | **Unverified.** Whether any are configured, and whether they work, is unknown                                                                        |
 
-There is no staging environment. Until previews are confirmed, a change is reviewed by
-running the branch locally ([running the site](../docs/verification.md#running-the-site)).
+No staging environment is documented in this repository; whether one exists externally
+has not been verified. Until previews are confirmed, a change is reviewed by running the
+branch locally ([running the site](../docs/verification.md#running-the-site)).
 
 **What merging means:** expect a merge to `main` to be published to pquadrant.com, but
 treat the trigger as unconfirmed. If a change must not go live, do not merge it.
-Confirming the Amplify settings needs access to the AWS console or CLI.
+Confirming the Amplify settings requires access to the relevant AWS configuration.
