@@ -123,7 +123,8 @@ Within the globe: every point is at its true geometry from the first frame and s
 scattered by a seeded drift (`ENTRANCE.seed`, independent of the starfield's seed), dim
 and colourless, then settles. No per-point value derives from position. Idle spin is
 `SPIN` 0.055 rad/s with `TILT` 0.16. Under reduced motion no entrance field is built
-and one settled frame is painted. Because the seed is fixed, the sequence repeats on
+and one settled frame is painted. Otherwise the loop draws every frame for as long as
+the page is open; it does not stop when the page is idle. Because the seed is fixed, the sequence repeats on
 every load; the rotation means a still frame differs by capture time.
 
 ## Open questions
