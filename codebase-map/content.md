@@ -82,8 +82,10 @@ The reading column hangs off the left margin. From 1100px wide (`stage:`), a con
 list, `PrivacyContents`
 ([src/components/privacy/PrivacyContents.tsx](../src/components/privacy/PrivacyContents.tsx)),
 sits sticky against the right margin and lights the section being read: the last one
-whose heading has passed the top fifth of the window or, at the foot of the page, the
-one just jumped to. It listens to scroll at most once a frame. Section ids come from
+whose heading has passed the top fifth of the window. The final window-height of
+scrolling is shared out equally between the sections that have not reached that line
+by then, so the short closing sections each take a turn, and an entry chosen from the
+list stays lit until the visitor scrolls. It listens to scroll at most once a frame. Section ids come from
 the headings (`sectionId` in `PrivacyPolicy`), so renaming a heading changes its link.
 
 **The policy describes what the site does, so it must change with it.** When a change
