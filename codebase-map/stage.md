@@ -180,21 +180,15 @@ them.
 
 Each layer handles `prefers-reduced-motion` itself:
 
-| Area                        | Behaviour                                                                                                               | Reacts to a change while open? |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| CSS fades and transitions   | `motion-reduce:animate-none` / `motion-reduce:transition-none` on most layers; exceptions below                         | Yes                            |
-| Globe move between routes   | Still animates: `data-ready:transition-[translate,scale]` on the motif wrapper outranks `motion-reduce:transition-none` | Yes, but has no effect         |
-| Tagline fade between routes | Still runs: the wrapper's opacity transition has no reduced-motion variant                                              | Not applicable                 |
-| Globe                       | `applyMotionPreference` in `globe.ts` stops the loop, `snap`s state and paints one frame                                | Yes (`change` listener)        |
-| Star pointer response       | `applyPreference` in [pointer-response.ts](../src/lib/starfield/pointer-response.ts)                                    | Yes                            |
-| Star route crossfade        | `Starfield` jumps straight to the target mix                                                                            | Checked on each route change   |
-| Tagline words               | `Tagline` skips its animations if the preference matches at mount; CSS `motion-reduce:opacity-100` shows the words      | **No**                         |
-
-**Known defect,
-[issue #54](https://github.com/pQuadrant/website/issues/54):** load with reduced motion
-on, then turn it off, and the tagline disappears. Its words fall back to `opacity-0`
-because the effect that would show them never ran. A change to the tagline's motion
-should fix this or keep it in mind.
+| Area                        | Behaviour                                                                                                                                                  | Reacts to a change while open?                           |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| CSS fades and transitions   | `motion-reduce:animate-none` / `motion-reduce:transition-none` on most layers; exceptions below                                                            | Yes                                                      |
+| Globe move between routes   | Still animates: `data-ready:transition-[translate,scale]` on the motif wrapper outranks `motion-reduce:transition-none`                                    | Yes, but has no effect                                   |
+| Tagline fade between routes | Still runs: the wrapper's opacity transition has no reduced-motion variant                                                                                 | Not applicable                                           |
+| Globe                       | `applyMotionPreference` in `globe.ts` stops the loop, `snap`s state and paints one frame                                                                   | Yes (`change` listener)                                  |
+| Star pointer response       | `applyPreference` in [pointer-response.ts](../src/lib/starfield/pointer-response.ts)                                                                       | Yes                                                      |
+| Star route crossfade        | `Starfield` jumps straight to the target mix                                                                                                               | Checked on each route change                             |
+| Tagline words               | `applyMotionPreference` in `Tagline` finishes the entrance animations, which then hold the words shown; CSS `motion-reduce:` classes cover the first paint | Yes (`change` listener); nothing replays when turned off |
 
 **Known defect,
 [issue #56](https://github.com/pQuadrant/website/issues/56):** the globe move above

@@ -44,6 +44,8 @@ const EMPHASIS_HOLD_MS = 350;
 const UNDERLINE_AFTER_MS = 450;
 const EASE = "cubic-bezier(0.2, 0.7, 0.2, 1)";
 
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
 interface TaglineProps {
   content: TaglineContent;
   mode: StageMode;
@@ -58,8 +60,6 @@ export function Tagline({ content, mode }: TaglineProps) {
   useEffect(() => {
     const line = lineRef.current;
     if (line === null) return;
-    // Under reduced motion CSS shows every word at once and nothing runs.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const animations: Animation[] = [];
     const play = (element: Element, keyframes: Keyframe[], delay: number) => {
@@ -100,7 +100,26 @@ export function Tagline({ content, mode }: TaglineProps) {
       );
     }
 
-    return () => animations.forEach((animation) => animation.cancel());
+    // Under reduced motion the entrance skips to its end, and a finished
+    // animation with `fill: "forwards"` goes on holding the words shown. The
+    // `motion-reduce:` classes cover the first paint, before this runs, but stop
+    // applying the moment the preference is turned off; without the held end
+    // state the words would fall back to hidden. Re-read on every change, so
+    // turning it on part way through the entrance snaps the same way. Nothing
+    // replays when it is turned off.
+    const reducedMotion = window.matchMedia(REDUCED_MOTION);
+    const applyMotionPreference = () => {
+      if (reducedMotion.matches) {
+        animations.forEach((animation) => animation.finish());
+      }
+    };
+    reducedMotion.addEventListener("change", applyMotionPreference);
+    applyMotionPreference();
+
+    return () => {
+      reducedMotion.removeEventListener("change", applyMotionPreference);
+      animations.forEach((animation) => animation.cancel());
+    };
   }, [lead.length]);
 
   // The padding under each word opens the lines up, and gives the underline
