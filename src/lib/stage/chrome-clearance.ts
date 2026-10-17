@@ -1,8 +1,8 @@
 /**
  * How much room the corner chrome leaves the motif.
  *
- * One of the four terms in the radius rule — see the Motif sizing section of
- * `docs/design/home.md`, which is where the rule lives. This module answers
+ * One of the four terms in the radius rule — see `motifRadius` in
+ * `src/lib/globe/projection.ts`, which is where the rule lives. This module answers
  * only "how close does the chrome come to this point", and the caller decides
  * what to do with the answer.
  *
@@ -26,7 +26,7 @@ export const CHROME_CORNER_ATTRIBUTE = "data-chrome-corner";
  * How far the sphere's edge is held back from the type.
  *
  * The same number the visible viewport's top and bottom are held back by, so
- * this page has one clearance and not two. See `docs/design/home.md`.
+ * this page has one clearance and not two (`EDGE_MARGIN` in `projection.ts`).
  */
 export const CHROME_CLEARANCE = 24;
 

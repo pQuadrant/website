@@ -5,8 +5,8 @@
  * This is the half of the module that decides what a value should be.
  * `projection.ts` turns those values into rectangles and `draw.ts` turns those
  * into fills; neither of them makes a decision. Keeping the three apart is what
- * makes a later move to a graphics-card renderer a contained change — see the
- * module contract in `docs/design/globe.md`.
+ * makes a later move to a graphics-card renderer a contained change — see Engine
+ * modules in `codebase-map/globe.md`.
  *
  * The globe has one state: idle. It spins up and tilts into place as it forms,
  * and then turns at a steady rate.

@@ -1,6 +1,6 @@
 /**
- * Star placement and appearance for the starfield layer, transcribed from "The
- * field" section of `docs/design/starfield.md`.
+ * Star placement and appearance for the starfield layer, mapped under Field
+ * generation in `codebase-map/starfield.md`.
  *
  * This module is the single definition of where a star sits and how bright it
  * is. It touches no canvas and no DOM: it is handed the
@@ -48,7 +48,7 @@ export interface Star {
    *
    * Most stars are on both and never change. The rest fill the ground one
    * route's globe or type leaves and the other's does not, and fade in or out
-   * as the route changes — see the Routes section of `starfield.md`.
+   * as the route changes — see Field generation in `codebase-map/starfield.md`.
    */
   home: boolean;
   market: boolean;
@@ -237,7 +237,7 @@ const WHITE_POINT = 255;
  * Builds the field, for both routes at once.
  *
  * Pure: same arguments in, same array out, every time. Each layout's `radius`
- * is the motif radius as `home.md` computes it, or the small globe's in the
+ * is the motif radius as `motifRadius` computes it, or the small globe's in the
  * marketplace, which the caller passes in rather than this module deriving a
  * second copy of it. `clear` is that route's type, which the caller measures;
  * see `text-clearance.ts`.
@@ -370,7 +370,7 @@ function textKeepProbability(
  * Derives everything about a star's appearance from its magnitude.
  *
  * Split out from the loop because this, not the placement above it, is what the
- * specification's appearance model actually is.
+ * appearance model actually is.
  */
 function describe(
   x: number,

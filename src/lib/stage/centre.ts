@@ -8,7 +8,7 @@
  * the canvas, which is `lvh` — is the browser's own viewport units.
  *
  * This module does not decide the value. It resolves the one CSS already holds.
- * See the Motif centring section of `docs/design/home.md`.
+ * See Stage centre in `codebase-map/stage.md`.
  */
 
 const CENTRE_PROPERTY = "--stage-centre-y";

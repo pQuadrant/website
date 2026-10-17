@@ -24,8 +24,8 @@ import { stageCentreY } from "@/lib/stage/centre";
 /**
  * Owns the canvas the starfield is drawn on, and nothing else.
  *
- * The field is specified in `docs/design/starfield.md`; where it sits in the
- * layer stack is in `docs/design/home.md`. Generation and the pointer response
+ * The field is mapped in `codebase-map/starfield.md`; where it sits in the
+ * layer stack is in `codebase-map/stage.md`. Generation and the pointer response
  * are pure modules in `src/lib/starfield/`, and this component's whole job is
  * to give them an element, a size, the globe and type each route keeps clear
  * of, a regenerated field when any of those changes, and the crossfade between
@@ -34,8 +34,8 @@ import { stageCentreY } from "@/lib/stage/centre";
  * **Nothing runs until the pointer moves.** The field is static: the only
  * motion on this page is the drag, and its loop is started by a pointer event
  * and cancelled again once the field has settled — see `pointer-response.ts`,
- * which owns it. A page nobody is touching runs nothing, which is a requirement
- * of the specification rather than an optimisation, and it is the thing to
+ * which owns it. A page nobody is touching runs nothing, which is a design
+ * requirement rather than an optimisation, and it is the thing to
  * preserve if this file is edited.
  */
 
@@ -169,8 +169,8 @@ export function Starfield({ mode }: StarfieldProps) {
 
       // The same centre the motif draws on, from the same declaration. If these
       // two ever diverge the ambient hole stops sitting over the sphere and its
-      // ramp lands on the rim as a halo — see the Motif centring section of
-      // `docs/design/home.md`.
+      // ramp lands on the rim as a halo — see Stage centre in
+      // `codebase-map/stage.md`.
       const centreY = stageCentreY(starsCanvas, height);
 
       // The falloff is defined against the motif radius, so it is read from the
@@ -287,8 +287,8 @@ export function Starfield({ mode }: StarfieldProps) {
        Both fade up over the first 400ms of the page, together, as one layer:
        the ambient light is the space the stars are in, and a field arriving
        before the space it sits in reads as two things rather than one. That
-       fade is the first phase of the page's entrance — see the Entrance section
-       of `docs/design/globe.md`, which owns the whole sequence. Under reduced
+       fade is the first phase of the page's entrance — see Page entrance
+       timeline in `codebase-map/stage.md` for the whole sequence. Under reduced
        motion there is no fade and the field is simply there. */
     <>
       {/* One ambient canvas per route, each with its dark hole under that

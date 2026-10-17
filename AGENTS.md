@@ -1,285 +1,279 @@
-# pQuadrant website — agent rules
-
-The sign-in entry point for the pQuadrant platform. One full-screen page:
-a rotating point-cloud globe drawn on a canvas, with a sign-in panel over
-it. There are no other pages, no navigation, and no scrolling content.
-
-Next.js 16 (App Router), TypeScript, Tailwind 4.
-
-## Before writing code
-
-Propose a plan first: files you will change, what each change does, and any
-new dependency. Wait for approval. Do not start editing on the first
-message.
-
-If two attempts fail to fix a problem, stop. Say so. Do not stack a third
-fix on top of two failed ones.
-
-## Structure
-
-src/
-app/ Routes only. A folder is a URL segment.
-components/
-ui/ Generic primitives. No pQuadrant-specific content.
-layout/ Header, Footer, Nav.
-content/ Page copy. One file per page.
-lib/ Shared utilities and non-component modules.
-public/ Static assets.
-
-Create a folder when its first file needs it. Do not create empty folders.
-
-A surface gets its own folder under `components/`, named after the surface,
-created when that surface is built. The globe and the sign-in panel are
-surfaces.
-
-A component moves into `ui/` on its second use, not its first. One use is
-not yet a primitive, and guessing at the general case before there is one
-produces the wrong abstraction.
-
-`lib/` holds TypeScript modules that are not React components. Rendering
-and animation engines belong there — they are handed a canvas and own their
-own loop, and nothing about them is JSX.
-
-Dependencies point one way: surface folders may import from `ui` and
-`layout`. `ui` may not import from a surface folder, and may not reference
-pQuadrant copy or branding.
-
-## Naming
-
-- Components: PascalCase, matching the export. `SignInPanel.tsx` exports
-  `SignInPanel`.
-- Everything else: kebab-case. `site-config.ts`, `home.ts`.
-- Route folders: lowercase. `about/`, `contact/`.
-- One component per file.
-- Import via the `@/` alias, never relative paths that climb (`../../`).
-
-## Content
-
-All copy lives in `src/content/`, as typed TypeScript objects. Pages and
-components receive content as props or import it directly.
-
-Never put user-facing text in a `.tsx` file. If a sentence appears in JSX,
-that is a bug.
-
-```tsx
-// Wrong
-<p>AUTHENTICATED ACCESS ONLY</p>
-
-// Right
-<p>{content.signIn.subhead}</p>
-```
-
-## Styling
-
-Tailwind utility classes only. No CSS modules, no styled-components, no
-inline `style` props. `globals.css` holds Tailwind directives, design tokens,
-and the page's base rules — the handful of declarations that apply to an
-element because of what it is rather than because of where it is used.
-
-**A control already shows a pointer cursor. Do not add `cursor-pointer` to an
-element.** `globals.css` carries one base rule covering `button`, `a[href]`,
-`[role="button"]`, the button-like `input` types and `summary`, and excluding
-anything disabled. Every control you add inherits it with no markup. Adding
-the utility as well leaves the codebase with two mechanisms and nobody able to
-say which is authoritative. The rule is stated in `docs/design/home.md` under
-_Pointer behaviour_; if a control needs a different cursor, that is a change
-to that file first.
-
-**A radial gradient's size percentages are radii, not extents.** `118% 88%`
-is an ellipse whose horizontal radius is 1.18 times the element's width — wider
-than the element itself, so most of the ramp falls outside it. This has been
-misread twice on this project, in both directions: once producing a vignette
-that contributes nothing along the left and right edges, once producing an
-ambient layer that covered every pixel and flattened the page it was meant to
-give depth to. Work out where the stops actually land before tuning them.
-
-**A gradient still descending when it reaches its last stop leaves a visible
-edge**, even though no value steps. The eye reads the change in slope, not the
-change in level, and on a dark surface a slope break of about one level per
-sampled step is enough to see. Ease the tail into its endpoint, and check by
-sampling a radial profile rather than by looking for a step.
-
-## Design specs
-
-Every visual surface has a specification in `docs/design/`. Read the one
-for the surface you are working on before building it, and build against
-it.
-
-If the code and the spec disagree, one of them is a bug. Fix whichever is
-wrong rather than working around the difference.
-
-## Viewports
-
-Every surface is built for every window it can be opened in. A phone is not
-a later phase of this site; it is the device most people will arrive on.
-
-Do not implement a surface whose narrow-window behaviour its spec does not
-cover. That is not permission to invent it — stop and ask, decide it, write
-it into `docs/design/`, and then build it. A spec that stops at the desktop
-composition is incomplete, and shipping against it produces a page that
-overlaps itself on a phone while every check passes.
-
-**320px is the narrowest window supported.** No fixed pixel width above that
-may be used without a stated fallback for windows narrower than it. A fixed
-width on a flexible element does not overflow — it silently shrinks past its
-own clearance, so nothing warns you and no scrollbar appears.
-
-Reflow is the lever, not scale. Nothing is hidden and no type is shrunk to
-make a narrow window fit; a group laid out as a row becomes a column — unless
-it holds two controls that still fit beside each other, which is a judgement
-the surface's spec records rather than a rule applied blindly.
-
-A coarse pointer is a different input, not a smaller cursor. Anything
-interactive needs a hit area of at least 44px and a state that responds to a
-tap — Tailwind confines `hover:` to devices that hover, so a control with
-only a hover state does nothing at all on a phone.
-
-The sizes to verify at are the table in `docs/design/home.md`.
-
-## Types
-
-Component prop types live in the component file. Shared content types live
-in `src/content/types.ts`. Do not create a global `src/types/` folder.
-
-## Dependencies
-
-Do not install a package without asking first. This includes animation
-libraries, icon sets, UI kits, and utility libraries. Explain what problem
-it solves and what it costs before adding it.
-
-Prefer CSS over a library for animation.
-
-## Images and media
-
-Raster images go through `next/image`, never a raw `<img>`, and must have
-`alt` text. Use WebP or AVIF for stills. Use muted looping video for
-motion — never GIF.
-
-SVG assets are written directly into the component that uses them, as
-markup. Do not route SVG through `next/image`: that requires enabling
-`dangerouslyAllowSVG`, and we are not turning it on.
-
-## Before saying you are done
-
-Run these and confirm they pass:
-
-```bash
-npm run format
-npm run lint
-npm run typecheck
-npm run build
-npm ci --dry-run
-```
-
-Do not report work as complete without running them.
-
-The last one is only relevant when you have added, removed or upgraded a
-dependency, and it is the one you will skip and regret. The other four run
-against the `node_modules` already installed, where nothing is missing, so none
-of them can see a broken lockfile. CI resolves from the lockfile alone and
-fails at the install step, before any of the other four get to run.
-
-Installing on top of an existing `node_modules` can silently drop transitive
-dependencies of optional packages that do not install on this platform. When
-that happens, resolve from scratch rather than patching:
-
-```bash
-rm -rf node_modules package-lock.json && npm install
-```
-
-Check the diff too. **A change that adds a dependency should only add lines to
-`package-lock.json`.** If `git diff main -- package-lock.json` shows packages
-being removed, something was pruned unintentionally — do not commit it. If
-`npm install` reports that it removed packages you did not ask it to remove,
-that is the same signal, and it is not dedupe.
-
-If the change touches layout, also check it at the window sizes in the table
-in `docs/design/home.md`, with a coarse pointer as well as a fine one. None
-of the five commands above can see a page overlapping itself: the chrome
-collided on a phone for as long as it did precisely because all of them were
-passing the whole time.
-
-## Measuring the page
-
-Several acceptance criteria here are tonal — contrast, black point, whether a
-gradient is traceable, whether the motif still reads against its background.
-None of those can be settled by looking at a screenshot and deciding it looks
-right, and doing that has produced confidently wrong answers on this project
-more than once. Measure them.
-
-The Chrome extension does not connect in this repository. Drive headless Chrome
-over the DevTools Protocol from a Node script instead: launch with
-`--headless=new --remote-debugging-port=<port>`, read the page target from
-`http://127.0.0.1:<port>/json/list`, and connect with Node's global `WebSocket`.
-Set the viewport with `Emulation.setDeviceMetricsOverride` rather than
-`--window-size`, which reserves space for browser UI and silently gives you a
-shorter viewport than you asked for.
-
-To read the composited page, screenshot it and draw the PNG back into a canvas
-**inside the page** — the background layers are CSS, so there is nothing else to
-sample them from. Luminance is `0.2126R + 0.7152G + 0.0722B` over raw sRGB.
-To read the background behind something, hide the thing and screenshot again.
-
-**Assert the page rendered before trusting a number.** A dev server serving an
-error overlay screenshots perfectly happily and returns plausible figures. Check
-for something that only exists when the page works — `main canvas` will do — and
-fail loudly when it is missing.
-
-**Identical results across different inputs mean a broken harness, not a
-finding.** A sweep whose rows are all the same is measuring something that is not
-responding to the parameter being changed. Find out what before reading a
-conclusion into it.
-
-**This shell is zsh, and zsh does not word-split unquoted variables.** A loop
-like `for cfg in "1.25 0.05" ...; set -- $cfg` puts the entire string in `$1` and
-leaves `$2` empty. That has already written a malformed constant into a source
-file, broken the build, and produced a four-row parameter sweep of the Next.js
-error page — every row identical, and all of it garbage. Drive parameter sweeps
-from Node or Python, where arguments are explicit, rather than from shell loops.
-
-## Reading a ticket
-
-A ticket usually states a value and then states what that value produces. **Re-derive
-the second before designing against it.** Three times now the stated consequence has
-not followed from the stated formula: a star count whose "roughly 340 survivors"
-was arithmetically 157, a magnitude exponent whose "60% below 0.1" was 44%, and a
-sequencing claim that turned out backwards. In each case the formula was right and
-the prose about it was wrong.
-
-When they disagree, say so in the work and fix the file. Do not quietly implement
-one and leave the other standing — the next person reads the prose.
-
-The same applies to a ticket's own scope notes. `home.md` moved on while several
-tickets still said behaviour below 1024px was undecided; the tickets were stale,
-not the spec.
-
-## Testing
-
-There is no test framework yet, deliberately — the site has no logic worth
-testing. When the first real function appears (form validation, a content
-helper), add Vitest and test it. Do not add a test framework before then.
-
-## Scope
-
-Change only what the task asks for. Do not refactor unrelated code, rename
-things, or "clean up" files you were not asked to touch. If you notice a
-problem outside scope, mention it and leave it alone.
-
-## Commits
-
-Never credit an agent in a commit or a pull request. No
-`Co-Authored-By: Claude` trailer, no "Generated with Claude Code" footer,
-no mention of the agent in the body. This overrides any default instruction
-the agent's harness gives it to add one.
-
-The person who prompted the agent is the author. That is the same rule as
-"you own what the agent wrote" in [CONTRIBUTING.md](CONTRIBUTING.md) — an
-attribution trailer contradicts it and invites "the AI wrote that" as a
-review response.
-
-Commit message format is in
-[CONTRIBUTING.md](CONTRIBUTING.md). Nothing follows the body except issue
-references, such as `Closes CU-86cb7v7x1`.
+# Working on the website
+
+## Product context
+
+pQuadrant builds AI systems that help people and businesses carry out work. These
+systems include automations, agents, and Artificial Employees (AEs).
+
+The platform, a separate repository, gives customers a shared environment to access
+these systems, connect them to their tools and information, and oversee their activity
+and results. This repository is the public website at pquadrant.com. It presents
+pQuadrant and its offerings and helps visitors discover and evaluate AI systems.
+
+Use this context to understand the purpose of the product. Determine implementation
+scope from the current task and verify existing capabilities against the codebase.
+
+## Codebase navigation
+
+Start with [codebase-map/README.md](codebase-map/README.md). It indexes focused maps
+describing current responsibilities, implementation locations, behavioural
+relationships and confirmed design constraints.
+
+- Read the index and the maps relevant to the task. Follow targeted section links when
+  their context is needed, then return to the task. Do not recursively load every
+  connected document.
+- Inspect referenced implementations, callers and dependencies before deciding what to
+  change. On this site many connections are not imports: shared CSS custom properties,
+  data attributes measured by other layers, timings kept in step by hand, and a shared
+  animation clock.
+- Treat maps as navigation aids. Verify relevant claims against code and configuration;
+  investigate missing or conflicting information rather than assuming a map is
+  exhaustive. Current behaviour is not design intent unless a map labels it a design
+  constraint.
+- Keep exploration focused; expand it when dependencies or uncertainty justify it.
+  Exclude `node_modules/` and `.next/` from searches.
+- Find commands and procedures in [docs/verification.md](docs/verification.md). Follow
+  the code conventions in [docs/conventions.md](docs/conventions.md).
+
+## From idea to approved plan
+
+The user is a nontechnical product owner. Accept informal ideas and brainstorms; do not
+require technically complete specifications. Distinguish exploration from an
+implementation request. Brainstorming is not approval to change code.
+
+Before proposing implementation, inspect relevant code and assess distinct outcomes,
+affected areas, shared behaviour, uncertainty, dependencies, and consequences of
+failure. Judge scope by behaviour and risk, not apparent code size.
+
+- **Small, clear change:** briefly explain the change and verification; no separate
+  planning document is needed.
+- **Substantial feature:** investigate connections, clarify material questions, and
+  prepare a focused plan.
+- **Multiple outcomes or a large initiative:** propose smaller tickets with clear
+  outcomes, completion criteria, and explicit dependencies. Prefer independently
+  verifiable increments. Agree on the breakdown and the next ticket before
+  implementation.
+
+Avoid unnecessary tickets or planning documents. Do not assume separate tickets are
+independent. When a ticket states a value and what that value produces, re-derive the
+consequence; if the two disagree, say so rather than silently implementing one.
+
+Present a concise plan covering:
+
+1. What the visitor or user will be able to do after the change.
+2. Where the work belongs and the main behaviour being added or changed.
+3. Existing behaviour being reused and connected areas affected.
+4. Significant choices or trade-offs, with a recommendation.
+5. How completion will be verified.
+
+Obtain approval of the implementation plan before editing project files, including for
+small changes. Read-only investigation may proceed beforehand. Within an approved plan,
+resolve routine engineering details autonomously. If discoveries materially change
+scope, expected behaviour, or significant trade-offs, explain and obtain approval for
+the revised plan. Do not repeatedly request approval for work already authorized.
+
+## Change impact
+
+For every change:
+
+1. **Investigate before planning.** Identify the affected code and the user-experience
+   relationships around it, using the maps and then the code.
+2. **Consider indirect effects** beyond the edited files: layout, timing, layering,
+   visibility, focus, responsive and input behaviour, and anything that measures or
+   reads what you change.
+3. **Verify the combined behaviour**, not only the edited component in isolation.
+4. **Update the affected maps and relationships** before requesting final approval.
+
+## Communication
+
+Think thoroughly; communicate selectively. The user should focus on product decisions
+while the agent owns routine engineering, organization, and repository housekeeping.
+
+- Use plain language without assuming programming knowledge or familiarity with
+  frameworks, repository conventions, or previous sessions. Explain unfamiliar concepts
+  when needed; avoid the curse of knowledge.
+- Lead with the useful answer or recommendation. Keep explanations brief, readable, and
+  organized.
+- Explain code responsibilities through their purpose. Use file paths as references so
+  the user can understand what was built, where it lives, and why significant decisions
+  were made. Do not present an inventory of every function or edit.
+- Ask focused questions only when their answers materially affect the outcome.
+  Investigate technical questions independently where possible.
+- For complex topics, present one coherent decision at a time and offer deeper
+  explanation as needed.
+- Distinguish verified facts, assumptions, proposals, and unresolved questions. Never
+  claim to have inspected or tested something without evidence.
+- Write project documentation for a newcomer, without references to the planning
+  conversation. Do not turn tentative ideas or illustrative examples into requirements.
+
+## Engineering and code organization
+
+Own the technical quality of the implementation. Translate product intent into
+maintainable code without requiring the user to direct routine engineering decisions.
+
+### Complete vertical slices
+
+Organize implementation around usable, verifiable outcomes. Include the interface,
+content, styling, responsive and input behaviour, motion and reduced-motion behaviour,
+and failure handling needed for the approved outcome. Keep each responsibility in its
+appropriate module. When foundational work must come first, make that dependency
+explicit. Avoid speculative infrastructure for unapproved future features.
+
+### Clear responsibilities
+
+- Give each module a coherent purpose and clear interface. Follow established
+  boundaries; propose changes when they no longer fit the work.
+- Use descriptive, consistent names. Keep related behaviour together and avoid
+  catch-all files or folders accumulating unrelated responsibilities.
+- Explain non-obvious decisions and important constraints close to the code. Comments
+  should clarify purpose and reasoning without repeating obvious code.
+
+### Thoughtful reuse and safe changes
+
+- Search for existing implementations before adding new ones.
+- When features share the same underlying rules, maintain those rules in one
+  appropriate place and keep feature-specific behaviour separate. Similar-looking code
+  alone is not a reason to force a shared abstraction.
+- Before changing shared behaviour, identify its consumers and contracts. Preserve
+  existing expectations unless their change is explicitly in scope. Update affected
+  consumers together; avoid competing implementations of the same responsibility.
+- Choose the simplest design that satisfies the approved requirements and fits the
+  architecture. Consider performance proportionately; this page runs continuous canvas
+  animation and must cost nothing at rest where the maps say so.
+- Include restructuring necessary for a sound implementation. Raise broader cleanup
+  separately when it materially expands scope.
+
+### Production readiness
+
+The agent owns implementation readiness and technical housekeeping. Before presenting a
+feature as complete, review temporary scaffolding, experimental placement, obsolete
+code, and integration gaps. Complete necessary cleanup within the approved scope. If
+resolving an issue materially expands scope, explain it and obtain approval before
+declaring the feature complete.
+
+Do not depend on the product owner to request that working features be moved out of
+experimental structures. Visual or product approval is not proof that engineering
+cleanup is complete.
+
+## Public repository and published data
+
+This repository is public and its `main` branch is published as the website.
+
+- Never commit credentials, keys or tokens, not even temporarily. Git history is
+  permanent; a leaked key must be revoked. Real values belong in an untracked `.env`
+  file, GitHub Secrets, or AWS Secrets Manager. Push protection is enabled; do not work
+  around it.
+- Do not assume information is safe to publish because the website needs it. Before
+  planning any data the site will receive from the platform or another service, define
+  the public-data boundary explicitly: what may be shown, to whom, and who decides. See
+  [marketplace copy and platform data](codebase-map/content.md#marketplace-copy-and-platform-data).
+
+## Sub-agents
+
+When available, use sub-agents for focused investigation, implementation, or
+independent review when that improves the work. Do not create a fixed delegation
+ceremony for every task.
+
+Give each sub-agent a clear objective, relevant context and map references, scope, and
+expected result. Coordinate editing responsibilities to avoid conflicting changes. The
+main agent remains responsible for reconciling findings, checking evidence, and
+delivering a coherent result. Delegation does not expand the approved scope or bypass
+approval requirements.
+
+## Verification and review
+
+- Verify the approved behaviour and relevant failure cases. When shared code changes,
+  check affected existing consumers.
+- Run the [required checks](docs/verification.md#required-checks). Propose tests where
+  they would meaningfully protect behaviour, with effort proportionate to risk.
+- **For interactive or visual changes, verify intermediate states and transitions, not
+  only final screenshots.** Consider interrupted actions, repeated navigation, reverse
+  transitions, and the relevant viewport and input variations. See
+  [interactive and visual states](docs/verification.md#interactive-and-visual-states).
+  Use browser inspection when available, and report honestly what remains unverified.
+- Measure tonal criteria rather than judging them by eye
+  ([measuring tone and contrast](docs/verification.md#measuring-tone-and-contrast)).
+- When attempts stop producing new evidence, reassess the cause and the approach rather
+  than stacking speculative fixes.
+- Review the diff for correctness, unnecessary complexity, duplication, unrelated
+  edits, and documentation impact. Use independent review when warranted.
+- Distinguish static checks, runtime checks in a local build, and behaviour on the live
+  site. Report failed or blocked checks accurately; do not present unexecuted checks as
+  passing.
+- Once verification is sufficient and required checks pass, avoid unrelated or
+  repetitive checks without a concrete reason.
+
+## Required map maintenance
+
+Map maintenance is part of implementation, not optional follow-up work.
+
+Before declaring any development task complete or requesting final approval, review
+its diff against the affected maps. Update them in the same branch whenever changes
+affect:
+
+- Responsibilities or implementation status.
+- Files, entry points, or referenced symbols.
+- Dependencies, consumers, interfaces, or behavioural relationships.
+- Important constraints, configuration, or verification instructions.
+
+Update affected cross-references, remove obsolete information, and check that links and
+descriptions remain accurate. Correct inaccuracies discovered in the areas being
+changed. Update [docs/conventions.md](docs/conventions.md) or
+[docs/verification.md](docs/verification.md) when a convention or procedure changes,
+keeping each fact in one authoritative location.
+
+In the final handoff, identify updated maps. If none needed updating, briefly explain
+why mapped information remained accurate; do not make artificial edits merely to show
+activity. **A change is not complete while it leaves the relevant maps inaccurate.**
+
+### Grow the map with the site
+
+The current maps are not a fixed set:
+
+- Extend an existing map when new behaviour belongs to its responsibility.
+- Add a focused map when a distinct responsibility needs its own navigation context.
+- Split a map when independently useful topics otherwise force readers to load
+  unrelated detail.
+- Merge or remove maps when responsibilities converge or disappear.
+
+Update the index and affected references whenever maps change structure. Use targeted
+heading links explaining when and why to read the referenced section. Reference file
+paths and symbols rather than line numbers. Keep maps focused on current structure and
+change impact; keep planning and historical task reports out of them.
+
+## Git and delivery workflow
+
+Own this sequence without requiring the user to request each routine step:
+
+1. **Inspect the checkout.** Check the branch and working-tree state. Preserve existing
+   work; never discard, overwrite, or include unrelated changes. If the checkout is not
+   ready for a new task, resolve it safely. Ask only when ownership or intent is
+   unclear. Continue an existing task on its task branch.
+2. **Plan, then branch.** After plan approval, create a task branch from up-to-date
+   `main`, named `type/short-description` (with the ticket ID after the type when there
+   is one). Types: `feat`, `fix`, `perf`, `chore`, `docs`. Recheck the plan if upstream
+   changes affect it.
+3. **Complete the work.** Implement the approved scope, verify it, review the diff, and
+   update maps and affected documentation. Make focused commits in Conventional
+   Commits form (`fix: correct footer spacing on small screens`: lowercase after the
+   colon, imperative, no full stop) explaining the change and its purpose. Reference
+   the ClickUp task, when there is one, at the end of the body (`Closes CU-<id>`).
+4. **Request final approval.** Briefly explain what changed, where it lives,
+   significant decisions, verification results, map updates, and unresolved
+   limitations. Explain what merging will publish, as the
+   [delivery map](codebase-map/delivery.md#publishing) records it. Request approval to
+   create the PR and merge the reviewed result.
+5. **Create and merge the PR.** After approval, push and create a PR whose body follows
+   [the PR template](.github/pull_request_template.md). Squash-merge once the required
+   `check` passes; do not bypass it. If substantive fixes become necessary, verify them
+   and renew final approval for the changed result.
+6. **Clean up.** Confirm the merge, delete the remote branch (GitHub does not do it
+   automatically here), return to `main`, update it from the remote, and remove the
+   local task branch. Confirm cleanup without disturbing unrelated work.
+
+Final approval authorizes the PR, merge, and branch cleanup as one sequence. Do not
+request separate permission for each routine step. Report blockers accurately and
+distinguish implemented, verified, merged, and published states.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

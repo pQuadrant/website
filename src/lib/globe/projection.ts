@@ -160,8 +160,8 @@ export function createGlobeFrame(): GlobeFrame {
 }
 
 /**
- * The radius rule, from the Motif sizing section of `docs/design/home.md`: the
- * smallest of four terms, with a floor.
+ * The radius rule: the smallest of four terms, with a floor. Its callers and
+ * what feeds it are mapped under Motif radius in `codebase-map/globe.md`.
  *
  * `visibleHeight` is the height the visitor can see — `2 x --stage-centre-y`,
  * which is `svh` — and **not** the canvas height. The canvas is `lvh`, the

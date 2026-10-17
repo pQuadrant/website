@@ -21,8 +21,8 @@
  * pixel of the frame it was in. A star is a point of light, and it stays one.
  *
  * Halos are drawn here as canvas gradients, not as a `box-shadow` and not as a
- * blur filter. `docs/design/home.md` prohibits both of those on the stage and
- * that prohibition still stands.
+ * blur filter. Both are ruled out on the stage; see Layer order in
+ * `codebase-map/stage.md`.
  */
 
 import type { Star } from "@/lib/starfield/starfield-points";

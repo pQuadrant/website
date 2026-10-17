@@ -4,7 +4,7 @@ import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 /**
  * The top-right cluster: the platform link.
  *
- * Specified in `docs/design/chrome.md`. The only interactive part of the
+ * Mapped under Corner chrome in `codebase-map/stage.md`. The only interactive part of the
  * chrome, so the link opts back into the pointer events that the stage's
  * corner region turns off.
  */

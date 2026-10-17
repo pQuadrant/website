@@ -3,9 +3,10 @@
  * a canvas it is handed.
  *
  * It contains no React, imports nothing from `src/components/`, holds no colour
- * value, and reads nothing from the DOM other than the canvas itself and the
- * visitor's motion preference. Everything else arrives through the handle
- * returned by `createGlobe`. See the module contract in `docs/design/globe.md`.
+ * value, and reads nothing from the DOM other than the canvas itself, the
+ * visitor's motion preference, and the corner regions `chromeClearance`
+ * measures for the radius. Everything else arrives through the handle
+ * returned by `createGlobe`. See Engine modules in `codebase-map/globe.md`.
  *
  * This file owns the lifecycle only: the frame clock, the motion preference,
  * and shutdown. What the values are is `state.ts`, where they land on screen is
@@ -51,9 +52,9 @@ export interface GlobeOptions {
    *
    * A function rather than a number because it is re-read on every resize, and
    * it arrives from outside rather than being computed here for the same reason
-   * the colours do: the answer lives in CSS, and this module reads nothing from
-   * the DOM but its own canvas. It is not `height / 2` — see the Motif centring
-   * section of `docs/design/home.md`.
+   * the colours do: the answer lives in CSS, and this module reads no CSS custom
+   * property itself. It is not `height / 2` — see Stage centre in
+   * `codebase-map/stage.md`.
    */
   centreY: (stageHeight: number) => number;
 }

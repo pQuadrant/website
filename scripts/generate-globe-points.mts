@@ -3,7 +3,7 @@
  *
  *   npm run generate:globe -- [--count 15000] [--chart path/to/chart.svg]
  *
- * Implements the "Geometry generation" section of `docs/design/globe.md`:
+ * Mapped under Point set in `codebase-map/globe.md`:
  * candidates are placed by the Fibonacci sphere method and classified as land or
  * ocean by testing their coordinate against Natural Earth 50m land geometry.
  * Every land candidate is kept; the ocean is thinned by regular discards to
@@ -34,7 +34,7 @@ import {
 } from "../src/lib/globe/fibonacci-sphere.ts";
 
 /**
- * The smallest share of the kept points that may be land. From the spec.
+ * The smallest share of the kept points that may be land. A design constraint.
  *
  * A floor, not a target. It sizes the candidate pool and nothing else: every
  * land candidate the pool yields is kept, so the share that actually ships
@@ -59,7 +59,7 @@ const LAND_SHARE_FLOOR = 0.64;
  */
 const POOL_MARGIN = 1.02;
 
-/** Default point count. The spec calls this a floor, not a ceiling. */
+/** Default point count. See Point set in `codebase-map/globe.md`. */
 const DEFAULT_COUNT = 15000;
 
 const RAD_TO_DEG = 180 / Math.PI;
