@@ -103,16 +103,17 @@ export function ApplyField({
       </span>
     );
   } else if (kind === "textarea") {
-    // Two lines tall at every size. A longer answer scrolls inside the box,
-    // never the panel around it.
+    // Three lines tall, two under 600px tall where the step would otherwise
+    // not fit the screen. A longer answer scrolls inside the box, never the
+    // panel around it. The height counts the box's padding and border.
     control = (
       <textarea
         {...shared}
-        rows={2}
+        rows={3}
         maxLength={maxLength}
         placeholder={content.placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className={`${CONTROL} ${border} block resize-none overscroll-contain py-[calc(9*var(--chrome-unit))] leading-[1.45]`}
+        className={`${CONTROL} ${border} block resize-none overscroll-contain py-[calc(9*var(--chrome-unit))] leading-[1.45] cramped:h-[calc(2lh+18*var(--chrome-unit)+2px)]`}
       />
     );
   } else {

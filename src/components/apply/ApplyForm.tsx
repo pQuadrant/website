@@ -20,6 +20,12 @@ import {
   MAX_LENGTH,
   tidyAnswer,
 } from "@/lib/apply/application";
+import {
+  focusProblem,
+  focusStart,
+  isTouchScreen,
+  STEP_TITLE_ATTRIBUTE,
+} from "@/lib/apply/focus";
 
 /**
  * The apply form's two steps and the screen after it, mapped under Apply flow
@@ -82,6 +88,9 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
   const [step, setStep] = useState(0);
   const [checking, setChecking] = useState(false);
   const [sent, setSent] = useState(false);
+  // Read out on a touch screen, where focus does not move to the first field
+  // that needs attention (see `focusProblem`).
+  const [announcement, setAnnouncement] = useState("");
 
   const fields = APPLICATION_STEPS[step] ?? [];
   const problems = fields.map((field) => answerProblem(field, answers[field]));
@@ -94,11 +103,8 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
     const root = formRef.current;
     if (target === null || root === null) return;
     pendingFocus.current = null;
-    const selector =
-      target === "problem"
-        ? "[aria-invalid='true']"
-        : "input, select, textarea, a[href], button";
-    root.querySelector<HTMLElement>(selector)?.focus();
+    if (target === "problem") focusProblem(root);
+    else focusStart(root);
   });
 
   const idFor = (field: string) => `${idPrefix}-${field}`;
@@ -112,12 +118,17 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     fields.forEach(tidy);
-    if (problems.some((problem) => problem !== null) || consentMissing) {
+    const count =
+      problems.filter((problem) => problem !== null).length +
+      (consentMissing ? 1 : 0);
+    if (count > 0) {
       setChecking(true);
+      setAnnouncement(isTouchScreen() ? content.problems(count) : "");
       pendingFocus.current = "problem";
       return;
     }
     setChecking(false);
+    setAnnouncement("");
     pendingFocus.current = "first";
     if (step < LAST_STEP) setStep(step + 1);
     else setSent(true);
@@ -125,6 +136,7 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
 
   const back = () => {
     setChecking(false);
+    setAnnouncement("");
     setStep(step - 1);
     pendingFocus.current = "first";
   };
@@ -256,6 +268,10 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
           </div>
         )}
 
+        <p role="status" className="sr-only">
+          {announcement}
+        </p>
+
         <div className="flex items-center gap-[calc(16*var(--chrome-unit))]">
           {step > 0 && (
             <button
@@ -281,9 +297,14 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
   );
 }
 
+/** The panel's heading. It takes focus in place of a field on touch screens. */
 function Title({ text }: { text: string }) {
   return (
-    <h2 className="font-sans text-[calc(22*var(--chrome-unit))] leading-[1.2] tracking-[-0.01em] text-fg-0 text-shadow-glow-0">
+    <h2
+      tabIndex={-1}
+      {...{ [STEP_TITLE_ATTRIBUTE]: "" }}
+      className="font-sans text-[calc(22*var(--chrome-unit))] leading-[1.2] tracking-[-0.01em] text-fg-0 text-shadow-glow-0 outline-hidden"
+    >
       {text}
     </h2>
   );

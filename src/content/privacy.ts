@@ -20,6 +20,7 @@ export const privacyContent: PrivacyContent = {
   title: "Privacy Policy",
   updated: "LAST UPDATED 18 OCTOBER 2026",
   contactEmail: CONTACT,
+  contentsLabel: "Contents",
 
   intro: [
     "pQuadrant (“we”, “us”) builds AI systems (automations, agents and Artificial Employees) that help businesses carry out work. This policy explains what personal information we collect through pquadrant.com, why we collect it, who we share it with, and the choices and rights you have.",

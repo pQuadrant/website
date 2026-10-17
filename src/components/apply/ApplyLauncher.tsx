@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { PRIMARY_ACTION } from "@/components/apply/action-styles";
 import { ApplyForm } from "@/components/apply/ApplyForm";
 import type { ApplyContent } from "@/content/types";
+import { focusStart } from "@/lib/apply/focus";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 
 /**
@@ -45,16 +46,15 @@ export function ApplyLauncher({
   const panelRef = useRef<HTMLDivElement>(null);
   const wasOpen = useRef(false);
 
-  // Opening puts focus on the first thing to fill in. Closing hands it back to
+  // Opening puts focus on the first thing to fill in, or on a touch screen on
+  // the title, so no keyboard opens by itself (`focusStart`). Closing hands it back to
   // APPLY NOW when it was in the panel, or nowhere after a backdrop click, so
   // the keyboard picks up where the visitor left off.
   useEffect(() => {
     const panel = panelRef.current;
     if (panel === null) return;
     if (open) {
-      panel
-        .querySelector<HTMLElement>("input, select, textarea, a[href], button")
-        ?.focus();
+      focusStart(panel);
     } else if (wasOpen.current) {
       const focused = document.activeElement;
       if (focused === document.body || panel.contains(focused)) {

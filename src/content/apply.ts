@@ -22,6 +22,10 @@ export const applyContent: ApplyContent = {
     spoken: (step, steps) => `Step ${step} of ${steps}`,
   },
   optional: "OPTIONAL",
+  problems: (count) =>
+    count === 1
+      ? "1 answer needs attention."
+      : `${count} answers need attention.`,
   choose: "Select",
 
   fields: {

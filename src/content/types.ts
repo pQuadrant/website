@@ -93,6 +93,11 @@ export interface ApplyContent {
   };
   /** Set beside the label of a question that may be left blank. */
   optional: string;
+  /**
+   * Read to assistive technology on a touch screen when a step cannot go on,
+   * where focus stays put rather than opening the keyboard on a field.
+   */
+  problems: (count: number) => string;
   /** The empty first choice of a list. */
   choose: string;
   fields: Record<ApplicationField, ApplyFieldContent>;
@@ -137,4 +142,6 @@ export interface PrivacyContent {
   sections: readonly PrivacySection[];
   /** Linked wherever it appears in the text. */
   contactEmail: string;
+  /** The accessible name of the contents list beside the policy. */
+  contentsLabel: string;
 }

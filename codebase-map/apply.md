@@ -42,8 +42,8 @@ it (below).
   shows the tidied first name.
 - **Checking.** Nothing is marked until the first press of CONTINUE or SUBMIT. Then each
   field with a problem gets a red border and its own message under it, tied with
-  `aria-describedby`; focus moves to the first such field, and each message goes as
-  soon as its field is put right. Changing step starts checking over. Phone is the one
+  `aria-describedby`; focus moves to the first such field (see focus, below), and each
+  message goes as soon as its field is put right. Changing step starts checking over. Phone is the one
   optional question and is checked only when filled. Length limits are `maxLength`, so
   they need no message.
 - **Consent.** Step two ends with a required checkbox. Its "Privacy Policy" link opens
@@ -52,9 +52,16 @@ it (below).
 - **The confirmation screen** offers the marketplace (a link to `/marketplace` that
   also closes the panel) and a custom request. **The custom request button does
   nothing**: where it leads is not decided.
-- **Focus.** Opening focuses the first control in the panel. Closing returns focus to
-  APPLY NOW when it was in the panel or nowhere. While open, the dialog is
-  `aria-modal` and everything outside the top-right corner is `inert`.
+- **Focus.** [src/lib/apply/focus.ts](../src/lib/apply/focus.ts) decides where it
+  goes. With a mouse or keyboard, opening and each new step focus the first field, and
+  a failed check focuses the first field with a problem. **Design constraint:** on a
+  touch screen the form never opens the keyboard or a list's picker by itself, because
+  it covers the step before it is read; focus goes to the panel's title
+  (`data-step-title`) instead, stays put after a failed check, and a `role="status"`
+  line announces how many answers need attention (`content.problems`). The reason is
+  in `focus.ts`. Closing returns focus to APPLY NOW when it was in the panel or
+  nowhere. While open, the dialog is `aria-modal` and everything outside the top-right
+  corner is `inert`.
 
 ## Connections
 
@@ -84,8 +91,8 @@ it (below).
   message shown: checked at 430 × 740, 412 × 780, 390 × 664, 375 × 629, 360 × 580 and
   375 × 553. Messages are kept to one line in a half column for this reason. The panel
   still scrolls inside itself, scrollbar hidden, where nothing could fit: the 320px
-  iPhone SE (320 × 460 visible) and phones on their side. The automate box is two
-  lines tall and scrolls inside itself.
+  iPhone SE (320 × 460 visible) and phones on their side. The automate box is three
+  lines tall, two under 600px tall, and scrolls inside itself.
 - **Narrowest phones.** Below 380px wide (`narrowest:` in `globals.css`), the two
   top-right controls tighten their tracking, padding and gap so they clear the wordmark
   ([corner chrome](stage.md#corner-chrome)).

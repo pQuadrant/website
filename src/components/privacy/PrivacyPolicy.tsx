@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PrivacyContents } from "@/components/privacy/PrivacyContents";
 import type {
   ChromeTopLeftContent,
   PrivacyBlock,
@@ -13,7 +14,20 @@ import type {
  * A plain reading page outside the stage: no globe, no starfield, and the
  * document scrolls normally. It keeps the stage's fill, type, colours and the
  * glowing wordmark, which sits where it does on the stage and leads home.
+ *
+ * The reading column hangs off the left margin under the wordmark, as the
+ * stage's content does. On wide windows the contents sit against the right
+ * margin, where the stage keeps its top-right controls, and stay in view while
+ * the policy scrolls; narrower windows have the column alone.
  */
+
+/** A heading as a fragment id: "Who we share it with" → "who-we-share-it-with". */
+function sectionId(heading: string): string {
+  return heading
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 interface PrivacyPolicyProps {
   content: PrivacyContent;
@@ -71,25 +85,41 @@ export function PrivacyPolicy({ content, wordmark }: PrivacyPolicyProps) {
         </Link>
       </header>
 
-      <main className="mt-14 max-w-[680px] text-[calc(15*var(--chrome-unit))] leading-[1.65] text-pretty text-fg-1 row:mt-20">
-        <h1 className="font-sans text-[calc(28*var(--chrome-unit))] leading-[1.15] tracking-[-0.015em] text-fg-0 text-shadow-glow-0">
-          {content.title}
-        </h1>
-        <p className="mt-3 font-mono text-chrome-label text-fg-2">
-          {content.updated}
-        </p>
+      <div className="mt-14 row:mt-20 stage:grid stage:grid-cols-[minmax(0,680px)_1fr] stage:gap-x-16">
+        <main className="max-w-[680px] text-[calc(15*var(--chrome-unit))] leading-[1.65] text-pretty text-fg-1">
+          <h1 className="font-sans text-[calc(28*var(--chrome-unit))] leading-[1.15] tracking-[-0.015em] text-fg-0 text-shadow-glow-0">
+            {content.title}
+          </h1>
+          <p className="mt-3 font-mono text-chrome-label text-fg-2">
+            {content.updated}
+          </p>
 
-        <div className="mt-8">{content.intro.map(block)}</div>
+          <div className="mt-8">{content.intro.map(block)}</div>
 
-        {content.sections.map((section) => (
-          <section key={section.heading} className="mt-10">
-            <h2 className="font-sans text-[calc(18*var(--chrome-unit))] leading-[1.3] text-fg-0">
-              {section.heading}
-            </h2>
-            {section.blocks.map(block)}
-          </section>
-        ))}
-      </main>
+          {content.sections.map((section) => (
+            <section
+              key={section.heading}
+              id={sectionId(section.heading)}
+              className="mt-10 scroll-mt-12"
+            >
+              <h2 className="font-sans text-[calc(18*var(--chrome-unit))] leading-[1.3] text-fg-0">
+                {section.heading}
+              </h2>
+              {section.blocks.map(block)}
+            </section>
+          ))}
+        </main>
+
+        <aside className="hidden stage:sticky stage:top-24 stage:block stage:w-[calc(240*var(--chrome-unit))] stage:self-start stage:justify-self-end">
+          <PrivacyContents
+            label={content.contentsLabel}
+            sections={content.sections.map(({ heading }) => ({
+              id: sectionId(heading),
+              heading,
+            }))}
+          />
+        </aside>
+      </div>
     </div>
   );
 }

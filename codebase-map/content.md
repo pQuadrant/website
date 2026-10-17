@@ -78,6 +78,14 @@ appears in no navigation or footer; the reason is the product owner's decision, 
 beside `privacyContent`. Its wordmark matches the stage's in position, size and
 tracking, and leads home. The contact address is linked wherever it appears.
 
+The reading column hangs off the left margin. From 1100px wide (`stage:`), a contents
+list, `PrivacyContents`
+([src/components/privacy/PrivacyContents.tsx](../src/components/privacy/PrivacyContents.tsx)),
+sits sticky against the right margin and lights the section being read: the last one
+whose heading has passed the top fifth of the window or, at the foot of the page, the
+one just jumped to. It listens to scroll at most once a frame. Section ids come from
+the headings (`sectionId` in `PrivacyPolicy`), so renaming a heading changes its link.
+
 **The policy describes what the site does, so it must change with it.** When a change
 starts storing or sending applications, adds email codes, bot protection, booking or
 any cookie, or gives data to a new service provider, update the matching sections and
