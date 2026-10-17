@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 
 import type { TaglineContent } from "@/content/types";
 import { CHROME_CORNER_ATTRIBUTE } from "@/lib/stage/chrome-clearance";
+import type { StageMode } from "@/lib/stage/mode";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 
 /**
- * SPIKE. The home page's tagline: bottom-left on a tall window, and centred
+ * The home page's tagline: bottom-left on a tall window, and centred
  * above the Browse hint on a phone held upright, on the same axis as the globe
  * and the hint.
  *
@@ -45,7 +46,7 @@ const EASE = "cubic-bezier(0.2, 0.7, 0.2, 1)";
 
 interface TaglineProps {
   content: TaglineContent;
-  mode: "home" | "market";
+  mode: StageMode;
 }
 
 export function Tagline({ content, mode }: TaglineProps) {
@@ -111,7 +112,7 @@ export function Tagline({ content, mode }: TaglineProps) {
       data-mode={mode}
       inert={mode === "market"}
       {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
-      className="pointer-events-none fixed right-[var(--mk-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--mk-inset-left)] transition-opacity delay-600 duration-400 data-[mode=market]:opacity-0 data-[mode=market]:delay-0 data-[mode=market]:duration-100 row:right-auto row:bottom-[var(--mk-inset-bottom)] short:right-auto short:bottom-[calc(50px+env(safe-area-inset-bottom))] [@media(height<310px)]:hidden [@media(height<500px)_and_(width<640px)]:hidden"
+      className="pointer-events-none fixed right-[var(--stage-inset-right)] bottom-[calc(40px+44*var(--chrome-unit)+16px+env(safe-area-inset-bottom))] left-[var(--stage-inset-left)] transition-opacity delay-600 duration-400 data-[mode=market]:opacity-0 data-[mode=market]:delay-0 data-[mode=market]:duration-100 row:right-auto row:bottom-[var(--stage-inset-bottom)] short:right-auto short:bottom-[calc(50px+env(safe-area-inset-bottom))] [@media(height<310px)]:hidden [@media(height<500px)_and_(width<640px)]:hidden"
     >
       {/* Beside the globe, the line stops 130px short of the window's middle so
           it never runs under the centre, but not narrower than 18em, which on
@@ -119,7 +120,7 @@ export function Tagline({ content, mode }: TaglineProps) {
       <p
         ref={lineRef}
         {...{ [STAR_CLEAR_ATTRIBUTE]: "home" }}
-        className="text-center text-balance row:max-w-[min(26em,max(18em,calc(50vw-var(--mk-inset-left)-130px)))] row:text-left row:text-pretty short:w-[13em] short:text-left short:text-pretty short:text-[calc(13*var(--chrome-unit))] short:leading-[1.4] font-sans text-[calc(15*var(--chrome-unit))] leading-[1.55] text-fg-1 text-shadow-glow-1"
+        className="text-center text-balance row:max-w-[min(26em,max(18em,calc(50vw-var(--stage-inset-left)-130px)))] row:text-left row:text-pretty short:w-[13em] short:text-left short:text-pretty short:text-[calc(13*var(--chrome-unit))] short:leading-[1.4] font-sans text-[calc(15*var(--chrome-unit))] leading-[1.55] text-fg-1 text-shadow-glow-1"
       >
         {/* Read once, as a sentence. The word-by-word copy below is for the
             eye only. */}

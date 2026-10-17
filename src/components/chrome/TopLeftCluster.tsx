@@ -1,22 +1,26 @@
 import Link from "next/link";
 
+import type { ChromeTopLeftContent } from "@/content/types";
+import type { StageMode } from "@/lib/stage/mode";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
-import { spikeContent } from "@/spike/content";
 
 /**
- * SPIKE. The top-left bar for the route experiment: the wordmark, and from the
- * row breakpoint up the HOME / MARKETPLACE switch. Both are real links, so the
- * routes carry the state and the browser's Back button works.
+ * The top-left cluster: the wordmark, and from the row breakpoint up the
+ * HOME / MARKETPLACE switch. Both are real links, so the routes carry the state
+ * and the browser's Back button works.
+ *
+ * Mapped under Corner chrome in `codebase-map/stage.md`.
  */
-interface SpikeTopBarProps {
-  mode: "home" | "market";
+interface TopLeftClusterProps {
+  content: ChromeTopLeftContent;
+  mode: StageMode;
 }
 
 const LINK =
   "pointer-events-auto transition-[color,text-shadow] duration-hover hover:text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0";
 
-export function SpikeTopBar({ mode }: SpikeTopBarProps) {
-  const { wordmark, switch: modes } = spikeContent;
+export function TopLeftCluster({ content, mode }: TopLeftClusterProps) {
+  const { wordmark, switch: modes } = content;
 
   return (
     <div className="flex h-chrome-touch items-center gap-chrome-product-gap font-mono text-chrome-label row:h-chrome-control">

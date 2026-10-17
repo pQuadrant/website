@@ -3,8 +3,7 @@
 Owns the two routes, `/` (home) and `/marketplace`, and everything that changes between
 them: how the page knows which route it is on, the globe's move, the fades of each
 route's content, the ways between routes, and focus. The marketplace is a deployed,
-evolving feature whose product design is unfinished; its implementation currently lives
-in `src/spike/` (see [status](#status-of-the-spike-folder)). Its copy, and the intended
+evolving feature whose product design is unfinished. Its copy, and the intended
 platform data, are in [content](content.md#marketplace-copy-and-platform-data).
 
 ## Route structure
@@ -14,12 +13,13 @@ platform data, are in [content](content.md#marketplace-copy-and-platform-data).
 - [src/app/(stage)/page.tsx](<../src/app/(stage)/page.tsx>) and
   [marketplace/page.tsx](<../src/app/(stage)/marketplace/page.tsx>) return `null`. They
   exist for the URLs; all visible content is in the persistent stage.
-- [src/spike/StageShell.tsx](../src/spike/StageShell.tsx), `StageShell`, derives
-  `mode` from `usePathname()`: `"market"` when the path starts with `/marketplace`,
-  otherwise `"home"`. Every route-dependent component takes `mode` as a prop and styles
-  on `data-mode`. The type is `StageMode` in
-  [starfield-points.ts](../src/lib/starfield/starfield-points.ts), although it is not a
-  starfield concept.
+- [StageShell.tsx](../src/components/stage/StageShell.tsx), `StageShell`, derives
+  `mode` from `usePathname()` with `stageModeFor` in
+  [src/lib/stage/mode.ts](../src/lib/stage/mode.ts): `"market"` when the path starts
+  with `/marketplace`, otherwise `"home"`. Every route-dependent component takes `mode`
+  (type `StageMode`, same file) as a prop and styles on `data-mode`; the starfield
+  uses the type too. `StageShell` also hands each component its copy from
+  `src/content/` ([where copy lives](content.md#where-copy-lives)).
 - Because nothing remounts, marketplace scroll position and search text survive a trip
   home and back. The pull gesture resets on each visit.
 - A deep link to `/marketplace` opens in place. `StageShell` sets `data-ready` on the
@@ -31,14 +31,14 @@ platform data, are in [content](content.md#marketplace-copy-and-platform-data).
 Rendered by `StageShell` as children of `Stage`, all mounted on both routes and faded
 by `mode`:
 
-| Component                       | Shown on           | File                                                                    |
-| ------------------------------- | ------------------ | ----------------------------------------------------------------------- |
-| `Tagline`                       | home               | [src/spike/Tagline.tsx](../src/spike/Tagline.tsx)                       |
-| `BrowseHint`                    | home, below `row:` | [src/spike/BrowseHint.tsx](../src/spike/BrowseHint.tsx)                 |
-| `HomeSwipe` (no markup)         | home, touch        | [src/spike/HomeSwipe.tsx](../src/spike/HomeSwipe.tsx)                   |
-| `MarketplaceHeading`            | marketplace        | [src/spike/MarketplaceHeading.tsx](../src/spike/MarketplaceHeading.tsx) |
-| `MarketplacePanel`              | marketplace        | [src/spike/MarketplacePanel.tsx](../src/spike/MarketplacePanel.tsx)     |
-| `SpikeTopBar` (top-left corner) | both               | [src/spike/SpikeTopBar.tsx](../src/spike/SpikeTopBar.tsx)               |
+| Component                          | Shown on           | File                                                                                                      |
+| ---------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------- |
+| `Tagline`                          | home               | [src/components/home/Tagline.tsx](../src/components/home/Tagline.tsx)                                     |
+| `BrowseHint`                       | home, below `row:` | [src/components/home/BrowseHint.tsx](../src/components/home/BrowseHint.tsx)                               |
+| `HomeSwipe` (no markup)            | home, touch        | [src/components/home/HomeSwipe.tsx](../src/components/home/HomeSwipe.tsx)                                 |
+| `MarketplaceHeading`               | marketplace        | [src/components/marketplace/MarketplaceHeading.tsx](../src/components/marketplace/MarketplaceHeading.tsx) |
+| `MarketplacePanel`                 | marketplace        | [src/components/marketplace/MarketplacePanel.tsx](../src/components/marketplace/MarketplacePanel.tsx)     |
+| `TopLeftCluster` (top-left corner) | both               | [src/components/chrome/TopLeftCluster.tsx](../src/components/chrome/TopLeftCluster.tsx)                   |
 
 **The tagline is a chrome corner.** It carries `data-chrome-corner`, so the globe sizes
 itself to clear it, and on most windows the tagline is what limits the globe's size
@@ -101,7 +101,7 @@ sampling frames during the move rather than only the end state
 
 ## Marketplace geometry
 
-The `/* SPIKE. Marketplace geometry */` block at the end of
+The `Marketplace geometry` block at the end of
 [globals.css](../src/app/globals.css) defines every marketplace length as custom
 properties on `:root`, so CSS has them on the first paint. Four are registered lengths
 (`--mk-r`, `--mk-globe-x`, `--mk-globe-y`, `--mk-content-top`) so script can read
@@ -109,28 +109,27 @@ pixels.
 
 | Property                                                               | Consumers                                                                                                        |
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `--mk-inset-left/right/bottom` (page margin plus safe area)            | `Tagline`, `MarketplacePanel`, and the other `--mk-*` values. Not marketplace-specific despite the name          |
-| `--mk-bar`, `--mk-bar-bottom` (top bar height and bottom edge)         | Other `--mk-*` values                                                                                            |
 | `--mk-r`, `--mk-globe-x`, `--mk-globe-y` (small globe)                 | The motif wrapper and `measureScale` in `StageShell`; `marketGlobe` in `Starfield` (star hole and ambient light) |
 | `--mk-heading-*`                                                       | `MarketplaceHeading`                                                                                             |
 | `--mk-content-top`, `--mk-panel-left`, `--mk-panel-pad`, `--mk-column` | `MarketplacePanel`                                                                                               |
 
 There are two compositions. Tall (500px and up): the small globe under the wordmark,
 the heading beside it, the catalogue below both. Short (under 500px): globe and heading
-in a left column, the catalogue beside them. The inset tiers repeat the stage margins
-as literals ([tokens](stage.md#tokens-breakpoints-and-variants)).
+in a left column, the catalogue beside them. Both lay out on the stage insets and the
+chrome bar ([tokens](stage.md#tokens-breakpoints-and-variants)), so a margin or bar
+change moves the marketplace too.
 
 ## Navigation and gestures
 
-| Way                                     | Direction      | Implemented in     | Notes                                                                                                                                                                        |
-| --------------------------------------- | -------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HOME / MARKETPLACE switch               | both           | `SpikeTopBar`      | `next/link`, `aria-current`; shown at `row:` only                                                                                                                            |
-| Wordmark                                | to home        | `SpikeTopBar`      | Link to `/`                                                                                                                                                                  |
-| BROWSE AI SYSTEMS ↓                     | to marketplace | `BrowseHint`       | Shown below `row:`; `inert` on the marketplace                                                                                                                               |
-| Swipe up                                | to marketplace | `HomeSwipe`        | Touch only; `window` listeners while on home; `SWIPE_DISTANCE` 60px or a flick (`FLICK_SPEED`, `FLICK_DISTANCE`)                                                             |
-| Pull down from the top of the catalogue | to home        | `MarketplacePanel` | Touch and wheel, on the scroller; `RESISTANCE`, `COMMIT_AT`, `DEAD_ZONE` in [src/spike/pull.ts](../src/spike/pull.ts); only a fresh gesture that starts at scroll top counts |
-| Esc                                     | to home        | `StageShell`       | `keydown` on `window`, marketplace only                                                                                                                                      |
-| Browser Back/Forward                    | both           | Next.js router     | The routes carry the state                                                                                                                                                   |
+| Way                                     | Direction      | Implemented in     | Notes                                                                                                                                                                                                  |
+| --------------------------------------- | -------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| HOME / MARKETPLACE switch               | both           | `TopLeftCluster`   | `next/link`, `aria-current`; shown at `row:` only                                                                                                                                                      |
+| Wordmark                                | to home        | `TopLeftCluster`   | Link to `/`                                                                                                                                                                                            |
+| BROWSE AI SYSTEMS ↓                     | to marketplace | `BrowseHint`       | Shown below `row:`; `inert` on the marketplace                                                                                                                                                         |
+| Swipe up                                | to marketplace | `HomeSwipe`        | Touch only; `window` listeners while on home; `SWIPE_DISTANCE` 60px or a flick (`FLICK_SPEED`, `FLICK_DISTANCE`)                                                                                       |
+| Pull down from the top of the catalogue | to home        | `MarketplacePanel` | Touch and wheel, on the scroller; `RESISTANCE`, `COMMIT_AT`, `DEAD_ZONE` in [src/lib/stage/route-gesture.ts](../src/lib/stage/route-gesture.ts); only a fresh gesture that starts at scroll top counts |
+| Esc                                     | to home        | `StageShell`       | `keydown` on `window`, marketplace only                                                                                                                                                                |
+| Browser Back/Forward                    | both           | Next.js router     | The routes carry the state                                                                                                                                                                             |
 
 - `HomeSwipe` and the panel share `DEAD_ZONE`, and each calls `preventDefault` only
   after it has claimed a vertical gesture. The scroller is `overscroll-contain`, so a
@@ -154,15 +153,6 @@ as literals ([tokens](stage.md#tokens-breakpoints-and-variants)).
   activating MARKETPLACE with the keyboard, focus stays on that link on the marketplace
   and again after Esc returns home. **Open:** whether this is the intended behaviour
   has not been decided. It is a design question, not a known defect.
-
-## Status of the spike folder
-
-Everything under `src/spike/` and the `SPIKE.` blocks in `globals.css` is the deployed
-marketplace and home-route implementation. Treat it as production code (see
-[production readiness](../AGENTS.md#production-readiness)). Its folder, names, untyped
-copy (`spikeContent`) and "deleted with the rest of `src/spike/`" comments are
-experimental leftovers. Moving it into production locations is a separate, planned
-change.
 
 ## Verification
 

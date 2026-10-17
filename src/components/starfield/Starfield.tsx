@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { motifRadius } from "@/lib/globe/projection";
 import { chromeClearance } from "@/lib/stage/chrome-clearance";
+import type { StageMode } from "@/lib/stage/mode";
 import { drawAmbient, drawStars } from "@/lib/starfield/draw";
 import {
   createPointerResponse,
@@ -13,7 +14,6 @@ import { ROUTE_MIX_MS, routeEase } from "@/lib/starfield/route-mix";
 import {
   createStarfield,
   type FieldLayout,
-  type StageMode,
 } from "@/lib/starfield/starfield-points";
 import {
   clearElements,

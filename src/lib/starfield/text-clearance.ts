@@ -9,7 +9,8 @@
  * the attribute below, and needs nothing else.
  */
 
-import type { ClearRect, StageMode } from "@/lib/starfield/starfield-points";
+import type { StageMode } from "@/lib/stage/mode";
+import type { ClearRect } from "@/lib/starfield/starfield-points";
 
 /**
  * Marks an element as type the stars stay off.

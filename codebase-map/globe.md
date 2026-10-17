@@ -62,11 +62,11 @@ to the nearest displayed `[data-chrome-corner]` box, less `CHROME_CLEARANCE` (24
 
 **Three callers must pass the same arguments:**
 
-| Caller                                                                    | Uses the radius for                                                              |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `measure` in `globe.ts`                                                   | Drawing the globe                                                                |
-| `draw` in [Starfield.tsx](../src/components/starfield/Starfield.tsx)      | The star-free disc and the ambient hole ([field](starfield.md#field-generation)) |
-| `measureScale` in [src/spike/StageShell.tsx](../src/spike/StageShell.tsx) | `--globe-scale` for the marketplace move                                         |
+| Caller                                                                     | Uses the radius for                                                              |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `measure` in `globe.ts`                                                    | Drawing the globe                                                                |
+| `draw` in [Starfield.tsx](../src/components/starfield/Starfield.tsx)       | The star-free disc and the ambient hole ([field](starfield.md#field-generation)) |
+| `measureScale` in [StageShell.tsx](../src/components/stage/StageShell.tsx) | `--globe-scale` for the marketplace move                                         |
 
 If one diverges, stars appear inside the sphere, a halo sits on its rim, or the small
 globe lands at the wrong size.
@@ -123,7 +123,8 @@ Within the globe: every point is at its true geometry from the first frame and s
 scattered by a seeded drift (`ENTRANCE.seed`, independent of the starfield's seed), dim
 and colourless, then settles. No per-point value derives from position. Idle spin is
 `SPIN` 0.055 rad/s with `TILT` 0.16. Under reduced motion no entrance field is built
-and one settled frame is painted. Because the seed is fixed, the sequence repeats on
+and one settled frame is painted. Otherwise the loop draws every frame for as long as
+the page is open; it does not stop when the page is idle. Because the seed is fixed, the sequence repeats on
 every load; the rotation means a still frame differs by capture time.
 
 ## Open questions

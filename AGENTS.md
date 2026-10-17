@@ -138,8 +138,8 @@ explicit. Avoid speculative infrastructure for unapproved future features.
   existing expectations unless their change is explicitly in scope. Update affected
   consumers together; avoid competing implementations of the same responsibility.
 - Choose the simplest design that satisfies the approved requirements and fits the
-  architecture. Consider performance proportionately; this page runs continuous canvas
-  animation and must cost nothing at rest where the maps say so.
+  architecture. Consider performance proportionately; the globe animates continuously, and
+  the starfield must cost nothing once settled, as the maps describe.
 - Include restructuring necessary for a sound implementation. Raise broader cleanup
   separately when it materially expands scope.
 

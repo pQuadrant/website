@@ -5,18 +5,21 @@ stays out of components is in [conventions](../docs/conventions.md#content).
 
 ## Where copy lives
 
-| Copy                                                       | Location                                                                                                          | Consumed by                                                           |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Platform link label and URL (`https://app.pquadrant.com`)  | `homeContent.chrome.topRight` in [src/content/home.ts](../src/content/home.ts)                                    | `TopRightCluster`, via `StageShell`                                   |
-| Tagline (`lead`, `emphasis`)                               | `homeContent.tagline` in `home.ts`                                                                                | `Tagline`, via `StageShell`                                           |
-| Types for the above                                        | [src/content/types.ts](../src/content/types.ts): `HomeContent`, `ChromeContent`, `TaglineContent`, `ExternalLink` |                                                                       |
-| Wordmark, HOME / MARKETPLACE, BROWSE AI SYSTEMS, catalogue | `spikeContent` in [src/spike/content.ts](../src/spike/content.ts), untyped `as const`                             | `SpikeTopBar`, `BrowseHint`, `MarketplaceHeading`, `MarketplacePanel` |
-| Page title and description                                 | `metadata` in [src/app/layout.tsx](../src/app/layout.tsx)                                                         | Browser, search engines                                               |
-| App name and description                                   | [src/app/manifest.ts](../src/app/manifest.ts)                                                                     | Installed web app                                                     |
+| Copy                                                      | Location                                                                                                        | Consumed by                              |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Wordmark, HOME / MARKETPLACE                              | `chromeContent.topLeft` in [src/content/chrome.ts](../src/content/chrome.ts)                                    | `TopLeftCluster`                         |
+| Platform link label and URL (`https://app.pquadrant.com`) | `chromeContent.topRight` in `chrome.ts`                                                                         | `TopRightCluster`                        |
+| Tagline (`lead`, `emphasis`), BROWSE AI SYSTEMS           | `homeContent.tagline`, `homeContent.browse` in [src/content/home.ts](../src/content/home.ts)                    | `Tagline`, `BrowseHint`                  |
+| Marketplace heading, line and catalogue                   | `marketplaceContent` in [src/content/marketplace.ts](../src/content/marketplace.ts)                             | `MarketplaceHeading`, `MarketplacePanel` |
+| Types for the above                                       | [src/content/types.ts](../src/content/types.ts): `ChromeContent`, `HomeContent`, `MarketplaceContent` and parts |                                          |
+| Page title and description                                | `metadata` in [src/app/layout.tsx](../src/app/layout.tsx)                                                       | Browser, search engines                  |
+| App name and description                                  | [src/app/manifest.ts](../src/app/manifest.ts)                                                                   | Installed web app                        |
 
 - The site description is written twice, in `layout.tsx` and `manifest.ts`, outside
   `src/content/`. Change both.
 - Glyphs that are presentation (`↓`, `/`) sit in components, marked `aria-hidden`.
+- `StageShell` passes each component its copy as props; no component imports a content
+  file.
 - `home.ts` notes that the tagline wording is not final.
 
 ## Wording effects
@@ -47,7 +50,8 @@ for wrapping and globe size, and replay the entrance.
 The catalogue is placeholder, live on production: rows `Popular`, `Automations`,
 `Agents`, `Artificial Employees`, `More`, `Even more`; cards labelled `System 1` to `8`;
 a search field with placeholder `Search (focus test)` that does nothing. The heading
-`AI Systems` and line `Pick the job you need done.` are also in `spikeContent`.
+`AI Systems` and line `Pick the job you need done.` are in the same file, which marks
+all of its copy as not final.
 
 **Intended, not implemented: platform-supplied marketplace data.** The website is meant
 to receive selected marketplace information from the platform (a separate repository),

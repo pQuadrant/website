@@ -28,8 +28,11 @@ It reruns 150ms (`RESIZE_DEBOUNCE_MS`) after the canvas or any `data-star-clear`
 element changes size. The field is regenerated, never scaled, so a resize may show a
 different arrangement.
 
-**Nothing runs at rest** (design constraint): no loop, timer or per-frame listener
-unless the pointer is moving or the route crossfade is running. Idle CPU must be zero.
+**The starfield runs nothing at rest** (design constraint): no loop, timer or
+per-frame listener, except while the pointer moves and the stars coast home afterwards,
+or while the route crossfade runs. Once settled, the stars and ambient-light canvases
+stop drawing, and this layer's idle CPU must be zero. This applies to the starfield
+only; the globe animates continuously ([entrance and motion](globe.md#entrance-and-motion)).
 
 ## Field generation
 
@@ -63,12 +66,12 @@ kept with probability 0 within `textClearInner` (24px) of a line, easing to 1 at
 
 The value says which route's sky it clears: `""` for both, `"home"` or `"market"`.
 
-| Marked element                       | Value      |
-| ------------------------------------ | ---------- |
-| Platform link in `TopRightCluster`   | `""`       |
-| Wordmark and switch in `SpikeTopBar` | `""`       |
-| Tagline paragraph, Browse hint       | `"home"`   |
-| Marketplace heading block            | `"market"` |
+| Marked element                          | Value      |
+| --------------------------------------- | ---------- |
+| Platform link in `TopRightCluster`      | `""`       |
+| Wordmark and switch in `TopLeftCluster` | `""`       |
+| Tagline paragraph, Browse hint          | `"home"`   |
+| Marketplace heading block               | `"market"` |
 
 **New text must carry the attribute, or stars can land on it.** The marketplace
 catalogue (search field, row titles, cards) is not marked today. It sits over a panel
@@ -107,6 +110,7 @@ cancels the loop. No smear: every frame clears fully.
 Field determinism allows pixel comparison of the stars canvas at a fixed size, as long
 as the pointer has not moved. Check: no star within 24px of text on either route; the
 empty disc follows the globe on both routes; the background does not change during a
-pointer sweep; no animation frames after the field settles. See
+pointer sweep; the stars and ambient canvases draw nothing once the field settles (the
+globe keeps drawing). See
 [interactive and visual states](../docs/verification.md#interactive-and-visual-states)
 and [measuring tone and contrast](../docs/verification.md#measuring-tone-and-contrast).

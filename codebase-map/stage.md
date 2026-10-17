@@ -67,7 +67,7 @@ Consumers, which must all read the same value:
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Globe centre and radius               | `options.centreY` in [Globe.tsx](../src/components/globe/Globe.tsx) → `measure` in [globe.ts](../src/lib/globe/globe.ts) |
 | Star density falloff and ambient hole | `draw` in [Starfield.tsx](../src/components/starfield/Starfield.tsx)                                                     |
-| Marketplace globe scale               | `measureScale` in [src/spike/StageShell.tsx](../src/spike/StageShell.tsx)                                                |
+| Marketplace globe scale               | `measureScale` in [StageShell.tsx](../src/components/stage/StageShell.tsx)                                               |
 | Globe move origin                     | `origin-[50%_var(--stage-centre-y)]` on the motif wrapper in `StageShell`                                                |
 | Document height                       | The spacer in `Stage`                                                                                                    |
 
@@ -104,8 +104,9 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   before changing the border, fill or background). The fill `--color-control-fill` is
   kept faint so the control reads as an object rather than a lit panel (its comment in
   `globals.css`).
-- **Top left:** `SpikeTopBar` in [src/spike/SpikeTopBar.tsx](../src/spike/SpikeTopBar.tsx):
-  the wordmark (link to `/`) and, from `row:` up, the HOME / MARKETPLACE switch. See
+- **Top left:** [TopLeftCluster.tsx](../src/components/chrome/TopLeftCluster.tsx),
+  `TopLeftCluster`: the wordmark (link to `/`) and, from `row:` up, the HOME /
+  MARKETPLACE switch. See
   [navigation and gestures](routes.md#navigation-and-gestures).
 - **Control states:** every control has an `active:` state matching its `hover:` state,
   because Tailwind emits `hover:` only for devices that hover. Focus is
@@ -140,9 +141,12 @@ reasoning; read it before changing values.
   The 640px in `row:` is a literal that duplicates `--breakpoint-stage-narrow`, because
   a media query cannot read a custom property; move both together. Media queries read
   the layout viewport, so an opening keyboard or a sliding toolbar does not reflow.
-- **Duplicated margins:** the marketplace's `--mk-inset-*` tiers repeat the 24/40/64
-  margins as literals at the same breakpoints. See
-  [marketplace geometry](routes.md#marketplace-geometry).
+- **Stage insets and the chrome bar:** the `Stage insets and the chrome bar` block in
+  `globals.css` sets `--stage-inset-left/right/bottom` (the page margin plus the safe
+  area, on the same three width tiers) and `--chrome-bar`, `--chrome-bar-bottom` (the
+  top row's height and bottom edge). `Tagline`, `MarketplacePanel` and the
+  [marketplace geometry](routes.md#marketplace-geometry) lay out on them. The inset
+  tiers repeat the 24/40/64 margins as literals; change both together.
 - **Pointer cursor:** one `@layer base` rule gives a pointer to `button`, `a[href]`,
   `[role="button"]`, button-like inputs and `summary`, excluding disabled. See
   [conventions](../docs/conventions.md#styling).
@@ -159,7 +163,7 @@ them.
 | Stars and ambient light fade in            | 0–400ms                            | `animate-stars-in` on the canvases in `Starfield.tsx`; token in `globals.css`                                                                           |
 | Corner regions fade in                     | 200ms and 260ms delays, 520ms each | `animate-chrome-in` and `[animation-delay:*]` on the regions in `Stage.tsx`                                                                             |
 | Globe resolves and spins up                | 250–1400ms                         | `ENTRANCE` in [entrance.ts](../src/lib/globe/entrance.ts), `advance` in [state.ts](../src/lib/globe/state.ts)                                           |
-| Tagline words, then emphasis and underline | from 900ms, 45ms stagger           | `FIRST_WORD_MS`, `STAGGER_MS`, `EMPHASIS_HOLD_MS` in `Tagline` ([src/spike/Tagline.tsx](../src/spike/Tagline.tsx)), Web Animations with `startTime = 0` |
+| Tagline words, then emphasis and underline | from 900ms, 45ms stagger           | `FIRST_WORD_MS`, `STAGGER_MS`, `EMPHASIS_HOLD_MS` in `Tagline` ([Tagline.tsx](../src/components/home/Tagline.tsx)), Web Animations with `startTime = 0` |
 
 - Only opacity animates on the chrome; everything is laid out and clickable from the
   first frame.
@@ -176,19 +180,27 @@ them.
 
 Each layer handles `prefers-reduced-motion` itself:
 
-| Area                      | Behaviour                                                                                                          | Reacts to a change while open? |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
-| CSS fades and transitions | `motion-reduce:animate-none` / `motion-reduce:transition-none` throughout                                          | Yes                            |
-| Globe                     | `applyMotionPreference` in `globe.ts` stops the loop, `snap`s state and paints one frame                           | Yes (`change` listener)        |
-| Star pointer response     | `applyPreference` in [pointer-response.ts](../src/lib/starfield/pointer-response.ts)                               | Yes                            |
-| Star route crossfade      | `Starfield` jumps straight to the target mix                                                                       | Checked on each route change   |
-| Tagline words             | `Tagline` skips its animations if the preference matches at mount; CSS `motion-reduce:opacity-100` shows the words | **No**                         |
+| Area                        | Behaviour                                                                                                               | Reacts to a change while open? |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| CSS fades and transitions   | `motion-reduce:animate-none` / `motion-reduce:transition-none` on most layers; exceptions below                         | Yes                            |
+| Globe move between routes   | Still animates: `data-ready:transition-[translate,scale]` on the motif wrapper outranks `motion-reduce:transition-none` | Yes, but has no effect         |
+| Tagline fade between routes | Still runs: the wrapper's opacity transition has no reduced-motion variant                                              | Not applicable                 |
+| Globe                       | `applyMotionPreference` in `globe.ts` stops the loop, `snap`s state and paints one frame                                | Yes (`change` listener)        |
+| Star pointer response       | `applyPreference` in [pointer-response.ts](../src/lib/starfield/pointer-response.ts)                                    | Yes                            |
+| Star route crossfade        | `Starfield` jumps straight to the target mix                                                                            | Checked on each route change   |
+| Tagline words               | `Tagline` skips its animations if the preference matches at mount; CSS `motion-reduce:opacity-100` shows the words      | **No**                         |
 
 **Known defect,
 [issue #54](https://github.com/pQuadrant/website/issues/54):** load with reduced motion
 on, then turn it off, and the tagline disappears. Its words fall back to `opacity-0`
 because the effect that would show them never ran. A change to the tagline's motion
 should fix this or keep it in mind.
+
+**Known defect,
+[issue #56](https://github.com/pQuadrant/website/issues/56):** the globe move above
+still animates under reduced motion. Elsewhere `motion-reduce:transition-none!` (the
+important form) is what wins against a more specific transition class. Whether the
+tagline's opacity fade should also stop is not decided.
 
 ## Verification
 

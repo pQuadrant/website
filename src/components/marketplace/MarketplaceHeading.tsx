@@ -1,12 +1,14 @@
-import { spikeContent } from "@/spike/content";
+import type { StageMode } from "@/lib/stage/mode";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 
 interface MarketplaceHeadingProps {
-  mode: "home" | "market";
+  heading: string;
+  subline: string;
+  mode: StageMode;
 }
 
 /**
- * SPIKE. "AI Systems" and its line, fixed beside the small globe — not in the
+ * "AI Systems" and its line, fixed beside the small globe — not in the
  * catalogue's scroller, so they stay put while the rows move.
  *
  * Beside the globe in a tall window; under it, in the left column, in a short
@@ -16,9 +18,11 @@ interface MarketplaceHeadingProps {
  * once the globe has nearly arrived, and clears in 100ms on the way home so the
  * growing globe never passes under it.
  */
-export function MarketplaceHeading({ mode }: MarketplaceHeadingProps) {
-  const { heading, subline } = spikeContent.panel;
-
+export function MarketplaceHeading({
+  heading,
+  subline,
+  mode,
+}: MarketplaceHeadingProps) {
   return (
     <div
       data-mode={mode}

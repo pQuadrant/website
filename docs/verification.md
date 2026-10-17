@@ -131,7 +131,9 @@ applies:
   order and the focus ring; off-route content not focusable.
 - **Reduced motion:** on at load, and toggled in both directions while the page is open.
 - **Resize:** during the entrance and during a route move.
-- **Idle:** no animation frames once the page and the star field have settled.
+- **Idle:** once settled, the star field and ambient light draw nothing, while the globe
+  keeps animating (it stops only under reduced motion). Count draws per canvas rather
+  than frames for the whole page.
 
 To compare pixels, first control time and randomness: the globe rotates continuously
 and the entrance runs on the page clock. Either control animation time (for example
