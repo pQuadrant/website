@@ -17,8 +17,13 @@ platform data, are in [content](content.md#marketplace-copy-and-platform-data).
   `experimental.staleTimes.static: Infinity` in [next.config.ts](../next.config.ts)
   keeps that copy for as long as the page is open. Otherwise it expires after 5 minutes
   and a later switch waits on a server round trip before `mode` changes, so nothing
-  moves for that time. The setting is safe only while the route pages render nothing;
-  it needs revisiting if one starts rendering server content.
+  moves for that time. The setting is safe only while every page is prerendered at
+  build time and changes only with a deploy; it needs revisiting if a page starts
+  rendering content that changes between deploys.
+- `/privacy` ([src/app/privacy/page.tsx](../src/app/privacy/page.tsx)) sits outside the
+  `(stage)` group, so it never mounts the stage, globe or starfield, and the document
+  scrolls there. Leaving it for `/` mounts the stage fresh and replays the entrance.
+  See [privacy policy](content.md#privacy-policy).
 - If the site has been republished since the page loaded, Next.js turns the next
   navigation into a full page load to avoid mixing versions. The marketplace then opens
   like a deep link, with no globe move.

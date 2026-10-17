@@ -144,7 +144,8 @@ reasoning; read it before changing values.
   drive only the margin tiers, by width.
 - **Variants:** `row:` is `(width >= 640px) and (height >= 500px)`, the roomy layout;
   `short:` is `(height < 500px)`, phones on their side; `narrowest:` is
-  `(width < 380px)`, used only by the top-right controls. 500px sits between the tallest
+  `(width < 380px)`, used only by the top-right controls; `cramped:` is
+  `(height < 600px)`, used only by the apply panel. 500px sits between the tallest
   landscape phone viewport (about 480px) and the shortest landscape tablet (744px).
   The 640px in `row:` is a literal that duplicates `--breakpoint-stage-narrow`, because
   a media query cannot read a custom property; move both together. Media queries read

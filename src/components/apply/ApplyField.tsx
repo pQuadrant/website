@@ -17,6 +17,8 @@ interface ApplyFieldProps {
   content: ApplyFieldContent;
   value: string;
   onChange: (value: string) => void;
+  /** Called when focus leaves the field, where the answer is tidied. */
+  onBlur?: () => void;
   maxLength: number;
   /** The problem to show, or `null` while there is none to show. */
   problem: AnswerProblem | null;
@@ -26,7 +28,7 @@ interface ApplyFieldProps {
   /** For a list: its empty first choice, then the answers. */
   choose?: string;
   options?: readonly string[];
-  /** Spans both columns where the form runs in two. */
+  /** Spans both columns of the form. */
   wide?: boolean;
 }
 
@@ -47,6 +49,7 @@ export function ApplyField({
   content,
   value,
   onChange,
+  onBlur,
   maxLength,
   problem,
   optionalLabel,
@@ -68,6 +71,7 @@ export function ApplyField({
     id,
     name: id,
     value,
+    onBlur,
     "aria-invalid": problem !== null,
     "aria-describedby": message === undefined ? undefined : messageId,
   };
@@ -99,6 +103,8 @@ export function ApplyField({
       </span>
     );
   } else if (kind === "textarea") {
+    // Two lines tall at every size. A longer answer scrolls inside the box,
+    // never the panel around it.
     control = (
       <textarea
         {...shared}
@@ -106,7 +112,7 @@ export function ApplyField({
         maxLength={maxLength}
         placeholder={content.placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className={`${CONTROL} ${border} block resize-none py-[calc(9*var(--chrome-unit))] leading-[1.45]`}
+        className={`${CONTROL} ${border} block resize-none overscroll-contain py-[calc(9*var(--chrome-unit))] leading-[1.45]`}
       />
     );
   } else {
@@ -125,7 +131,7 @@ export function ApplyField({
 
   return (
     <div
-      className={`flex min-w-0 flex-col gap-[7px] ${wide ? "stage-narrow:col-span-2" : ""}`}
+      className={`flex min-w-0 flex-col gap-1.5 row:gap-[7px] ${wide ? "col-span-2" : ""}`}
     >
       <label
         htmlFor={id}

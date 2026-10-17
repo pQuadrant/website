@@ -5,7 +5,8 @@ implementation, and verify against the code. Cross-references are detours: read 
 named section, then return to the task. Follow further links only when the change needs
 them.
 
-The site is one persistent stage serving two routes, `/` and `/marketplace`. Most
+The site is one persistent stage serving two routes, `/` and `/marketplace`, plus a
+plain reading page, `/privacy`, outside it. Most
 connections here are behavioural rather than imports: shared CSS properties, a shared
 clock, matching timings, and elements measured by other layers.
 

@@ -5,16 +5,17 @@ stays out of components is in [conventions](../docs/conventions.md#content).
 
 ## Where copy lives
 
-| Copy                                                      | Location                                                                                                                        | Consumed by                              |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Wordmark, HOME / MARKETPLACE                              | `chromeContent.topLeft` in [src/content/chrome.ts](../src/content/chrome.ts)                                                    | `TopLeftCluster`                         |
-| Platform link label and URL (`https://app.pquadrant.com`) | `chromeContent.topRight` in `chrome.ts`                                                                                         | `TopRightCluster`                        |
-| Tagline (`lead`, `emphasis`), BROWSE AI SYSTEMS           | `homeContent.tagline`, `homeContent.browse` in [src/content/home.ts](../src/content/home.ts)                                    | `Tagline`, `BrowseHint`                  |
-| Marketplace heading, line and catalogue                   | `marketplaceContent` in [src/content/marketplace.ts](../src/content/marketplace.ts)                                             | `MarketplaceHeading`, `MarketplacePanel` |
-| APPLY NOW, the apply form, its messages, the screen after | `applyContent` in [src/content/apply.ts](../src/content/apply.ts)                                                               | `ApplyLauncher`, `ApplyForm`             |
-| Types for the above                                       | [src/content/types.ts](../src/content/types.ts): `ChromeContent`, `HomeContent`, `MarketplaceContent`, `ApplyContent` and parts |                                          |
-| Page title and description                                | `metadata` in [src/app/layout.tsx](../src/app/layout.tsx)                                                                       | Browser, search engines                  |
-| App name and description                                  | [src/app/manifest.ts](../src/app/manifest.ts)                                                                                   | Installed web app                        |
+| Copy                                                      | Location                                                                                                                                          | Consumed by                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Wordmark, HOME / MARKETPLACE                              | `chromeContent.topLeft` in [src/content/chrome.ts](../src/content/chrome.ts)                                                                      | `TopLeftCluster`                         |
+| Platform link label and URL (`https://app.pquadrant.com`) | `chromeContent.topRight` in `chrome.ts`                                                                                                           | `TopRightCluster`                        |
+| Tagline (`lead`, `emphasis`), BROWSE AI SYSTEMS           | `homeContent.tagline`, `homeContent.browse` in [src/content/home.ts](../src/content/home.ts)                                                      | `Tagline`, `BrowseHint`                  |
+| Marketplace heading, line and catalogue                   | `marketplaceContent` in [src/content/marketplace.ts](../src/content/marketplace.ts)                                                               | `MarketplaceHeading`, `MarketplacePanel` |
+| APPLY NOW, the apply form, its messages, the screen after | `applyContent` in [src/content/apply.ts](../src/content/apply.ts)                                                                                 | `ApplyLauncher`, `ApplyForm`             |
+| Privacy policy                                            | `privacyContent` in [src/content/privacy.ts](../src/content/privacy.ts)                                                                           | `PrivacyPolicy`                          |
+| Types for the above                                       | [src/content/types.ts](../src/content/types.ts): `ChromeContent`, `HomeContent`, `MarketplaceContent`, `ApplyContent`, `PrivacyContent` and parts |                                          |
+| Page title and description                                | `metadata` in [src/app/layout.tsx](../src/app/layout.tsx)                                                                                         | Browser, search engines                  |
+| App name and description                                  | [src/app/manifest.ts](../src/app/manifest.ts)                                                                                                     | Installed web app                        |
 
 - The site description is written twice, in `layout.tsx` and `manifest.ts`, outside
   `src/content/`. Change both.
@@ -41,11 +42,9 @@ Changing the words changes layout and motion, not only text:
 - **Chrome label width** changes the top corner boxes, which also feed the globe's size,
   and below 380px wide the gap between the wordmark and the two top-right controls
   (15px at 320px when APPLY NOW was added).
-- **Apply form copy** changes the panel's height. The form is meant to fit without
-  scrolling on common phones; check 390 × 844 after a wording change
-  ([apply flow](apply.md#verification)).
-- The tagline's `sr-only` copy is the full sentence; the animated words are hidden from
-  assistive technology. Both come from the same strings.
+- **Apply form copy** changes the panel's height. Each step is meant to fit an upright
+  phone without scrolling, with messages on one line in a half column; check the phone
+  heights in [fitting a phone](apply.md#connections) after a wording change.
 
 **Verify** a wording change at the [window sizes](../docs/verification.md#window-sizes)
 for wrapping and globe size, and replay the entrance.
@@ -69,3 +68,20 @@ loading behaviour, how a change on either side affects the other, and the
 routes kept in the client cache indefinitely
 ([route structure](routes.md#route-structure)) would show stale data. Nothing here
 authorizes building it.
+
+## Privacy policy
+
+`/privacy` renders `privacyContent` through `PrivacyPolicy`
+([src/components/privacy/PrivacyPolicy.tsx](../src/components/privacy/PrivacyPolicy.tsx)).
+**Design constraint:** it is linked only from the apply form's consent checkbox and
+appears in no navigation or footer; the reason is the product owner's decision, recorded
+beside `privacyContent`. Its wordmark matches the stage's in position, size and
+tracking, and leads home. The contact address is linked wherever it appears.
+
+**The policy describes what the site does, so it must change with it.** When a change
+starts storing or sending applications, adds email codes, bot protection, booking or
+any cookie, or gives data to a new service provider, update the matching sections and
+the "updated" date in the same change. It states that application data is stored with
+AWS in Stockholm, which matches the platform's database configuration
+(**unverified** against a live deployment), and that the site uses no cookies. It has
+not been reviewed by a lawyer.

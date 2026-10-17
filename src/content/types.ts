@@ -84,7 +84,8 @@ export interface ApplyContent {
   /** The button in the top-right corner. */
   trigger: string;
   title: string;
-  intro: string;
+  /** One line under the title per step, about that step's questions. */
+  intros: readonly string[];
   /** Step progress, shown to the eye and read to assistive technology. */
   progress: {
     shown: (step: number, steps: number) => string;
@@ -117,4 +118,23 @@ export interface ApplyContent {
     marketplace: string;
     custom: string;
   };
+}
+
+/** A block of the privacy policy: a paragraph, or a bulleted list. */
+export type PrivacyBlock = string | { list: readonly string[] };
+
+export interface PrivacySection {
+  heading: string;
+  blocks: readonly PrivacyBlock[];
+}
+
+/** The privacy policy page. */
+export interface PrivacyContent {
+  title: string;
+  /** Shown under the title. */
+  updated: string;
+  intro: readonly PrivacyBlock[];
+  sections: readonly PrivacySection[];
+  /** Linked wherever it appears in the text. */
+  contactEmail: string;
 }

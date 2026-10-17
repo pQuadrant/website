@@ -86,3 +86,101 @@ export function answerProblem(
   }
   return null;
 }
+
+/**
+ * Words kept in capitals when a lowercase company name or role is tidied:
+ * job titles, departments and company suffixes people type in lowercase.
+ */
+const ACRONYMS: ReadonlySet<string> = new Set([
+  "ai",
+  "ceo",
+  "cfo",
+  "cio",
+  "cmo",
+  "coo",
+  "cpo",
+  "cto",
+  "evp",
+  "hr",
+  "it",
+  "pr",
+  "svp",
+  "vp",
+  "dmcc",
+  "fz",
+  "fze",
+  "fzco",
+  "llc",
+  "uae",
+  "uk",
+  "usa",
+]);
+
+/** True when the text has letters and every one of them is lowercase. */
+function allLower(text: string): boolean {
+  return text === text.toLowerCase() && text !== text.toUpperCase();
+}
+
+/** True when the text has letters and every one of them is a capital. */
+function allUpper(text: string): boolean {
+  return text === text.toUpperCase() && text !== text.toLowerCase();
+}
+
+/** "anne-marie" → "Anne-Marie", "o'neil" → "O'Neil". */
+function capitalise(word: string): string {
+  return word
+    .toLowerCase()
+    .replace(/(^|[-'’])(\p{L})/gu, (_, mark: string, letter: string) => {
+      return mark + letter.toUpperCase();
+    });
+}
+
+/** Each hyphenated part in capitals if it is a known acronym: "fz-llc" → "FZ-LLC". */
+function acronymOr(word: string, otherwise: (word: string) => string): string {
+  const parts = word.split("-");
+  return parts.every((part) => ACRONYMS.has(part.toLowerCase()))
+    ? word.toUpperCase()
+    : otherwise(word);
+}
+
+/**
+ * An answer as it should be kept and shown back: spacing cleaned up, an email
+ * in lowercase, and a name, company or role capitalised when it was typed all
+ * in one case. Anything typed in mixed case is left as typed, because it is
+ * already a choice: "McDonald", "van der Berg", "eBay". Company names typed in
+ * capitals stay in capitals, since they are usually initials. Scripts without
+ * capitals, such as Arabic, are left as typed.
+ */
+export function tidyAnswer(field: ApplicationField, value: string): string {
+  if (field === "goal") {
+    const text = value.trim().replace(/[ \t]{2,}/g, " ");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  const text = value.trim().replace(/\s+/g, " ");
+  const words = text.split(" ");
+
+  switch (field) {
+    case "firstName":
+    case "lastName":
+      return allLower(text) || allUpper(text)
+        ? words.map(capitalise).join(" ")
+        : text;
+    case "company":
+      return allLower(text)
+        ? words.map((word) => acronymOr(word, capitalise)).join(" ")
+        : text;
+    case "role":
+      return allLower(text)
+        ? words
+            .map((word, index) =>
+              acronymOr(word, (w) => (index === 0 ? capitalise(w) : w)),
+            )
+            .join(" ")
+        : text;
+    case "email":
+      return text.toLowerCase();
+    default:
+      return text;
+  }
+}

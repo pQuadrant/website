@@ -237,6 +237,12 @@
    each other at about 375px, so the tightening stops at 380px. */
 @custom-variant narrowest (@media (width < 380px));
 
+/* A window under 600px tall: the shortest upright phones with their browser
+   bars showing, and every phone on its side. The apply panel tightens its
+   spacing here so a step still fits without scrolling on an iPhone SE
+   (375 x 553 visible) with every message shown. */
+@custom-variant cramped (@media (height < 600px));
+
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff and the starfield's ambient light. Twice it is the document's height.
 

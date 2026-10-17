@@ -18,6 +18,7 @@ import {
   EMPTY_ANSWERS,
   isOptional,
   MAX_LENGTH,
+  tidyAnswer,
 } from "@/lib/apply/application";
 
 /**
@@ -32,8 +33,15 @@ import {
  * is put right; focus moves to the first field that still needs attention.
  * Changing step starts that step's checking over.
  *
+ * Each answer is tidied when focus leaves its field, and the step's answers
+ * again when it is submitted, so an answer finished with Enter is tidied too
+ * (`tidyAnswer`).
+ *
  * Submitting sends nothing yet; the screen after it is shown on the browser's
  * checks alone.
+ *
+ * On a phone the form keeps two columns and tighter spacing, so each step fits
+ * an upright phone's screen without the panel scrolling.
  */
 
 interface FieldControl {
@@ -95,8 +103,15 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
 
   const idFor = (field: string) => `${idPrefix}-${field}`;
 
+  const tidy = (field: ApplicationField) =>
+    setAnswers((current) => ({
+      ...current,
+      [field]: tidyAnswer(field, current[field]),
+    }));
+
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    fields.forEach(tidy);
     if (problems.some((problem) => problem !== null) || consentMissing) {
       setChecking(true);
       pendingFocus.current = "problem";
@@ -152,9 +167,9 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
       <form
         noValidate
         onSubmit={onSubmit}
-        className="flex flex-col gap-[calc(22*var(--chrome-unit))]"
+        className="flex flex-col gap-4 row:gap-[calc(22*var(--chrome-unit))] cramped:gap-2.5"
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 row:gap-2">
           <div className="flex items-baseline justify-between gap-4">
             <Title text={content.title} />
             <span className="shrink-0 font-mono text-chrome-label text-fg-2">
@@ -166,14 +181,12 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
               </span>
             </span>
           </div>
-          {step === 0 && (
-            <p className="text-[calc(13*var(--chrome-unit))] leading-normal text-pretty text-fg-1">
-              {content.intro}
-            </p>
-          )}
+          <p className="text-[calc(13*var(--chrome-unit))] leading-normal text-pretty text-fg-1">
+            {content.intros[step]}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-[calc(12*var(--chrome-unit))] gap-y-[calc(14*var(--chrome-unit))] stage-narrow:grid-cols-2">
+        <div className="grid grid-cols-2 gap-x-[calc(12*var(--chrome-unit))] gap-y-3 row:gap-y-[calc(14*var(--chrome-unit))] cramped:gap-y-2">
           {fields.map((field, index) => (
             <ApplyField
               key={field}
@@ -184,6 +197,7 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
               onChange={(value) =>
                 setAnswers((current) => ({ ...current, [field]: value }))
               }
+              onBlur={() => tidy(field)}
               maxLength={MAX_LENGTH[field]}
               problem={checking ? (problems[index] ?? null) : null}
               optionalLabel={isOptional(field) ? content.optional : undefined}

@@ -35,6 +35,11 @@ it (below).
   `inert`), so answers and the current step survive closing and reopening, and route
   changes. A reload starts over. After a successful submit, reopening shows the
   confirmation screen again.
+- **Tidying.** When focus leaves a field, and for the whole step when it is
+  submitted, `tidyAnswer` cleans the answer: spacing collapsed, email lowercased, and a
+  name, company or role typed all in one case capitalised (with acronyms such as CEO
+  and FZ-LLC kept in capitals). Mixed case is kept as typed. The confirmation screen
+  shows the tidied first name.
 - **Checking.** Nothing is marked until the first press of CONTINUE or SUBMIT. Then each
   field with a problem gets a red border and its own message under it, tied with
   `aria-describedby`; focus moves to the first such field, and each message goes as
@@ -42,8 +47,8 @@ it (below).
   optional question and is checked only when filled. Length limits are `maxLength`, so
   they need no message.
 - **Consent.** Step two ends with a required checkbox. Its "Privacy Policy" link opens
-  `/privacy` in a new tab, so the form is not lost. **That page does not exist yet**;
-  the link leads to the not-found page until it is built.
+  `/privacy` in a new tab, so the form is not lost
+  ([privacy policy](content.md#privacy-policy)).
 - **The confirmation screen** offers the marketplace (a link to `/marketplace` that
   also closes the panel) and a custom request. **The custom request button does
   nothing**: where it leads is not decided.
@@ -73,6 +78,14 @@ it (below).
 - **Globe size.** APPLY NOW widens the top-right corner. At the sizes checked when it
   was added, the globe kept its size except on phones on their side (844 × 390: two
   pixels smaller).
+- **Fitting a phone.** The form keeps two columns at every width and tightens its
+  spacing on phones, and again under 600px tall (`cramped:` in `globals.css`), so each
+  step fits an upright phone's visible height without the panel scrolling, with every
+  message shown: checked at 430 × 740, 412 × 780, 390 × 664, 375 × 629, 360 × 580 and
+  375 × 553. Messages are kept to one line in a half column for this reason. The panel
+  still scrolls inside itself, scrollbar hidden, where nothing could fit: the 320px
+  iPhone SE (320 × 460 visible) and phones on their side. The automate box is two
+  lines tall and scrolls inside itself.
 - **Narrowest phones.** Below 380px wide (`narrowest:` in `globals.css`), the two
   top-right controls tighten their tracking, padding and gap so they clear the wordmark
   ([corner chrome](stage.md#corner-chrome)).
@@ -84,6 +97,6 @@ step's messages and focus, Esc on both routes, a swipe through the open panel on
 phone, keyboard order, and reduced motion
 ([interactive states](../docs/verification.md#interactive-and-visual-states)). Check
 the panel and the top-right corner at the [window sizes](../docs/verification.md#window-sizes),
-including 379 and 380 wide. On short windows the panel scrolls inside itself; its
-scrollbar is hidden. Behaviour with a phone's on-screen keyboard has to be checked on a
+including 379 and 380 wide, and at the phone heights listed under fitting a phone,
+with every message shown. Behaviour with a phone's on-screen keyboard has to be checked on a
 device.
