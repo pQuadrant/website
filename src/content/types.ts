@@ -1,3 +1,5 @@
+import type { ApplicationField } from "@/lib/apply/application";
+
 /**
  * Content types for the site's page copy.
  *
@@ -64,5 +66,55 @@ export interface MarketplaceContent {
     rows: readonly string[];
     /** Each card reads as this label followed by its number. */
     cardLabel: string;
+  };
+}
+
+/** One question on the apply form. */
+export interface ApplyFieldContent {
+  label: string;
+  placeholder?: string;
+  /** Shown under the field when a required answer is left blank. */
+  missing?: string;
+  /** Shown under the field when the answer cannot be right as typed. */
+  invalid?: string;
+}
+
+/** The apply button, its panel, the form inside it and what follows. */
+export interface ApplyContent {
+  /** The button in the top-right corner. */
+  trigger: string;
+  title: string;
+  intro: string;
+  /** Step progress, shown to the eye and read to assistive technology. */
+  progress: {
+    shown: (step: number, steps: number) => string;
+    spoken: (step: number, steps: number) => string;
+  };
+  /** Set beside the label of a question that may be left blank. */
+  optional: string;
+  /** The empty first choice of a list. */
+  choose: string;
+  fields: Record<ApplicationField, ApplyFieldContent>;
+  companySizes: readonly string[];
+  consent: {
+    /** The sentence around the link, split where the link sits. */
+    before: string;
+    link: string;
+    after: string;
+    href: string;
+    missing: string;
+    /** Read with the link: it opens in a new tab so the form is kept. */
+    opensInNewTab: string;
+  };
+  actions: {
+    continue: string;
+    back: string;
+    submit: string;
+  };
+  success: {
+    title: string;
+    body: (firstName: string) => string;
+    marketplace: string;
+    custom: string;
   };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { TopLeftCluster } from "@/components/chrome/TopLeftCluster";
 import { TopRightCluster } from "@/components/chrome/TopRightCluster";
@@ -13,6 +13,7 @@ import { MarketplaceHeading } from "@/components/marketplace/MarketplaceHeading"
 import { MarketplacePanel } from "@/components/marketplace/MarketplacePanel";
 import { Stage } from "@/components/stage/Stage";
 import { Starfield } from "@/components/starfield/Starfield";
+import { applyContent } from "@/content/apply";
 import { chromeContent } from "@/content/chrome";
 import { homeContent } from "@/content/home";
 import { marketplaceContent } from "@/content/marketplace";
@@ -60,6 +61,7 @@ export function StageShell({ children }: StageShellProps) {
   const router = useRouter();
   const mode = stageModeFor(pathname);
   const motifRef = useRef<HTMLDivElement>(null);
+  const [applyOpen, setApplyOpen] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -81,14 +83,18 @@ export function StageShell({ children }: StageShellProps) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // Esc closes the apply panel first, and only otherwise leaves the
+  // marketplace. One listener, so a single press never does both.
   useEffect(() => {
-    if (mode !== "market") return;
+    if (!applyOpen && mode !== "market") return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") router.push("/");
+      if (event.key !== "Escape") return;
+      if (applyOpen) setApplyOpen(false);
+      else router.push("/");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mode, router]);
+  }, [applyOpen, mode, router]);
 
   return (
     <Stage
@@ -114,19 +120,38 @@ export function StageShell({ children }: StageShellProps) {
           <Globe />
         </div>
       }
-      topLeft={<TopLeftCluster content={chromeContent.topLeft} mode={mode} />}
-      topRight={<TopRightCluster content={chromeContent.topRight} />}
+      // While the apply panel is open, everything outside the top-right
+      // corner is inert, so focus stays with the panel and its two controls.
+      // The wrappers are `contents`: they hold no box, so the fixed layers
+      // inside them lay out exactly as before.
+      topLeft={
+        <div className="contents" inert={applyOpen}>
+          <TopLeftCluster content={chromeContent.topLeft} mode={mode} />
+        </div>
+      }
+      topRight={
+        <TopRightCluster
+          content={chromeContent.topRight}
+          apply={applyContent}
+          applyOpen={applyOpen}
+          onApplyOpenChange={setApplyOpen}
+        />
+      }
     >
-      <Tagline content={homeContent.tagline} mode={mode} />
-      <BrowseHint label={homeContent.browse} mode={mode} />
-      <HomeSwipe active={mode === "home"} />
-      <MarketplaceHeading
-        heading={marketplaceContent.heading}
-        subline={marketplaceContent.subline}
-        mode={mode}
-      />
-      <MarketplacePanel content={marketplaceContent.catalogue} mode={mode} />
-      {children}
+      <div className="contents" inert={applyOpen}>
+        <Tagline content={homeContent.tagline} mode={mode} />
+        <BrowseHint label={homeContent.browse} mode={mode} />
+        {/* Its listeners are on the window, which inert does not reach: a
+            swipe through the apply form must not open the marketplace. */}
+        <HomeSwipe active={mode === "home" && !applyOpen} />
+        <MarketplaceHeading
+          heading={marketplaceContent.heading}
+          subline={marketplaceContent.subline}
+          mode={mode}
+        />
+        <MarketplacePanel content={marketplaceContent.catalogue} mode={mode} />
+        {children}
+      </div>
     </Stage>
   );
 }

@@ -74,6 +74,32 @@
     0 0 calc(16 * var(--chrome-unit)) calc(2 * var(--chrome-unit))
       rgba(234, 237, 244, 0.3);
 
+  /* The apply panel and its fields. The panel is solid rather than translucent
+     over a blur: a blur would be recomputed on every frame the globe and the
+     stars move. The design's 0.86 alpha relied on that blur; without it the
+     tagline and the catalogue read through the form (about 20 luminance levels
+     over the panel's own at 320 x 568, and still visible at 0.96). The colour is
+     the design's panel base. See Apply flow in `codebase-map/apply.md`. */
+  --color-panel: #05070b;
+  --color-backdrop: rgba(2, 3, 6, 0.4);
+  --color-hairline: #232b36;
+  --color-hairline-hover: #3a4350;
+  --color-field-fill: rgba(255, 255, 255, 0.025);
+  --color-field-focus-fill: rgba(78, 155, 251, 0.05);
+  --color-error: #e8928a;
+  --shadow-field-focus: 0 0 0 3px rgba(78, 155, 251, 0.12);
+
+  /* The primary action: an accent border on an accent tint that brightens on
+     hover and again on press. Its glow is the border's own blue, emitted the
+     way the chrome text emits its own colour, not a shadow cast below it. */
+  --color-accent-fill: rgba(78, 155, 251, 0.16);
+  --color-accent-fill-hover: rgba(78, 155, 251, 0.26);
+  --color-accent-fill-active: rgba(78, 155, 251, 0.32);
+  --shadow-glow-accent: 0 0 calc(16 * var(--chrome-unit))
+    rgba(78, 155, 251, 0.28);
+  --shadow-glow-accent-hover: 0 0 calc(20 * var(--chrome-unit))
+    calc(1 * var(--chrome-unit)) rgba(78, 155, 251, 0.42);
+
   /* Accents */
   --color-accent-bright: #4e9bfb;
   --color-land: #5fd98f;
@@ -204,6 +230,12 @@
 /* A short window: a phone on its side. The globe fills the height, so what
    would sit under it moves beside it instead. Never overlaps `row:`. */
 @custom-variant short (@media (height < 500px));
+
+/* The narrowest phones, down to the 320px the site supports. The wordmark,
+   PLATFORM and APPLY NOW only fit side by side there once the two controls'
+   tracking, padding and gap tighten. At the design's spacing they first clear
+   each other at about 375px, so the tightening stops at 380px. */
+@custom-variant narrowest (@media (width < 380px));
 
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff and the starfield's ambient light. Twice it is the document's height.
