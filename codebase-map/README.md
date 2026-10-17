@@ -5,7 +5,8 @@ implementation, and verify against the code. Cross-references are detours: read 
 named section, then return to the task. Follow further links only when the change needs
 them.
 
-The site is one persistent stage serving two routes, `/` and `/marketplace`. Most
+The site is one persistent stage serving two routes, `/` and `/marketplace`, plus a
+plain reading page, `/privacy`, outside it. Most
 connections here are behavioural rather than imports: shared CSS properties, a shared
 clock, matching timings, and elements measured by other layers.
 
@@ -17,7 +18,8 @@ clock, matching timings, and elements measured by other layers.
 | [Routes](routes.md#routes)          | Home and marketplace: mode, route content, globe move, fades, gestures, focus                            | `StageShell`, `src/components/home/` or `marketplace/`, `src/app/(stage)/`, `src/lib/stage/mode.ts`, [transition timing](routes.md#route-transition-timing), [gestures](routes.md#navigation-and-gestures), `--mk-*` |
 | [Globe](globe.md#globe)             | Globe component and engine, size rule, point generator                                                   | `src/lib/globe/`, `Globe`, [anything that affects the globe's size](globe.md#motif-radius)                                                                                                                           |
 | [Starfield](starfield.md#starfield) | Star canvases, field, ambient light, text clearance, pointer drag                                        | `src/lib/starfield/`, `Starfield`, [adding text to the page](starfield.md#text-clearance)                                                                                                                            |
-| [Content](content.md#content)       | Where copy lives and what wording changes affect; intended platform data                                 | `src/content/`, metadata, [any copy change](content.md#wording-effects), [marketplace data](content.md#marketplace-copy-and-platform-data)                                                                           |
+| [Apply flow](apply.md#apply-flow)   | APPLY NOW, its panel, the application form and the screen after it                                       | `src/components/apply/`, `src/lib/apply/`, `src/content/apply.ts`, anything in the top-right corner                                                                                                                  |
+| [Content](content.md#content)       | Where copy lives and what wording changes affect; intended platform data                                 | `src/content/`, metadata, [any copy change](content.md#wording-effects), [marketplace data](content.md#marketplace-copy-and-platform-data), [privacy policy](content.md#privacy-policy)                              |
 | [Delivery](delivery.md#delivery)    | CI, GitHub rules, Amplify publishing                                                                     | Workflows, merge or deploy questions, [what merging publishes](delivery.md#publishing)                                                                                                                               |
 
 Working rules are in [AGENTS.md](../AGENTS.md). Code conventions are in

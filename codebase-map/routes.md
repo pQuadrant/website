@@ -17,8 +17,13 @@ platform data, are in [content](content.md#marketplace-copy-and-platform-data).
   `experimental.staleTimes.static: Infinity` in [next.config.ts](../next.config.ts)
   keeps that copy for as long as the page is open. Otherwise it expires after 5 minutes
   and a later switch waits on a server round trip before `mode` changes, so nothing
-  moves for that time. The setting is safe only while the route pages render nothing;
-  it needs revisiting if one starts rendering server content.
+  moves for that time. The setting is safe only while every page is prerendered at
+  build time and changes only with a deploy; it needs revisiting if a page starts
+  rendering content that changes between deploys.
+- `/privacy` ([src/app/privacy/page.tsx](../src/app/privacy/page.tsx)) sits outside the
+  `(stage)` group, so it never mounts the stage, globe or starfield, and the document
+  scrolls there. Leaving it for `/` mounts the stage fresh and replays the entrance.
+  See [privacy policy](content.md#privacy-policy).
 - If the site has been republished since the page loaded, Next.js turns the next
   navigation into a full page load to avoid mixing versions. The marketplace then opens
   like a deep link, with no globe move.
@@ -137,12 +142,14 @@ change moves the marketplace too.
 | BROWSE AI SYSTEMS ↓                     | to marketplace | `BrowseHint`       | Shown below `row:`; `inert` on the marketplace                                                                                                                                                         |
 | Swipe up                                | to marketplace | `HomeSwipe`        | Touch only; `window` listeners while on home; `SWIPE_DISTANCE` 60px or a flick (`FLICK_SPEED`, `FLICK_DISTANCE`)                                                                                       |
 | Pull down from the top of the catalogue | to home        | `MarketplacePanel` | Touch and wheel, on the scroller; `RESISTANCE`, `COMMIT_AT`, `DEAD_ZONE` in [src/lib/stage/route-gesture.ts](../src/lib/stage/route-gesture.ts); only a fresh gesture that starts at scroll top counts |
-| Esc                                     | to home        | `StageShell`       | `keydown` on `window`, marketplace only                                                                                                                                                                |
+| Esc                                     | to home        | `StageShell`       | `keydown` on `window`, marketplace only; while the apply panel is open it closes the panel instead ([apply flow](apply.md#connections))                                                                |
 | Browser Back/Forward                    | both           | Next.js router     | The routes carry the state                                                                                                                                                                             |
 
 - `HomeSwipe` and the panel share `DEAD_ZONE`, and each calls `preventDefault` only
   after it has claimed a vertical gesture. The scroller is `overscroll-contain`, so a
   pull does not also start the browser's pull-to-refresh.
+- `HomeSwipe` is switched off while the apply panel is open, and the route content is
+  `inert` then ([apply flow](apply.md#connections)).
 - **Changes that disturb it:** a new touch or wheel listener on `window` or the panel;
   changing `overscroll` behaviour; making the document scroll.
 - The starfield's pointer response listens to `window` `pointermove` on hover-capable

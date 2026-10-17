@@ -49,10 +49,14 @@ canvas gradients, not `box-shadow` or a blur filter. The reasons are in the glow
 comment in `globals.css` and the header of
 [src/lib/starfield/draw.ts](../src/lib/starfield/draw.ts).
 
-**Not confirmed:** the stage also uses only square corners and 1px borders, with no
-border radius, backdrop blur, frosted glass, noise, scanlines, SVG or displacement
-filters, or curvature. Earlier design documents excluded these; nothing current
-confirms the exclusion is still intended.
+**Design constraint:** controls and panels have square corners and no backdrop blur or
+frosted glass. Both were chosen over the apply panel's design, which had them: the
+reasons are beside the panel tokens in `globals.css` and the field box in
+`ApplyField`.
+
+**Not confirmed:** the stage also uses only 1px borders, with no noise, scanlines, SVG
+or displacement filters, or curvature. Earlier design documents excluded these; nothing
+current confirms the exclusion is still intended.
 
 ## Stage centre
 
@@ -96,10 +100,13 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
 [motif radius](globe.md#motif-radius).
 
 - **Top right:** [TopRightCluster.tsx](../src/components/chrome/TopRightCluster.tsx),
-  `TopRightCluster`. The platform link is a real `<a href>` (modified/middle click and
-  context menu work; same tab, no `target`). Row height is `h-chrome-touch` (44 units)
-  below `row:` and `h-chrome-control` (34 units) at `row:` and up; the link stretches to
-  it. The border is `fg-2`; earlier design documents chose it as the first ramp value
+  `TopRightCluster`: the platform link, then APPLY NOW and the panel it opens
+  ([apply flow](apply.md#apply-flow)). The platform link is a real `<a href>`
+  (modified/middle click and context menu work; same tab, no `target`). Row height is
+  `h-chrome-touch` (44 units) below `row:` and `h-chrome-control` (34 units) at `row:`
+  and up; both controls stretch to it. The gap between them is 10px, and 18 units at
+  `row:`. Below 380px wide (`narrowest:`) their tracking, padding and gap tighten so
+  they clear the wordmark, which inherits the label tracking and is about 100px wide. The border is `fg-2`; earlier design documents chose it as the first ramp value
   clearing 3:1 non-text contrast against the corner ground (not confirmed; measure
   before changing the border, fill or background). The fill `--color-control-fill` is
   kept faint so the control reads as an object rather than a lit panel (its comment in
@@ -136,7 +143,9 @@ reasoning; read it before changing values.
 - **Breakpoints:** `--breakpoint-stage: 1100px` and `--breakpoint-stage-narrow: 640px`
   drive only the margin tiers, by width.
 - **Variants:** `row:` is `(width >= 640px) and (height >= 500px)`, the roomy layout;
-  `short:` is `(height < 500px)`, phones on their side. 500px sits between the tallest
+  `short:` is `(height < 500px)`, phones on their side; `narrowest:` is
+  `(width < 380px)`, used only by the top-right controls; `cramped:` is
+  `(height < 600px)`, used only by the apply panel. 500px sits between the tallest
   landscape phone viewport (about 480px) and the shortest landscape tablet (744px).
   The 640px in `row:` is a literal that duplicates `--breakpoint-stage-narrow`, because
   a media query cannot read a custom property; move both together. Media queries read

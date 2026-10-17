@@ -59,13 +59,13 @@
     0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
     0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
 
-  /* The platform link's body. A faint white lift that gives the only action on
-     the page something to be, rather than a floating word. Kept faint: it
-     should read as an object, not as a lit panel competing with the label. */
+  /* The body of a quiet control: the platform link and the apply flow's
+     secondary actions. A faint white lift that gives the control something to
+     be, rather than a floating word. Kept faint: it should read as an object,
+     not as a lit panel competing with the label. */
   --color-control-fill: rgba(255, 255, 255, 0.03);
 
-  /* The keyboard focus indicator for the control in the top-right cluster,
-     built from the fg-0 glow above rather than the browser's default outline so
+  /* The keyboard focus indicator for every control on the site, built from the fg-0 glow above rather than the browser's default outline so
      the page keeps one visual language. The 1px ring carries the boundary and
      the halo carries the emission; neither alone is both crisp and of a piece
      with the rest of the chrome. */
@@ -73,6 +73,32 @@
     0 0 0 1px var(--color-fg-0),
     0 0 calc(16 * var(--chrome-unit)) calc(2 * var(--chrome-unit))
       rgba(234, 237, 244, 0.3);
+
+  /* The apply panel and its fields. The panel is solid rather than translucent
+     over a blur: a blur would be recomputed on every frame the globe and the
+     stars move. The design's 0.86 alpha relied on that blur; without it the
+     tagline and the catalogue read through the form (about 20 luminance levels
+     over the panel's own at 320 x 568, and still visible at 0.96). The colour is
+     the design's panel base. See Apply flow in `codebase-map/apply.md`. */
+  --color-panel: #05070b;
+  --color-backdrop: rgba(2, 3, 6, 0.4);
+  --color-hairline: #232b36;
+  --color-hairline-hover: #3a4350;
+  --color-field-fill: rgba(255, 255, 255, 0.025);
+  --color-field-focus-fill: rgba(78, 155, 251, 0.05);
+  --color-error: #e8928a;
+  --shadow-field-focus: 0 0 0 3px rgba(78, 155, 251, 0.12);
+
+  /* The primary action: an accent border on an accent tint that brightens on
+     hover and again on press. Its glow is the border's own blue, emitted the
+     way the chrome text emits its own colour, not a shadow cast below it. */
+  --color-accent-fill: rgba(78, 155, 251, 0.16);
+  --color-accent-fill-hover: rgba(78, 155, 251, 0.26);
+  --color-accent-fill-active: rgba(78, 155, 251, 0.32);
+  --shadow-glow-accent: 0 0 calc(16 * var(--chrome-unit))
+    rgba(78, 155, 251, 0.28);
+  --shadow-glow-accent-hover: 0 0 calc(20 * var(--chrome-unit))
+    calc(1 * var(--chrome-unit)) rgba(78, 155, 251, 0.42);
 
   /* Accents */
   --color-accent-bright: #4e9bfb;
@@ -205,6 +231,18 @@
    would sit under it moves beside it instead. Never overlaps `row:`. */
 @custom-variant short (@media (height < 500px));
 
+/* The narrowest phones, down to the 320px the site supports. The wordmark,
+   PLATFORM and APPLY NOW only fit side by side there once the two controls'
+   tracking, padding and gap tighten. At the design's spacing they first clear
+   each other at about 375px, so the tightening stops at 380px. */
+@custom-variant narrowest (@media (width < 380px));
+
+/* A window under 600px tall: the shortest upright phones with their browser
+   bars showing, and every phone on its side. The apply panel tightens its
+   spacing here so a step still fits without scrolling on an iPhone SE
+   (375 x 553 visible) with every message shown. */
+@custom-variant cramped (@media (height < 600px));
+
 /* Where the stage centres what it draws: the motif, the starfield's density
    falloff and the starfield's ambient light. Twice it is the document's height.
 
@@ -277,7 +315,7 @@
  * `docs/conventions.md`, and do not add `cursor-pointer` to an element.
  *
  * A browser's own stylesheet gives `<button>` an arrow, and only `<a href>`
- * gets a pointer for free. Three of the page's four controls are buttons, so
+ * gets a pointer for free. Many of the page's controls are buttons, so
  * without this the glow was left doing all the work of saying "this is
  * pressable" while the cursor said the opposite. Tailwind is the obvious
  * suspect and is not to blame: its preflight has no cursor rule on buttons,

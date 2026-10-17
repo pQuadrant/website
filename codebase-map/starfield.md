@@ -69,6 +69,7 @@ The value says which route's sky it clears: `""` for both, `"home"` or `"market"
 | Marked element                          | Value      |
 | --------------------------------------- | ---------- |
 | Platform link in `TopRightCluster`      | `""`       |
+| APPLY NOW in `ApplyLauncher`            | `""`       |
 | Wordmark and switch in `TopLeftCluster` | `""`       |
 | Tagline paragraph, Browse hint          | `"home"`   |
 | Marketplace heading block               | `"market"` |
