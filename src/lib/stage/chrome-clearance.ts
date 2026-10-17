@@ -7,9 +7,11 @@
  * what to do with the answer.
  *
  * It measures the chrome where the chrome actually is rather than recomputing
- * the margins and offsets in script. Those live in CSS, they tier with the
- * window, and two of them moved in the last two tickets; a second copy of them
- * here would be a second thing to keep in step and would be wrong the first
+ * it in script. Where a corner box ends depends on inputs script cannot cheaply
+ * reproduce: margins that change at the width tiers, safe-area insets only the
+ * device knows, the chrome scale, and how wide the copy renders and where the
+ * tagline wraps. A second copy of those rules here would have to be kept in
+ * step with the CSS by hand, and would silently misplace the globe the first
  * time it was not.
  */
 

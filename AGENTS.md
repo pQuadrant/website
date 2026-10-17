@@ -151,6 +151,13 @@ code, and integration gaps. Complete necessary cleanup within the approved scope
 resolving an issue materially expands scope, explain it and obtain approval before
 declaring the feature complete.
 
+When a change retires or replaces a feature or workflow, find what still refers to it
+in tracked templates, agent instructions, documentation, scripts, package scripts,
+dependencies and configuration. Before removing a file, dependency, script or setting,
+check its remaining usage: tooling can rely on a file that no application code imports.
+Update or remove obsolete references within the approved scope, and name larger
+follow-up work explicitly in the handoff.
+
 Do not depend on the product owner to request that working features be moved out of
 experimental structures. Visual or product approval is not proof that engineering
 cleanup is complete.
