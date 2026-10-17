@@ -2,7 +2,8 @@
  * The globe's entrance: how far off its true position each point starts, when
  * it settles, and how it looks while it has not.
  *
- * Transcribed from the "Entrance" section of `docs/design/globe.md`. Like the
+ * Its place in the page's opening sequence is mapped under Page entrance
+ * timeline in `codebase-map/stage.md`. Like the
  * rest of `src/lib/globe/`, nothing here decides when to paint — `state.ts`
  * holds the clock, `projection.ts` reads these values per point, and `draw.ts`
  * puts them on the canvas.

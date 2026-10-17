@@ -1,6 +1,7 @@
 /**
- * Point placement for the globe motif, transcribed from the "Even distribution"
- * and "Land classification" sections of `docs/design/globe.md`.
+ * Point placement for the globe motif by the Fibonacci sphere method, and the
+ * longitude and latitude the land test classifies. See Point set in
+ * `codebase-map/globe.md`.
  *
  * This module is the single definition of where a point sits on the sphere. The
  * build-time generator (`scripts/generate-globe-points.mts`) and the runtime both

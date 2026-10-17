@@ -1,6 +1,6 @@
 /**
- * The timing of the sky's crossfade between routes — see the Routes section of
- * `docs/design/starfield.md`.
+ * The timing of the sky's crossfade between routes — see Route transition
+ * timing in `codebase-map/routes.md`.
  *
  * The globe's move between the routes is a CSS transition on the motif in
  * `StageShell.tsx`. The stars cannot be a CSS transition, because each one

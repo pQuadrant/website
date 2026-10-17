@@ -80,7 +80,7 @@
   --color-ocean: #4e9bfb;
   /* The motif's white point. Land and ocean both top out well short of white —
      the land green is luminance 186 — so the highlight cannot come from either
-     of them. See the highlight rule in `docs/design/globe.md`. */
+     of them. See the highlight constants in `src/lib/globe/projection.ts`. */
   --color-highlight: #f2f7ff;
 
   /* Type role. Carries its own letter-spacing; pair with font-sans or
@@ -95,14 +95,15 @@
 
   /* Stage layer colours. The stage's background layers compose with gradients
      rather than flat fills, so each stop is a token of its own.
-     See `docs/design/home.md`. */
+     See Layer order in `codebase-map/stage.md`. */
   --color-vignette: rgba(0, 0, 0, 0.38);
 
   /* The chrome's dimensions, every one of them the same count of units as it
      used to be pixels. They come from one number so the cluster keeps its
      internal proportions at every window size instead of drifting apart — a
      control that grows while the type inside it does not is how a control stops
-     fitting its label. See `docs/design/chrome.md`.
+     fitting its label. See Tokens, breakpoints and variants in
+     `codebase-map/stage.md`.
 
      What is *not* here is as load-bearing as what is. Borders stay 1px, the
      focus ring's ring stays 1px, and the corner margins keep their
@@ -126,8 +127,8 @@
 
      Both are width alone, deliberately. The margin tightens because the window
      has run out of *horizontal* room, and that is a different question from
-     whether a cluster has room to run as a row — see `row` below, and the
-     Margins section of `docs/design/home.md`. The two used to be the same
+     whether a cluster has room to run as a row — see `row` below, and Corner
+     chrome in `codebase-map/stage.md`. The two used to be the same
      breakpoint because until landscape was specified there was only one way for
      a window to be short of room.
 
@@ -142,8 +143,8 @@
      fades up first, the corner clusters follow it in with a 60ms stagger
      and are settled by 900ms, and the globe resolves into the frame they leave.
      The globe's own share is drawn on its canvas and timed in
-     `src/lib/globe/entrance.ts` — see the Entrance section of
-     `docs/design/globe.md` for the whole sequence.
+     `src/lib/globe/entrance.ts` — see Page entrance timeline in
+     `codebase-map/stage.md` for the whole sequence.
 
      Both halves run on the same clock. These animations start with the document
      timeline and the globe reads `requestAnimationFrame`'s timestamp, which is
@@ -173,7 +174,7 @@
    Two ways to run out of room, and either one triggers the same reflow: a
    window is tight when it is narrower than 640px *or* shorter than 500px. One
    composition, one reflow of it, reachable from two directions. See
-   `docs/design/chrome.md`, _Narrow windows, and short ones_.
+   Tokens, breakpoints and variants in `codebase-map/stage.md`.
 
    The height half exists because a phone in landscape is not narrow, it is
    short. An iPhone 15 Pro Max on its side is about 930px wide, well clear of
@@ -211,7 +212,7 @@
    tall — the viewport with the browser's retractable UI retracted, the tallest
    it ever gets — and centring on that number puts the motif below the middle of
    what the visitor can actually see, by half the height of the browser chrome.
-   See the Motif centring section of `docs/design/home.md`.
+   See Stage centre in `codebase-map/stage.md`.
 
    Registered rather than a plain variable so that its computed value resolves to
    pixels. An unregistered custom property holding `50svh` is handed to script as
@@ -250,8 +251,8 @@
    *
    * `clamp()` rather than a breakpoint: it is continuous, so there is no size at
    * which the chrome visibly jumps, and it adds no tier to the two
-   * `docs/design/home.md` allows. See `docs/design/chrome.md` for the derivation
-   * of S_MAX and the values it produces.
+   * width breakpoints. S_MAX is 1.7 because, as a share of the viewport, the
+   * platform control at 2560px is still smaller than it is on a phone.
    */
   --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
 }
@@ -272,8 +273,8 @@
  * Showing a pointer is a property of *being* a control, not of any particular
  * one — and a per-element approach is one place per control, and forgettable by
  * construction: the failure is a new control shipping without it and nobody
- * noticing for a month. See the Pointer behaviour section of
- * `docs/design/home.md`, and do not add `cursor-pointer` to an element.
+ * noticing for a month. See Styling in
+ * `docs/conventions.md`, and do not add `cursor-pointer` to an element.
  *
  * A browser's own stylesheet gives `<button>` an arrow, and only `<a href>`
  * gets a pointer for free. Three of the page's four controls are buttons, so

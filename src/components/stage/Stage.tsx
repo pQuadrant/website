@@ -5,8 +5,8 @@ import { CHROME_CORNER_ATTRIBUTE } from "@/lib/stage/chrome-clearance";
 /**
  * The stage: the full-window surface every other part of the home page sits on.
  *
- * Specified in `docs/design/home.md`. The layer order, the gradient stops, the
- * margins and the window-size behaviour all come from that file.
+ * Mapped in `codebase-map/stage.md`, which records the layer order, the
+ * centre and the corner regions, and what else depends on them.
  *
  * Layer one, the stage fill, is not drawn here. It is set on the document in
  * `src/app/layout.tsx`, because a fill applied to this element alone leaves a
@@ -40,13 +40,13 @@ export function Stage({
           Both live on a canvas rather than in CSS because both are positioned
           relative to the motif radius, and no CSS gradient can be — a
           gradient's stops follow the stage, the motif radius does not, and the
-          two drift apart as the window changes. See `docs/design/starfield.md`. */}
+          two drift apart as the window changes. See `codebase-map/starfield.md`. */}
       {starfield}
 
       {/* Layer 3 — the motif. Its canvas spans the stage and is fixed, so it
           stays put behind the scrolling content in a short window. The radius
           is a drawing parameter inside the module, not the size of the element
-          — see `docs/design/globe.md`. */}
+          — see `codebase-map/globe.md`. */}
       {motif}
 
       {/* Layer 4 — vignette. Above the canvas, so it darkens the motif's outer
@@ -64,8 +64,8 @@ export function Stage({
           regions are: were it not, it would take every click meant for the
           motif.
 
-          The height is twice the shared centre — see the Motif centring section
-          of `docs/design/home.md`. Written that way rather than as `min-h-svh`,
+          The height is twice the shared centre — see Stage centre in
+          `codebase-map/stage.md`. Written that way rather than as `min-h-svh`,
           which would be the same rule expressed a second time and free to drift
           from it; the declaration is the one in `globals.css`. Not `dvh`, which
           is the *current* viewport and tracks a mobile browser's toolbar. */}

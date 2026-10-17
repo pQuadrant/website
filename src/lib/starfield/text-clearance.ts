@@ -1,6 +1,6 @@
 /**
- * Where the type is, for the starfield to keep clear of — see the Text clearance
- * section of `docs/design/starfield.md`.
+ * Where the type is, for the starfield to keep clear of — see Text clearance in
+ * `codebase-map/starfield.md`.
  *
  * Measured from the page rather than written down here, for the same reason
  * `chrome-clearance.ts` measures the corners: the type's position lives in CSS

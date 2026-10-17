@@ -2,8 +2,8 @@
  * The starfield's response to the pointer: the one piece of motion on the page.
  *
  * The cursor sweeps through the field and the stars it passes are carried along
- * with it, then coast to a stop and drift back to where they were. Specified
- * under _Pointer response_ in `docs/design/starfield.md`.
+ * with it, then coast to a stop and drift back to where they were. Mapped
+ * under Pointer response in `codebase-map/starfield.md`.
  *
  * **A star is kicked by the line the cursor swept this frame, not by where the
  * cursor ended up.** That is the whole difference between a swipe and a
@@ -12,9 +12,8 @@
  * the mouse slowed down; measuring from the segment it travelled disturbs
  * everything it actually crossed, evenly, at any speed.
  *
- * The model is taken from the reference the design is measured against — see
- * _Pointer response_ in the specification, which records where it came from and
- * the numbers it uses. Two earlier attempts at this file guessed instead: one
+ * The model and its numbers, `POINTER` below, are transcribed from the visual
+ * reference the design was measured against rather than invented. Two earlier attempts at this file guessed instead: one
  * pulled stars home with a spring, which wobbles like jelly, and one pushed
  * them radially away from the cursor, which is a repulsion field and reads as a
  * force rather than as a hand. Neither is what the reference does.
