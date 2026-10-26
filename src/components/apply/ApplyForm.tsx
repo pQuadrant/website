@@ -8,6 +8,7 @@ import {
   PRIMARY_ACTION,
   SECONDARY_ACTION,
 } from "@/components/apply/action-styles";
+import { ApplyCheckbox } from "@/components/apply/ApplyCheckbox";
 import { ApplyField, type ApplyFieldKind } from "@/components/apply/ApplyField";
 import type { ApplyContent } from "@/content/types";
 import {
@@ -85,6 +86,7 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
 
   const [answers, setAnswers] = useState<ApplicationAnswers>(EMPTY_ANSWERS);
   const [consent, setConsent] = useState(false);
+  const [marketing, setMarketing] = useState(false);
   const [step, setStep] = useState(0);
   const [checking, setChecking] = useState(false);
   const [sent, setSent] = useState(false);
@@ -170,16 +172,12 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
     );
   }
 
-  const consentId = idFor("consent");
-  const consentMessageId = `${consentId}-message`;
-  const showConsentMessage = checking && consentMissing;
-
   return (
     <div ref={formRef}>
       <form
         noValidate
         onSubmit={onSubmit}
-        className="flex flex-col gap-4 row:gap-[calc(22*var(--chrome-unit))] cramped:gap-2.5"
+        className="flex flex-col gap-3 row:gap-[calc(22*var(--chrome-unit))] cramped:gap-2"
       >
         <div className="flex flex-col gap-1.5 row:gap-2">
           <div className="flex items-baseline justify-between gap-4">
@@ -222,49 +220,40 @@ export function ApplyForm({ content, onClose }: ApplyFormProps) {
         </div>
 
         {step === LAST_STEP && (
-          <div className="flex flex-col gap-[7px]">
-            {/* The whole line is the target, so it is tall enough to tap. */}
-            <label
-              htmlFor={consentId}
-              className="flex min-h-chrome-touch items-center gap-3 text-[calc(13*var(--chrome-unit))] text-fg-1 row:min-h-0"
+          <div className="flex flex-col gap-0.5 cramped:gap-0 row:gap-2">
+            <ApplyCheckbox
+              id={idFor("consent")}
+              checked={consent}
+              onChange={setConsent}
+              message={
+                checking && consentMissing ? content.consent.missing : undefined
+              }
             >
-              <input
-                id={consentId}
-                type="checkbox"
-                checked={consent}
-                onChange={(event) => setConsent(event.target.checked)}
-                aria-invalid={showConsentMessage}
-                aria-describedby={
-                  showConsentMessage ? consentMessageId : undefined
-                }
-                className="size-4 shrink-0 accent-accent-bright"
-              />
-              <span>
-                {content.consent.before}
-                {/* A new tab, so following it does not lose the form. */}
-                <a
-                  href={content.consent.href}
-                  target="_blank"
-                  rel="noopener"
-                  className="text-fg-0 underline decoration-fg-2 underline-offset-2 transition-[text-decoration-color] duration-hover hover:decoration-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:decoration-fg-0"
-                >
-                  {content.consent.link}
-                  <span className="sr-only">
-                    {" "}
-                    {content.consent.opensInNewTab}
-                  </span>
-                </a>
-                {content.consent.after}
-              </span>
-            </label>
-            {showConsentMessage && (
-              <p
-                id={consentMessageId}
-                className="text-[calc(12*var(--chrome-unit))] leading-snug text-error"
+              {content.consent.before}
+              {/* A new tab, so following it does not lose the form. */}
+              <a
+                href={content.consent.href}
+                target="_blank"
+                rel="noopener"
+                className="text-fg-0 underline decoration-fg-2 underline-offset-2 transition-[text-decoration-color] duration-hover hover:decoration-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:decoration-fg-0"
               >
-                {content.consent.missing}
-              </p>
-            )}
+                {content.consent.link}
+                <span className="sr-only">
+                  {" "}
+                  {content.consent.opensInNewTab}
+                </span>
+              </a>
+              {content.consent.after}
+            </ApplyCheckbox>
+            {/* Optional, and never ticked to begin with: consent to marketing
+                has to be given, not assumed. */}
+            <ApplyCheckbox
+              id={idFor("marketing")}
+              checked={marketing}
+              onChange={setMarketing}
+            >
+              {content.marketing}
+            </ApplyCheckbox>
           </div>
         )}
 

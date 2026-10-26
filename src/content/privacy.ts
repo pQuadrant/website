@@ -18,7 +18,7 @@ const CONTACT = "abdulrahmankeshta@pquadrant.com";
 
 export const privacyContent: PrivacyContent = {
   title: "Privacy Policy",
-  updated: "LAST UPDATED 18 OCTOBER 2026",
+  updated: "LAST UPDATED 26 OCTOBER 2026",
   contactEmail: CONTACT,
   contentsLabel: "Contents",
 
@@ -38,6 +38,7 @@ export const privacyContent: PrivacyContent = {
             "Your company’s size, and your phone number if you choose to give it.",
             "What you would like to automate, in your own words.",
             "That you agreed to this policy, and when.",
+            "Whether you would like marketing emails from us, and when you said so.",
           ],
         },
         "Information you give us when you write to us or meet with us, such as during a guided demo: your contact details and what you tell us.",
@@ -78,7 +79,7 @@ export const privacyContent: PrivacyContent = {
     {
       heading: "Marketing",
       blocks: [
-        "We will not send you newsletters or promotional emails unless you have agreed to receive them, where the law requires your agreement. Every marketing email will include a way to unsubscribe. Messages about your application or a demo you have arranged are not marketing.",
+        "We send marketing emails, about new AI systems, offers and discounts, only if you ask for them by ticking the box for them when you apply. It is optional and never ticked for you, and leaving it unticked does not affect your application. Every marketing email includes a way to unsubscribe, and you can also ask us to stop at any time by writing to us. Messages about your application or a demo you have arranged are not marketing.",
       ],
     },
     {
