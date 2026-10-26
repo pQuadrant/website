@@ -9,7 +9,8 @@ import type { AnswerProblem } from "@/lib/apply/application";
  * reader reads it when the form moves focus to the field.
  */
 
-export type ApplyFieldKind = "text" | "email" | "tel" | "select" | "textarea";
+export type ApplyFieldKind =
+  "text" | "email" | "tel" | "select" | "textarea" | "code";
 
 interface ApplyFieldProps {
   id: string;
@@ -39,7 +40,15 @@ interface ApplyFieldProps {
  * stage has square corners.
  */
 const CONTROL =
-  "w-full border bg-field-fill px-[calc(12*var(--chrome-unit))] font-sans text-[calc(15*var(--chrome-unit))] text-fg-0 outline-hidden transition-[border-color,box-shadow,background-color] duration-hover ease-[ease] placeholder:text-fg-2 hover:border-hairline-hover focus:border-accent-bright focus:bg-field-focus-fill focus:shadow-field-focus pointer-coarse:text-[16px]";
+  "w-full border bg-field-fill px-[calc(12*var(--chrome-unit))] text-fg-0 outline-hidden transition-[border-color,box-shadow,background-color] duration-hover ease-[ease] placeholder:text-fg-2 hover:border-hairline-hover focus:border-accent-bright focus:bg-field-focus-fill focus:shadow-field-focus";
+
+const TEXT =
+  "font-sans text-[calc(15*var(--chrome-unit))] pointer-coarse:text-[16px]";
+
+/** A one-time code, set wide and spaced in the chrome's mono so each digit
+ * stands apart. */
+const CODE =
+  "font-mono text-[calc(20*var(--chrome-unit))] tracking-[0.4em] pointer-coarse:text-[20px]";
 
 const HEIGHT = "h-chrome-touch row:h-[calc(36*var(--chrome-unit))]";
 
@@ -83,7 +92,7 @@ export function ApplyField({
         <select
           {...shared}
           onChange={(event) => onChange(event.target.value)}
-          className={`${CONTROL} ${HEIGHT} ${border} appearance-none pr-[calc(30*var(--chrome-unit))] ${value === "" ? "text-fg-1" : ""}`}
+          className={`${CONTROL} ${TEXT} ${HEIGHT} ${border} appearance-none pr-[calc(30*var(--chrome-unit))] ${value === "" ? "text-fg-1" : ""}`}
         >
           <option value="" className="bg-stage text-fg-0">
             {choose}
@@ -113,7 +122,22 @@ export function ApplyField({
         maxLength={maxLength}
         placeholder={content.placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className={`${CONTROL} ${border} block resize-none overscroll-contain py-[calc(9*var(--chrome-unit))] leading-[1.45] cramped:h-[calc(2lh+18*var(--chrome-unit)+2px)]`}
+        className={`${CONTROL} ${TEXT} ${border} block resize-none overscroll-contain py-[calc(9*var(--chrome-unit))] leading-[1.45] cramped:h-[calc(2lh+18*var(--chrome-unit)+2px)]`}
+      />
+    );
+  } else if (kind === "code") {
+    // Digits only on a phone's keypad, and offered from the email or message
+    // by the phone itself where it can (`one-time-code`).
+    control = (
+      <input
+        {...shared}
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={maxLength}
+        placeholder={content.placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${CONTROL} ${CODE} ${HEIGHT} ${border}`}
       />
     );
   } else {
@@ -125,7 +149,7 @@ export function ApplyField({
         placeholder={content.placeholder}
         autoComplete={autoComplete}
         onChange={(event) => onChange(event.target.value)}
-        className={`${CONTROL} ${HEIGHT} ${border}`}
+        className={`${CONTROL} ${TEXT} ${HEIGHT} ${border}`}
       />
     );
   }

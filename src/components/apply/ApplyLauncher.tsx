@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { PRIMARY_ACTION } from "@/components/apply/action-styles";
-import { ApplyForm } from "@/components/apply/ApplyForm";
+import { ApplyFlow } from "@/components/apply/ApplyFlow";
 import type { ApplyContent } from "@/content/types";
 import { focusStart } from "@/lib/apply/focus";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
@@ -102,7 +102,7 @@ export function ApplyLauncher({
         inert={!open}
         className="pointer-events-auto invisible fixed top-[calc(var(--chrome-bar-bottom)+14px)] cramped:top-[calc(var(--chrome-bar-bottom)+10px)] right-[var(--stage-inset-right)] z-10 max-h-[calc(100svh-var(--chrome-bar-bottom)-28px)] cramped:max-h-[calc(100svh-var(--chrome-bar-bottom)-20px)] w-[min(500px,calc(100vw-var(--stage-inset-left)-var(--stage-inset-right)))] origin-top-right -translate-y-2.5 scale-[0.98] overflow-y-auto overscroll-contain border border-hairline bg-panel p-4 font-sans tracking-normal opacity-0 [scrollbar-width:none] [transition:opacity_260ms_cubic-bezier(0.4,0,1,1),translate_260ms_cubic-bezier(0.4,0,1,1),scale_260ms_cubic-bezier(0.4,0,1,1),visibility_0s_linear_260ms] stage-narrow:p-6 cramped:py-3 data-open:visible data-open:translate-y-0 data-open:scale-100 data-open:opacity-100 data-open:[transition:opacity_320ms_cubic-bezier(0.2,0.7,0.2,1),translate_320ms_cubic-bezier(0.2,0.7,0.2,1),scale_320ms_cubic-bezier(0.2,0.7,0.2,1),visibility_0s] motion-reduce:transition-none! [&::-webkit-scrollbar]:hidden"
       >
-        <ApplyForm content={content} onClose={close} />
+        <ApplyFlow content={content} onClose={close} />
       </div>
     </>
   );

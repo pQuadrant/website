@@ -1,8 +1,8 @@
 import type { ApplyContent } from "@/content/types";
 
 /**
- * The apply flow's copy: the APPLY NOW button, the two-step form and the
- * screen that follows it. Not final.
+ * The apply flow's copy: the APPLY NOW button, the two-step form, opening an
+ * application again, the email code and the screen that follows. Not final.
  *
  * The form is short on purpose, so it fits the panel without scrolling; adding
  * a question is a product decision. Messages sit in half-width columns on a
@@ -74,10 +74,41 @@ export const applyContent: ApplyContent = {
     submit: "SUBMIT APPLICATION",
   },
 
-  success: {
-    title: "Application received",
-    body: (firstName) =>
-      `Thanks, ${firstName}. What would you like to do next?`,
+  alreadyApplied: {
+    question: "Already applied?",
+    action: "Open your application",
+  },
+
+  open: {
+    title: "Open your application",
+    intro: "Enter the email you applied with and we'll send you a code.",
+    submit: "EMAIL ME A CODE",
+  },
+
+  code: {
+    title: "Check your email",
+    intro: (email) => `We sent a 6-digit code to ${email}.`,
+    field: {
+      label: "CODE",
+      missing: "Enter the code from the email.",
+      invalid: "Enter all 6 digits.",
+    },
+    submit: "CONFIRM",
+    resendQuestion: "Didn't get it?",
+    resend: "Send a new code",
+    resent: "A new code is on its way.",
+  },
+
+  next: {
+    applied: {
+      title: "Application received",
+      body: (firstName) =>
+        `Thanks, ${firstName}. What would you like to do next?`,
+    },
+    returning: {
+      title: "Welcome back",
+      body: "Your application is open. What would you like to do next?",
+    },
     marketplace: "EXPLORE THE MARKETPLACE",
     custom: "REQUEST A CUSTOM AI SYSTEM",
   },
