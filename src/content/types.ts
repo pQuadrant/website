@@ -112,6 +112,8 @@ export interface ApplyContent {
     /** Read with the link: it opens in a new tab so the form is kept. */
     opensInNewTab: string;
   };
+  /** The optional checkbox under the consent one, asking for marketing emails. */
+  marketing: string;
   actions: {
     continue: string;
     back: string;

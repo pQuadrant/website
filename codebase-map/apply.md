@@ -13,6 +13,7 @@ here.
 | APPLY NOW, backdrop, panel, focus on open and close     | `ApplyLauncher` in [src/components/apply/ApplyLauncher.tsx](../src/components/apply/ApplyLauncher.tsx)                |
 | Steps, checking, messages, consent, the screen after    | `ApplyForm` in [src/components/apply/ApplyForm.tsx](../src/components/apply/ApplyForm.tsx)                            |
 | One question: label, control, its message               | `ApplyField` in [src/components/apply/ApplyField.tsx](../src/components/apply/ApplyField.tsx)                         |
+| A checkbox: consent or marketing, its message           | `ApplyCheckbox` in [src/components/apply/ApplyCheckbox.tsx](../src/components/apply/ApplyCheckbox.tsx)                |
 | Primary and secondary button styles                     | [src/components/apply/action-styles.ts](../src/components/apply/action-styles.ts)                                     |
 | The questions, which are optional, length limits, rules | `APPLICATION_STEPS`, `MAX_LENGTH`, `answerProblem` in [src/lib/apply/application.ts](../src/lib/apply/application.ts) |
 | Tidying answers                                         | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                       |
@@ -48,9 +49,11 @@ it (below).
   message goes as soon as its field is put right. Changing step starts checking over. Phone is the one
   optional question and is checked only when filled. Length limits are `maxLength`, so
   they need no message.
-- **Consent.** Step two ends with a required checkbox. Its "Privacy Policy" link opens
-  `/privacy` in a new tab, so the form is not lost
-  ([privacy policy](content.md#privacy-policy)).
+- **Consent.** Step two ends with two checkboxes. The first, agreeing to the Privacy
+  Policy, is required; its "Privacy Policy" link opens `/privacy` in a new tab, so the
+  form is not lost ([privacy policy](content.md#privacy-policy)). The second asks for
+  marketing emails. It is optional and starts unticked, because consent to marketing
+  has to be given rather than assumed; the policy's Marketing section says the same.
 - **The confirmation screen** offers the marketplace (a link to `/marketplace` that
   also closes the panel) and a custom request. **The custom request button does
   nothing**: where it leads is not decided.
@@ -91,7 +94,9 @@ it (below).
   spacing on phones, and again under 600px tall (`cramped:` in `globals.css`), so each
   step fits an upright phone's visible height without the panel scrolling, with every
   message shown: checked at 430 × 740, 412 × 780, 390 × 664, 375 × 629, 360 × 580 and
-  375 × 553. Messages are kept to one line in a half column for this reason. The panel
+  375 × 553. Messages are kept to one line in a half column for this reason. For the
+  same reason the checkbox lines are 36px tall on a phone and 28px under 600px tall,
+  short of the 44px touch height the other controls keep. The panel
   still scrolls inside itself, scrollbar hidden, where nothing could fit: the 320px
   iPhone SE (320 × 460 visible) and phones on their side. The automate box is three
   lines tall, two under 600px tall, and scrolls inside itself.

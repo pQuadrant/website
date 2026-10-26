@@ -65,6 +65,8 @@ export const applyContent: ApplyContent = {
     missing: "Agree to the Privacy Policy to submit.",
     opensInNewTab: "(opens in a new tab)",
   },
+  marketing:
+    "Email me about new AI systems, offers and discounts. Optional; unsubscribe any time.",
 
   actions: {
     continue: "CONTINUE",
