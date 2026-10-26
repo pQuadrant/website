@@ -1,25 +1,31 @@
 # Apply flow
 
-Owns APPLY NOW, the panel it opens, the two-step application form and the screen that
-follows it. The form checks answers in the browser only: **nothing is sent or stored
-yet**, and the confirmation screen appears on the browser's checks alone. Data decisions
-for applications are recorded in the platform repository's `docs/data-model.md`, not
-here.
+Owns APPLY NOW, the panel it opens, and the screens inside it: the two-step application
+form, opening an application again, the email code, and the screen that follows. The
+forms check answers in the browser only: **nothing is sent or stored yet, and no code is
+emailed**; the code screen accepts any six digits. Data decisions for applicants are
+recorded in the platform repository's `docs/data-model.md`, not here.
 
 ## Where it lives
 
-| Part                                                    | Location                                                                                                              |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| APPLY NOW, backdrop, panel, focus on open and close     | `ApplyLauncher` in [src/components/apply/ApplyLauncher.tsx](../src/components/apply/ApplyLauncher.tsx)                |
-| Steps, checking, messages, consent, the screen after    | `ApplyForm` in [src/components/apply/ApplyForm.tsx](../src/components/apply/ApplyForm.tsx)                            |
-| One question: label, control, its message               | `ApplyField` in [src/components/apply/ApplyField.tsx](../src/components/apply/ApplyField.tsx)                         |
-| A checkbox: consent or marketing, its message           | `ApplyCheckbox` in [src/components/apply/ApplyCheckbox.tsx](../src/components/apply/ApplyCheckbox.tsx)                |
-| Primary and secondary button styles                     | [src/components/apply/action-styles.ts](../src/components/apply/action-styles.ts)                                     |
-| The questions, which are optional, length limits, rules | `APPLICATION_STEPS`, `MAX_LENGTH`, `answerProblem` in [src/lib/apply/application.ts](../src/lib/apply/application.ts) |
-| Tidying answers                                         | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                       |
-| Where focus goes, on touch screens and otherwise        | `focusStart`, `focusProblem` in [src/lib/apply/focus.ts](../src/lib/apply/focus.ts)                                   |
-| Every word, including each field's messages             | `applyContent` in [src/content/apply.ts](../src/content/apply.ts), typed by `ApplyContent`                            |
-| Panel, field, error and accent colours and glows        | The apply panel and primary action tokens in [globals.css](../src/app/globals.css)                                    |
+| Part                                                    | Location                                                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| APPLY NOW, backdrop, panel, focus on open and close     | `ApplyLauncher` in [src/components/apply/ApplyLauncher.tsx](../src/components/apply/ApplyLauncher.tsx)                   |
+| Which screen shows, and moving between them             | `ApplyFlow` in [src/components/apply/ApplyFlow.tsx](../src/components/apply/ApplyFlow.tsx)                               |
+| The application's steps, checking, messages, consent    | `ApplyForm` in [src/components/apply/ApplyForm.tsx](../src/components/apply/ApplyForm.tsx)                               |
+| Opening an application again                            | `OpenApplicationForm` in [src/components/apply/OpenApplicationForm.tsx](../src/components/apply/OpenApplicationForm.tsx) |
+| The email code screen                                   | `EmailCodeForm` in [src/components/apply/EmailCodeForm.tsx](../src/components/apply/EmailCodeForm.tsx)                   |
+| The screen after the code: marketplace or custom        | `NextSteps` in [src/components/apply/NextSteps.tsx](../src/components/apply/NextSteps.tsx)                               |
+| Every form's frame: title, line, actions row            | `ApplyStep`, `ApplyTitle` in [src/components/apply/](../src/components/apply/)                                           |
+| One question: label, control, its message               | `ApplyField` in [src/components/apply/ApplyField.tsx](../src/components/apply/ApplyField.tsx)                            |
+| A checkbox: consent or marketing, its message           | `ApplyCheckbox` in [src/components/apply/ApplyCheckbox.tsx](../src/components/apply/ApplyCheckbox.tsx)                   |
+| Button and inline link styles                           | [src/components/apply/action-styles.ts](../src/components/apply/action-styles.ts)                                        |
+| The questions, which are optional, length limits, rules | `APPLICATION_STEPS`, `MAX_LENGTH`, `answerProblem` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)    |
+| Tidying answers                                         | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                          |
+| The code's length and rule                              | `CODE_LENGTH`, `codeProblem`, `tidyCode` in [src/lib/apply/email-code.ts](../src/lib/apply/email-code.ts)                |
+| Where focus goes, on touch screens and otherwise        | `focusStart`, `focusProblem`, `usePendingFocus` in [src/lib/apply/focus.ts](../src/lib/apply/focus.ts)                   |
+| Every word, including each field's messages             | `applyContent` in [src/content/apply.ts](../src/content/apply.ts), typed by `ApplyContent`                               |
+| Panel, field, error and accent colours and glows        | The apply panel and primary action tokens in [globals.css](../src/app/globals.css)                                       |
 
 `StageShell` owns whether the panel is open (`applyOpen`) and passes it through
 `TopRightCluster` to `ApplyLauncher`, because three other parts of the stage react to
@@ -28,22 +34,40 @@ it (below).
 ## Behaviour
 
 - **Opening and closing.** APPLY NOW toggles the panel. It also closes on a backdrop
-  click, on Esc, and when the marketplace choice on the confirmation screen is followed.
+  click, on Esc, and when the marketplace choice after the code is followed.
   Nothing navigates on open or close. The panel opens in 320ms
   (`cubic-bezier(0.2,0.7,0.2,1)`) and closes in 260ms (`cubic-bezier(0.4,0,1,1)`); the
   backdrop fades over 280ms. These are CSS transitions on `data-open`, so a click part
   way through reverses from wherever the panel is. Under reduced motion both are
   instant.
-- **Kept progress.** The panel and form stay mounted while closed (invisible and
-  `inert`), so answers and the current step survive closing and reopening, and route
-  changes. A reload starts over. After a successful submit, reopening shows the
-  confirmation screen again.
+- **Screens.** `ApplyFlow` shows one screen at a time:
+
+      apply ──SUBMIT──▶ code ──CONFIRM──▶ next
+        │                ▲
+        └─"Already applied?"─▶ open ──EMAIL ME A CODE─┘
+
+  "Already applied? Open your application" sits beside CONTINUE on step one, where step
+  two has BACK, so it adds no height. The open screen asks only for an email. BACK on
+  the code screen returns to whichever screen asked for the code. The screen after the
+  code thanks a new applicant by first name, or welcomes back a returning one; what a
+  returning applicant should see there is not decided yet. **Wording:** opening an
+  application again is never called signing in, because PLATFORM, beside it, is where
+  customers sign in.
+
+- **Kept progress.** The panel and its screens stay mounted while closed (invisible and
+  `inert`), and the application and open screens stay mounted, `hidden`, while another
+  screen shows, so answers and the current step survive moving between screens, closing
+  and reopening, and route changes. The code screen is mounted only while shown, so it
+  starts empty each time. A reload starts over. Once past the code, reopening shows the
+  screen after it again.
 - **Tidying.** When focus leaves a field, and for the whole step when it is
   submitted, `tidyAnswer` cleans the answer: spacing collapsed, email lowercased, and a
   name, company or role typed all in one case capitalised (with acronyms such as CEO
-  and FZ-LLC kept in capitals). Mixed case is kept as typed. The confirmation screen
-  shows the tidied first name.
-- **Checking.** Nothing is marked until the first press of CONTINUE or SUBMIT. Then each
+  and FZ-LLC kept in capitals). Mixed case is kept as typed. The code screen shows the
+  tidied email and the screen after it the tidied first name. A code keeps only its
+  digits, so a pasted "123 456" fits (`tidyCode`).
+- **Checking.** Nothing is marked until a form's button is first pressed (CONTINUE,
+  SUBMIT, EMAIL ME A CODE, CONFIRM). Then each
   field with a problem gets a red border and its own message under it, tied with
   `aria-describedby`; focus moves to the first such field (see focus, below), and each
   message goes as soon as its field is put right. Changing step starts checking over. Phone is the one
@@ -54,11 +78,17 @@ it (below).
   form is not lost ([privacy policy](content.md#privacy-policy)). The second asks for
   marketing emails. It is optional and starts unticked, because consent to marketing
   has to be given rather than assumed; the policy's Marketing section says the same.
-- **The confirmation screen** offers the marketplace (a link to `/marketplace` that
+- **The code screen** asks for six digits, on a numeric keypad on phones, and lets the
+  phone offer the code from the email (`autocomplete="one-time-code"`). "Send a new
+  code" only shows that one is on its way. **Not built yet:** telling someone, after
+  the code, that their email has already applied; it waits for real codes (the
+  platform's `docs/data-model.md` records why it comes after the code).
+- **The screen after the code** offers the marketplace (a link to `/marketplace` that
   also closes the panel) and a custom request. **The custom request button does
   nothing**: where it leads is not decided.
 - **Focus.** [src/lib/apply/focus.ts](../src/lib/apply/focus.ts) decides where it
-  goes. With a mouse or keyboard, opening and each new step focus the first field, and
+  goes. With a mouse or keyboard, opening and each new step or screen focus the first
+  field, and
   a failed check focuses the first field with a problem. **Design constraint:** on a
   touch screen the form never opens the keyboard or a list's picker by itself, because
   it covers the step before it is read; focus goes to the panel's title
@@ -96,7 +126,8 @@ it (below).
   message shown: checked at 430 × 740, 412 × 780, 390 × 664, 375 × 629, 360 × 580 and
   375 × 553. Messages are kept to one line in a half column for this reason. For the
   same reason the checkbox lines are 36px tall on a phone and 28px under 600px tall,
-  short of the 44px touch height the other controls keep. The panel
+  short of the 44px touch height the other controls keep. The open and code screens
+  are shorter than either step. The panel
   still scrolls inside itself, scrollbar hidden, where nothing could fit: the 320px
   iPhone SE (320 × 460 visible) and phones on their side. The automate box is three
   lines tall, two under 600px tall, and scrolls inside itself.

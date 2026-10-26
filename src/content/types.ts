@@ -79,7 +79,7 @@ export interface ApplyFieldContent {
   invalid?: string;
 }
 
-/** The apply button, its panel, the form inside it and what follows. */
+/** The apply button, its panel and every screen inside it. */
 export interface ApplyContent {
   /** The button in the top-right corner. */
   trigger: string;
@@ -119,9 +119,32 @@ export interface ApplyContent {
     back: string;
     submit: string;
   };
-  success: {
+  /** Beside CONTINUE on step one, for someone who has applied before. */
+  alreadyApplied: {
+    question: string;
+    action: string;
+  };
+  /** Opening an application again: an email, and a code sent to it. */
+  open: {
     title: string;
-    body: (firstName: string) => string;
+    intro: string;
+    submit: string;
+  };
+  /** The email code, after applying or opening an application. */
+  code: {
+    title: string;
+    intro: (email: string) => string;
+    field: ApplyFieldContent;
+    submit: string;
+    resendQuestion: string;
+    resend: string;
+    /** Shown once a new code has been asked for. */
+    resent: string;
+  };
+  /** Once the code is confirmed: after applying, or on returning. */
+  next: {
+    applied: { title: string; body: (firstName: string) => string };
+    returning: { title: string; body: string };
     marketplace: string;
     custom: string;
   };
