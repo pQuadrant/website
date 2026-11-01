@@ -41,10 +41,15 @@ Changing the words changes layout and motion, not only text:
   ([text clearance](starfield.md#text-clearance)).
 - **Chrome label width** changes the top corner boxes, which also feed the globe's size,
   and below 380px wide the gap between the wordmark and the two top-right controls
-  (15px at 320px when APPLY NOW was added).
+  (15px at 320px with APPLY NOW, 10px with APPLICATION). YOUR APPLICATION overlaps the
+  wordmark on an upright phone, so it is used only where the chrome is a row
+  ([apply flow](apply.md#connections)).
 - **Apply form copy** changes the panel's height. Each step is meant to fit an upright
   phone without scrolling, with messages on one line in a half column; check the phone
-  heights in [fitting a phone](apply.md#connections) after a wording change.
+  heights in [fitting a phone](apply.md#connections) after a wording change. That
+  includes the messages for the platform's answers (`errors`, `emailApplied`,
+  `open.notApplied`, the code's refusals), which are keyed by the platform's refusal
+  codes in `describeFailure` and the forms.
 
 **Verify** a wording change at the [window sizes](../docs/verification.md#window-sizes)
 for wrapping and globe size, and replay the entrance.
@@ -59,9 +64,11 @@ all of its copy as not final.
 
 **Intended, not implemented: platform-supplied marketplace data.** The website is meant
 to receive selected marketplace information from the platform (a separate repository),
-such as AI system versions, so visitors can evaluate offerings. Today there is no fetch,
-API client, environment variable or data contract; all marketplace content is static in
-this repository. Planning that integration has to settle, and record here: the
+such as AI system versions, so visitors can evaluate offerings. Today there is no fetch
+or data contract for it; all marketplace content is static in this repository. The only
+calls the site makes to the platform are the apply panel's, through
+[src/lib/apply/platform.ts](../src/lib/apply/platform.ts) ([apply flow](apply.md#connections)),
+which marketplace data could share the address and error handling of. Planning that integration has to settle, and record here: the
 authoritative source, producer and consumer, the interface contract, failure and
 loading behaviour, how a change on either side affects the other, and the
 [public-data boundary](../AGENTS.md#public-repository-and-published-data), and whether
@@ -89,9 +96,18 @@ list stays lit until the visitor scrolls. It listens to scroll at most once a fr
 the headings (`sectionId` in `PrivacyPolicy`), so renaming a heading changes its link.
 
 **The policy describes what the site does, so it must change with it.** When a change
-starts storing or sending applications, adds email codes, bot protection, booking or
-any cookie, or gives data to a new service provider, update the matching sections and
-the "updated" date in the same change. It states that application data is stored with
-AWS in Stockholm, which matches the platform's database configuration
-(**unverified** against a live deployment), and that the site uses no cookies. It has
-not been reviewed by a lawyer.
+adds booking, analytics, advertising or any other cookie, or gives data to a new service
+provider, update the matching sections, and `updated` and `version` together, in the
+same change. `version` is sent with each application as the policy the applicant agreed
+to ([apply flow](apply.md#connections)). It names Cloudflare for bot protection,
+describes the cookie that keeps an application open, and says the country is worked out
+from the IP address, crediting DB-IP with a link, which DB-IP's licence requires (a
+block with a link, rendered by `PrivacyPolicy`). It states that application data is
+stored with AWS in Stockholm, which matches the platform's live database (eu-north-1).
+It has not been reviewed by a lawyer.
+
+**Design constraint:** the Cookies section's wording is the product owner's, kept as
+written, including "You can change your choice at any time in Cookie settings" ahead of
+the cookie banner, which is planned and not built. **Open:** "we do not use it for
+advertising" under How we use it will need revisiting when advertising cookies arrive
+with the banner.

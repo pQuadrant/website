@@ -27,6 +27,15 @@ interface ApplyStepProps {
   announcement: string;
   /** Left of the primary action: BACK, or a way to a different screen. */
   secondary?: ReactNode;
+  /** A failed call to the platform, shown above the actions. */
+  error?: string;
+  /**
+   * While the platform is answering: the primary action shows `busyLabel`
+   * and a second press does nothing. It stays focusable, so keyboard focus is
+   * not lost while it waits.
+   */
+  busy?: boolean;
+  busyLabel?: string;
   children: ReactNode;
 }
 
@@ -38,11 +47,14 @@ export function ApplyStep({
   onSubmit,
   announcement,
   secondary,
+  error,
+  busy = false,
+  busyLabel,
   children,
 }: ApplyStepProps) {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSubmit();
+    if (!busy) onSubmit();
   };
 
   return (
@@ -67,13 +79,22 @@ export function ApplyStep({
         {announcement}
       </p>
 
+      {/* Always present, so a screen reader announces it when it fills. */}
+      <p
+        role="alert"
+        className="text-[calc(12*var(--chrome-unit))] leading-snug text-error empty:hidden"
+      >
+        {error}
+      </p>
+
       <div className="flex items-center gap-[calc(16*var(--chrome-unit))]">
         {secondary}
         <button
           type="submit"
-          className={`${PRIMARY_ACTION} ${ACTION_HEIGHT} ml-auto shrink-0`}
+          aria-disabled={busy || undefined}
+          className={`${PRIMARY_ACTION} ${ACTION_HEIGHT} ml-auto shrink-0 aria-disabled:opacity-70`}
         >
-          {submitLabel}
+          {busy ? (busyLabel ?? submitLabel) : submitLabel}
         </button>
       </div>
     </form>

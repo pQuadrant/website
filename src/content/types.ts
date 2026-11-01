@@ -83,6 +83,27 @@ export interface ApplyFieldContent {
 export interface ApplyContent {
   /** The button in the top-right corner. */
   trigger: string;
+  /**
+   * The same button while an application is open on this device: `long`
+   * where the chrome is a row, `short` on a narrow or short window, where the
+   * long label runs into the wordmark.
+   */
+  yourApplication: { long: string; short: string };
+  /** The primary action's label while the platform is answering. */
+  working: string;
+  /** Shown above the actions when a call to the platform fails. */
+  errors: {
+    network: string;
+    server: string;
+    /** Cloudflare's check that the visitor is a person did not pass. */
+    botCheck: string;
+    tooManyRequests: (minutes: number) => string;
+    emailFailed: string;
+    /** The platform did not accept an answer the browser accepted. */
+    invalidAnswers: string;
+  };
+  /** Under the email field when that address has already applied. */
+  emailApplied: { message: string; action: string };
   title: string;
   /** One line under the title per step, about that step's questions. */
   intros: readonly string[];
@@ -129,6 +150,8 @@ export interface ApplyContent {
     title: string;
     intro: string;
     submit: string;
+    /** Under the email field when that address has not applied. */
+    notApplied: string;
   };
   /** The email code, after applying or opening an application. */
   code: {
@@ -140,18 +163,34 @@ export interface ApplyContent {
     resend: string;
     /** Shown once a new code has been asked for. */
     resent: string;
+    /** Under the code field when the platform does not accept it. */
+    wrong: string;
+    expired: string;
+    tooManyTries: string;
+    noCode: string;
+    /** The resend link while the platform says to wait. */
+    resendIn: (seconds: number) => string;
+    tooManyCodes: (minutes: number) => string;
   };
   /** Once the code is confirmed: after applying, or on returning. */
   next: {
     applied: { title: string; body: (firstName: string) => string };
-    returning: { title: string; body: string };
+    returning: { title: (firstName: string) => string; body: string };
+    /** Under the choices: closes the application on this device. */
+    notYou: { question: string; action: string };
     marketplace: string;
     custom: string;
   };
 }
 
-/** A block of the privacy policy: a paragraph, or a bulleted list. */
-export type PrivacyBlock = string | { list: readonly string[] };
+/**
+ * A block of the privacy policy: a paragraph, a bulleted list, or a paragraph
+ * with one link in it, split where the link sits.
+ */
+export type PrivacyBlock =
+  | string
+  | { list: readonly string[] }
+  | { before: string; link: { label: string; href: string }; after: string };
 
 export interface PrivacySection {
   heading: string;
@@ -163,6 +202,11 @@ export interface PrivacyContent {
   title: string;
   /** Shown under the title. */
   updated: string;
+  /**
+   * The same date as YYYY-MM-DD. Sent with each application as the version of
+   * the policy the applicant agreed to; change it with `updated`.
+   */
+  version: string;
   intro: readonly PrivacyBlock[];
   sections: readonly PrivacySection[];
   /** Linked wherever it appears in the text. */

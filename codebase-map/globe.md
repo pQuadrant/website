@@ -73,7 +73,8 @@ globe lands at the wrong size.
 
 **What feeds the corner term.** Three elements carry `data-chrome-corner`: the two top
 corner regions in `Stage`, and the tagline wrapper. Hidden elements report empty boxes
-and are skipped. The top-right region holds PLATFORM and APPLY NOW; the apply panel
+and are skipped. The top-right region holds PLATFORM and APPLY NOW, which reads APPLICATION or YOUR
+APPLICATION while an application is open and so changes the box's width; the apply panel
 and its backdrop are `fixed`, so they never add to that box
 ([apply flow](apply.md#connections)).
 

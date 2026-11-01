@@ -7,6 +7,7 @@ import { ApplyCheckbox } from "@/components/apply/ApplyCheckbox";
 import { ApplyField, type ApplyFieldKind } from "@/components/apply/ApplyField";
 import { ApplyStep } from "@/components/apply/ApplyStep";
 import type { ApplyContent } from "@/content/types";
+import { describeFailure } from "@/lib/apply/failure";
 import {
   answerProblem,
   APPLICATION_STEPS,
@@ -18,6 +19,7 @@ import {
   tidyAnswer,
 } from "@/lib/apply/application";
 import { isTouchScreen, usePendingFocus } from "@/lib/apply/focus";
+import type { CallFailure, CallResult } from "@/lib/apply/platform";
 
 /**
  * The apply form's two steps, mapped under Apply flow in
@@ -36,8 +38,11 @@ import { isTouchScreen, usePendingFocus } from "@/lib/apply/focus";
  * again when it is submitted, so an answer finished with Enter is tidied too
  * (`tidyAnswer`).
  *
- * Submitting hands the answers to `ApplyFlow`, which asks for the email code.
- * Nothing is sent yet.
+ * Whether the email has already applied is asked of the platform as soon as
+ * focus leaves the email field, and again on CONTINUE, which does not go on
+ * while it has. Submitting hands the answers to `ApplyFlow`, which sends the
+ * email code. A failed call is shown above the actions, and the step stays
+ * where it is.
  *
  * On a phone the form keeps two columns and tighter spacing, so each step fits
  * an upright phone's screen without the panel scrolling.
@@ -65,14 +70,24 @@ const LAST_STEP = APPLICATION_STEPS.length - 1;
 
 interface ApplyFormProps {
   content: ApplyContent;
-  /** The answers, tidied and accepted by the browser's checks. */
-  onSubmitted: (answers: ApplicationAnswers) => void;
+  /** Asks the platform whether this tidied email has applied. */
+  onCheckEmail: (email: string) => Promise<CallResult<{ applied: boolean }>>;
+  /**
+   * The answers, tidied and accepted by the browser's checks, and the
+   * marketing choice. Resolves to null once the code is on its way, or to why
+   * it could not be sent.
+   */
+  onSubmitted: (
+    answers: ApplicationAnswers,
+    marketing: boolean,
+  ) => Promise<CallFailure | null>;
   /** Leaves for the screen where someone who has applied opens it again. */
-  onOpenApplication: () => void;
+  onOpenApplication: (email?: string) => void;
 }
 
 export function ApplyForm({
   content,
+  onCheckEmail,
   onSubmitted,
   onOpenApplication,
 }: ApplyFormProps) {
@@ -88,6 +103,49 @@ export function ApplyForm({
   // Read out on a touch screen, where focus does not move to the first field
   // that needs attention (see `focusProblem`).
   const [announcement, setAnnouncement] = useState("");
+  // What the platform has said about emails typed so far: the last one known
+  // to have applied, and the last one known not to have.
+  const [appliedEmail, setAppliedEmail] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const typedEmail = tidyAnswer("email", answers.email);
+  const emailNotice =
+    appliedEmail !== null && typedEmail === appliedEmail ? (
+      <>
+        {content.emailApplied.message}{" "}
+        <button
+          type="button"
+          onClick={() => onOpenApplication(appliedEmail)}
+          className={INLINE_LINK}
+        >
+          {content.emailApplied.action}
+        </button>
+      </>
+    ) : undefined;
+
+  /**
+   * Whether the email has applied, asking the platform unless it has already
+   * answered for this address, or why it could not be asked.
+   */
+  const checkEmail = async (email: string): Promise<boolean | CallFailure> => {
+    if (email === newEmail) return false;
+    if (email === appliedEmail) return true;
+    const result = await onCheckEmail(email);
+    if (!result.ok) return result;
+    if (result.data.applied) setAppliedEmail(email);
+    else setNewEmail(email);
+    return result.data.applied;
+  };
+
+  /** Leaving the email field: tidied, then asked about. A failure here is
+   * not shown; CONTINUE asks again and shows it. */
+  const leaveEmail = () => {
+    tidy("email");
+    if (answerProblem("email", typedEmail) === null)
+      void checkEmail(typedEmail);
+  };
 
   const fields = APPLICATION_STEPS[step] ?? [];
   const problems = fields.map((field) => answerProblem(field, answers[field]));
@@ -101,7 +159,8 @@ export function ApplyForm({
       [field]: tidyAnswer(field, current[field]),
     }));
 
-  const submit = () => {
+  const submit = async () => {
+    setError("");
     fields.forEach(tidy);
     const count =
       problems.filter((problem) => problem !== null).length +
@@ -114,18 +173,45 @@ export function ApplyForm({
     }
     setChecking(false);
     setAnnouncement("");
+
     if (step < LAST_STEP) {
+      setBusy(true);
+      const applied = await checkEmail(typedEmail);
+      setBusy(false);
+      if (typeof applied === "object") {
+        setError(describeFailure(applied, content.errors));
+        return;
+      }
+      if (applied) {
+        setChecking(true);
+        setAnnouncement(isTouchScreen() ? content.problems(1) : "");
+        requestFocus("problem");
+        return;
+      }
       setStep(step + 1);
       requestFocus("start");
     } else {
       const tidied = { ...answers };
       for (const field of fields)
         tidied[field] = tidyAnswer(field, answers[field]);
-      onSubmitted(tidied);
+      setBusy(true);
+      const failure = await onSubmitted(tidied, marketing);
+      setBusy(false);
+      if (failure === null) return;
+      if (failure.error === "already_applied") {
+        // Applied from elsewhere since the email was checked.
+        setAppliedEmail(typedEmail);
+        setStep(0);
+        setChecking(true);
+        requestFocus("problem");
+        return;
+      }
+      setError(describeFailure(failure, content.errors));
     }
   };
 
   const back = () => {
+    setError("");
     setChecking(false);
     setAnnouncement("");
     setStep(step - 1);
@@ -150,8 +236,11 @@ export function ApplyForm({
         submitLabel={
           step < LAST_STEP ? content.actions.continue : content.actions.submit
         }
-        onSubmit={submit}
+        onSubmit={() => void submit()}
         announcement={announcement}
+        error={error}
+        busy={busy}
+        busyLabel={content.working}
         secondary={
           step > 0 ? (
             <button type="button" onClick={back} className={TEXT_ACTION}>
@@ -164,7 +253,7 @@ export function ApplyForm({
               {content.alreadyApplied.question}{" "}
               <button
                 type="button"
-                onClick={onOpenApplication}
+                onClick={() => onOpenApplication()}
                 className={INLINE_LINK}
               >
                 {content.alreadyApplied.action}
@@ -184,9 +273,10 @@ export function ApplyForm({
               onChange={(value) =>
                 setAnswers((current) => ({ ...current, [field]: value }))
               }
-              onBlur={() => tidy(field)}
+              onBlur={field === "email" ? leaveEmail : () => tidy(field)}
               maxLength={MAX_LENGTH[field]}
               problem={checking ? (problems[index] ?? null) : null}
+              notice={field === "email" ? emailNotice : undefined}
               optionalLabel={isOptional(field) ? content.optional : undefined}
               choose={content.choose}
               options={

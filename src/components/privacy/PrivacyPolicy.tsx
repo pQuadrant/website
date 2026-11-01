@@ -60,6 +60,20 @@ export function PrivacyPolicy({ content, wordmark }: PrivacyPolicyProps) {
       <p key={index} className="mt-3">
         {withEmail(item)}
       </p>
+    ) : "link" in item ? (
+      // A credit or reference elsewhere, so it opens in a new tab.
+      <p key={index} className="mt-3">
+        {item.before}
+        <a
+          href={item.link.href}
+          target="_blank"
+          rel="noopener"
+          className={LINK}
+        >
+          {item.link.label}
+        </a>
+        {item.after}
+      </p>
     ) : (
       <ul
         key={index}

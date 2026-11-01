@@ -6,9 +6,10 @@ import type { PrivacyContent } from "@/content/types";
  * decision.
  *
  * It describes what the site does with personal information, so it has to
- * change whenever that does: when applications start being stored, when email
- * codes, bot protection, booking or cookies are added, and when a new service
- * provider receives data. Change "updated" with it. It was written to meet the
+ * change whenever that does, such as when booking, analytics or advertising
+ * are added, and when a new service provider receives data. Change "updated"
+ * and "version" with it: "version" is sent with each application as the
+ * policy the applicant agreed to. It was written to meet the
  * common requirements of the UAE, Egyptian, Saudi, EU and UK data protection
  * laws and US state privacy laws, and has not been reviewed by a lawyer.
  * See Privacy policy in `codebase-map/content.md`.
@@ -18,7 +19,8 @@ const CONTACT = "abdulrahmankeshta@pquadrant.com";
 
 export const privacyContent: PrivacyContent = {
   title: "Privacy Policy",
-  updated: "LAST UPDATED 26 OCTOBER 2026",
+  updated: "LAST UPDATED 2 NOVEMBER 2026",
+  version: "2026-11-02",
   contactEmail: CONTACT,
   contentsLabel: "Contents",
 
@@ -39,7 +41,15 @@ export const privacyContent: PrivacyContent = {
             "What you would like to automate, in your own words.",
             "That you agreed to this policy, and when.",
             "Whether you would like marketing emails from us, and when you said so.",
+            "Your device’s time zone, so we can suggest demo times that suit you.",
           ],
+        },
+        {
+          before:
+            "The country you are in when you apply, worked out from your IP address using ",
+          link: { label: "IP Geolocation by DB-IP", href: "https://db-ip.com" },
+          after:
+            ". The lookup happens on our own systems; your IP address is not stored with your application.",
         },
         "Information you give us when you write to us or meet with us, such as during a guided demo: your contact details and what you tell us.",
         "Technical information our hosting provider processes automatically to deliver the site and keep it secure, such as your IP address, browser type and the pages requested.",
@@ -87,7 +97,7 @@ export const privacyContent: PrivacyContent = {
       blocks: [
         {
           list: [
-            "Service providers who help us run the site and our business, such as cloud hosting and storage (Amazon Web Services), email delivery, scheduling, and spam and bot protection. They may use your information only to provide their services to us, under contract.",
+            "Service providers who help us run the site and our business, such as cloud hosting, storage and email delivery (Amazon Web Services), scheduling, and spam and bot protection (Cloudflare, which checks that an application comes from a person). They may use your information only to provide their services to us, under contract.",
             "Professional advisers, such as lawyers and accountants, where needed.",
             "Authorities, where the law requires it or to protect our rights or the safety of others.",
             "A buyer or successor, if our business is reorganised, merged or sold. They would remain bound by this policy.",
@@ -138,7 +148,13 @@ export const privacyContent: PrivacyContent = {
     {
       heading: "Cookies",
       blocks: [
-        "The site does not use cookies or similar technologies, for analytics, advertising or anything else. If we add any, we will update this policy first and ask for your consent where the law requires it.",
+        "We use two kinds of cookies.",
+        {
+          list: [
+            "Necessary cookies keep the site working, such as the one that keeps your application open for 30 days after your last visit. They are always on.",
+            "Analytics and advertising cookies help us understand how the site is used and show you our ads on other sites, through advertising partners. We use these only if you accept them in the cookie banner when you first visit. You can change your choice at any time in Cookie settings.",
+          ],
+        },
       ],
     },
     {
