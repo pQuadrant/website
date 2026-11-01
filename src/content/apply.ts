@@ -12,6 +12,21 @@ import type { ApplyContent } from "@/content/types";
 
 export const applyContent: ApplyContent = {
   trigger: "APPLY NOW",
+  yourApplication: { long: "YOUR APPLICATION", short: "APPLICATION" },
+  working: "ONE MOMENT…",
+  errors: {
+    network: "Couldn't reach pQuadrant. Check your connection.",
+    server: "Something went wrong on our side. Try again.",
+    botCheck: "We couldn't confirm you're a person. Try again.",
+    tooManyRequests: (minutes) =>
+      `Too many attempts. Try again in ${minutes} min.`,
+    emailFailed: "We couldn't send the email. Try again.",
+    invalidAnswers: "Some answers need another look.",
+  },
+  emailApplied: {
+    message: "This email has already applied.",
+    action: "Open your application",
+  },
   title: "Apply for access",
   intros: [
     "Tell us who you are and how to reach you.",
@@ -83,6 +98,7 @@ export const applyContent: ApplyContent = {
     title: "Open your application",
     intro: "Enter the email you applied with and we'll send you a code.",
     submit: "EMAIL ME A CODE",
+    notApplied: "We don't have an application for this email.",
   },
 
   code: {
@@ -97,6 +113,12 @@ export const applyContent: ApplyContent = {
     resendQuestion: "Didn't get it?",
     resend: "Send a new code",
     resent: "A new code is on its way.",
+    wrong: "That code isn't right.",
+    expired: "This code has expired. Send a new code.",
+    tooManyTries: "Too many tries. Send a new code.",
+    noCode: "Send a new code to continue.",
+    resendIn: (seconds) => `Send a new code in ${seconds}s`,
+    tooManyCodes: (minutes) => `Too many codes. Try again in ${minutes} min.`,
   },
 
   next: {
@@ -106,9 +128,10 @@ export const applyContent: ApplyContent = {
         `Thanks, ${firstName}. What would you like to do next?`,
     },
     returning: {
-      title: "Welcome back",
-      body: "Your application is open. What would you like to do next?",
+      title: (firstName) => `Welcome back, ${firstName}`,
+      body: "What would you like to do next?",
     },
+    notYou: { question: "Not you?", action: "Close it on this device" },
     marketplace: "EXPLORE THE MARKETPLACE",
     custom: "REQUEST A CUSTOM AI SYSTEM",
   },

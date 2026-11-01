@@ -101,7 +101,8 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
 
 - **Top right:** [TopRightCluster.tsx](../src/components/chrome/TopRightCluster.tsx),
   `TopRightCluster`: the platform link, then APPLY NOW and the panel it opens
-  ([apply flow](apply.md#apply-flow)). The platform link is a real `<a href>`
+  ([apply flow](apply.md#apply-flow)); APPLY NOW reads APPLICATION, or YOUR APPLICATION
+  at `row:`, while an application is open on the device. The platform link is a real `<a href>`
   (modified/middle click and context menu work; same tab, no `target`). Row height is
   `h-chrome-touch` (44 units) below `row:` and `h-chrome-control` (34 units) at `row:`
   and up; both controls stretch to it. The gap between them is 10px, and 18 units at

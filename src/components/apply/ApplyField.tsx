@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { ApplyFieldContent } from "@/content/types";
 import type { AnswerProblem } from "@/lib/apply/application";
 
@@ -23,6 +25,11 @@ interface ApplyFieldProps {
   maxLength: number;
   /** The problem to show, or `null` while there is none to show. */
   problem: AnswerProblem | null;
+  /**
+   * A message from the platform about this answer, such as an email that has
+   * already applied. Shown in place of the problem's message, the same way.
+   */
+  notice?: ReactNode;
   /** Set beside the label when the question may be left blank. */
   optionalLabel?: string;
   autoComplete?: string;
@@ -61,27 +68,28 @@ export function ApplyField({
   onBlur,
   maxLength,
   problem,
+  notice,
   optionalLabel,
   autoComplete,
   choose,
   options = [],
   wide = false,
 }: ApplyFieldProps) {
-  const message = problem === null ? undefined : content[problem];
+  const message = notice ?? (problem === null ? undefined : content[problem]);
+  const invalid = message !== undefined;
   const messageId = `${id}-message`;
   // A field with a problem stays red while it is being put right, focus
   // included; its message goes, and the border with it, once it is.
-  const border =
-    problem === null
-      ? "border-hairline"
-      : "border-error hover:border-error focus:border-error";
+  const border = !invalid
+    ? "border-hairline"
+    : "border-error hover:border-error focus:border-error";
 
   const shared = {
     id,
     name: id,
     value,
     onBlur,
-    "aria-invalid": problem !== null,
+    "aria-invalid": invalid,
     "aria-describedby": message === undefined ? undefined : messageId,
   };
 
