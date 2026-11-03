@@ -9,8 +9,10 @@ import {
 
 /**
  * Cloudflare Turnstile, the check that a request to the platform comes from a
- * person. The platform refuses an email check or a code request without a
- * fresh token from it. See Apply flow in `codebase-map/apply.md`.
+ * person. The first email check or code request of a visit carries a token
+ * from it, and later ones the human pass the platform returns
+ * (`human-proof.ts`, which is what calls this). See Apply flow in
+ * `codebase-map/apply.md`.
  *
  * The widget is invisible almost always. When Cloudflare wants an
  * interaction, a small box appears in the element the panel gives it, and
