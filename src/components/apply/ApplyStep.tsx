@@ -18,7 +18,7 @@ import { ApplyTitle } from "@/components/apply/ApplyTitle";
 
 interface ApplyStepProps {
   title: string;
-  /** Set beside the title, such as the step count. */
+  /** Set beside the title, such as the step count read to screen readers. */
   aside?: ReactNode;
   intro: string;
   submitLabel: string;

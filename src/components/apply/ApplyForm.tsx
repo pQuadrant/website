@@ -228,13 +228,8 @@ export function ApplyForm({
       <ApplyStep
         title={content.title}
         aside={
-          <span className="shrink-0 font-mono text-chrome-label text-fg-2">
-            <span aria-hidden="true">
-              {content.progress.shown(step + 1, APPLICATION_STEPS.length)}
-            </span>
-            <span className="sr-only">
-              {content.progress.spoken(step + 1, APPLICATION_STEPS.length)}
-            </span>
+          <span className="sr-only">
+            {content.progress(step + 1, APPLICATION_STEPS.length)}
           </span>
         }
         intro={content.intros[step] ?? ""}

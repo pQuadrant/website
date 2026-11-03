@@ -107,11 +107,11 @@ export interface ApplyContent {
   title: string;
   /** One line under the title per step, about that step's questions. */
   intros: readonly string[];
-  /** Step progress, shown to the eye and read to assistive technology. */
-  progress: {
-    shown: (step: number, steps: number) => string;
-    spoken: (step: number, steps: number) => string;
-  };
+  /**
+   * Which step this is, read to assistive technology only. Nothing is shown:
+   * the title, the line under it and CONTINUE or SUBMIT already tell the eye.
+   */
+  progress: (step: number, steps: number) => string;
   /** Set beside the label of a question that may be left blank. */
   optional: string;
   /**
