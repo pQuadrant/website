@@ -21,7 +21,7 @@ contract is under Apply endpoints in its `apps/api/README.md`.
 | Every form's frame: title, line, error line, actions row   | `ApplyStep`, `ApplyTitle` in [src/components/apply/](../src/components/apply/)                                                     |
 | One question: label, control, its message                  | `ApplyField` in [src/components/apply/ApplyField.tsx](../src/components/apply/ApplyField.tsx)                                      |
 | A checkbox: consent or marketing, its message              | `ApplyCheckbox` in [src/components/apply/ApplyCheckbox.tsx](../src/components/apply/ApplyCheckbox.tsx)                             |
-| Button and inline link styles                              | [src/components/apply/action-styles.ts](../src/components/apply/action-styles.ts)                                                  |
+| Button and inline link styles, the space before a link     | [src/components/apply/action-styles.ts](../src/components/apply/action-styles.ts)                                                  |
 | The questions, which are optional, length limits, rules    | `APPLICATION_STEPS`, `MAX_LENGTH`, `answerProblem` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)              |
 | Tidying answers                                            | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                                    |
 | The code's length and rule, and the wait for a new one     | `CODE_LENGTH`, `codeProblem`, `tidyCode`, `NEW_CODE_WAIT_SECONDS` in [src/lib/apply/email-code.ts](../src/lib/apply/email-code.ts) |

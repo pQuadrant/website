@@ -2,7 +2,11 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { INLINE_LINK, TEXT_ACTION } from "@/components/apply/action-styles";
+import {
+  INLINE_LINK,
+  LINK_LEAD_SPACE,
+  TEXT_ACTION,
+} from "@/components/apply/action-styles";
 import { ApplyField } from "@/components/apply/ApplyField";
 import { ApplyStep } from "@/components/apply/ApplyStep";
 import type { ApplyContent } from "@/content/types";
@@ -165,7 +169,8 @@ export function EmailCodeForm({
           />
           <div className="col-span-2 flex flex-col gap-1">
             <p className="text-[calc(13*var(--chrome-unit))] leading-snug text-fg-2">
-              {content.code.resendQuestion}{" "}
+              {content.code.resendQuestion}
+              <span className={LINK_LEAD_SPACE}> </span>
               {waitSeconds > 0 ? (
                 <span>{content.code.resendIn(waitSeconds)}</span>
               ) : (
