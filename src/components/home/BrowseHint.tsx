@@ -10,7 +10,7 @@ interface BrowseHintProps {
 
 /**
  * `BROWSE AI SYSTEMS ↓`, the way into the marketplace wherever the
- * HOME / MARKETPLACE switch is not shown.
+ * MARKETPLACE link in the top left is not shown.
  *
  * Part of the persistent stage, so it fades on the mode rather than mounting
  * and unmounting with the route. Leaving home it is gone in 160ms, before the

@@ -26,7 +26,7 @@ interface HomeSwipeProps {
  * quick flick, released, navigates; anything else does nothing.
  *
  * Touch only. A wheel or trackpad scroll on a desktop is too easily an
- * accident, and there the HOME / MARKETPLACE switch is always in view.
+ * accident, and there the MARKETPLACE link is always in view.
  */
 export function HomeSwipe({ active }: HomeSwipeProps) {
   const router = useRouter();

@@ -5,9 +5,11 @@ import type { StageMode } from "@/lib/stage/mode";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
 
 /**
- * The top-left cluster: the wordmark, and from the row breakpoint up the
- * HOME / MARKETPLACE switch. Both are real links, so the routes carry the state
- * and the browser's Back button works.
+ * The top-left cluster: the wordmark, which is the way home, and from the row
+ * breakpoint up a MARKETPLACE link beside it, lit while on the marketplace.
+ * There is no HOME link: visitors expect the wordmark to lead home. Both are
+ * real links, so the routes carry the state and the browser's Back button
+ * works.
  *
  * Mapped under Corner chrome in `codebase-map/stage.md`.
  */
@@ -20,7 +22,7 @@ const LINK =
   "pointer-events-auto transition-[color,text-shadow] duration-hover hover:text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0";
 
 export function TopLeftCluster({ content, mode }: TopLeftClusterProps) {
-  const { wordmark, switch: modes } = content;
+  const { wordmark, marketplace } = content;
 
   return (
     <div className="flex h-chrome-touch items-center gap-chrome-product-gap font-mono text-chrome-label row:h-chrome-control">
@@ -41,21 +43,11 @@ export function TopLeftCluster({ content, mode }: TopLeftClusterProps) {
         className="hidden items-center gap-chrome-product-gap row:flex"
       >
         <Link
-          href="/"
-          aria-current={mode === "home" ? "page" : undefined}
-          className={`${LINK} ${mode === "home" ? "text-fg-0 text-shadow-glow-0" : "text-fg-1 text-shadow-glow-1"}`}
-        >
-          {modes.home}
-        </Link>
-        <span aria-hidden="true" className="text-separator">
-          /
-        </span>
-        <Link
           href="/marketplace"
           aria-current={mode === "market" ? "page" : undefined}
           className={`${LINK} ${mode === "market" ? "text-fg-0 text-shadow-glow-0" : "text-fg-1 text-shadow-glow-1"}`}
         >
-          {modes.marketplace}
+          {marketplace}
         </Link>
       </nav>
     </div>

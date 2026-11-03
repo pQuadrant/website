@@ -113,8 +113,9 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   kept faint so the control reads as an object rather than a lit panel (its comment in
   `globals.css`).
 - **Top left:** [TopLeftCluster.tsx](../src/components/chrome/TopLeftCluster.tsx),
-  `TopLeftCluster`: the wordmark (link to `/`) and, from `row:` up, the HOME /
-  MARKETPLACE switch. See
+  `TopLeftCluster`: the wordmark (link to `/`, the only way home in the chrome) and,
+  from `row:` up, a divider and a MARKETPLACE link, lit on the marketplace. There is
+  no HOME link: visitors expect the wordmark to lead home. See
   [navigation and gestures](routes.md#navigation-and-gestures).
 - **Control states:** every control has an `active:` state matching its `hover:` state,
   because Tailwind emits `hover:` only for devices that hover. Focus is
