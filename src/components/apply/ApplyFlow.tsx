@@ -22,7 +22,7 @@ import {
   sendCode,
   submitApplication,
 } from "@/lib/apply/platform";
-import { useTurnstile } from "@/lib/apply/turnstile";
+import { useHumanCheck } from "@/lib/apply/human-proof";
 
 /**
  * Which screen the apply panel shows, and every call it makes to the
@@ -43,11 +43,13 @@ import { useTurnstile } from "@/lib/apply/turnstile";
  * empty each time a code is asked for. Moving to a screen focuses its start,
  * as opening the panel does.
  *
- * The email check and every code request carry a fresh Cloudflare Turnstile
- * token, whose widget lives at the bottom of the panel and only takes space
- * when Cloudflare asks the visitor to interact. A token is got ready whenever
- * focus is in the panel (opening it puts focus there, and so does each field
- * and screen), so a call rarely waits for Cloudflare.
+ * The email check and every code request carry proof of a person
+ * (`human-proof.ts`): a Cloudflare Turnstile token the first time, and the
+ * human pass the platform returns after that. Turnstile's widget lives at the
+ * bottom of the panel and only takes space when Cloudflare asks the visitor to
+ * interact. Until there is a pass, a token is got ready whenever focus is in
+ * the panel (opening it puts focus there, and so does each field and screen),
+ * so a call rarely waits for Cloudflare.
  */
 
 type Screen = "apply" | "open" | "code";
@@ -75,7 +77,7 @@ export function ApplyFlow({
   const rootRef = useRef<HTMLDivElement>(null);
   const botRef = useRef<HTMLDivElement>(null);
   const requestFocus = usePendingFocus(() => rootRef.current);
-  const botCheck = useTurnstile(botRef);
+  const humanCheck = useHumanCheck(botRef);
 
   const [screen, setScreen] = useState<Screen>("apply");
   const [codeRequest, setCodeRequest] = useState<CodeRequest | null>(null);
@@ -96,19 +98,11 @@ export function ApplyFlow({
     requestFocus("start");
   };
 
-  const withToken = async <T,>(
-    send: (token: string) => Promise<CallResult<T>>,
-  ): Promise<CallResult<T>> => {
-    const token = await botCheck.token();
-    if (token === null) return { ok: false, error: "bot_check_failed" };
-    return send(token);
-  };
-
   const requestCode = async (
     request: CodeRequest,
   ): Promise<CallFailure | null> => {
-    const result = await withToken((token) =>
-      sendCode(request.email, request.purpose, token),
+    const result = await humanCheck.send((proof) =>
+      sendCode(request.email, request.purpose, proof),
     );
     return result.ok ? null : result;
   };
@@ -167,7 +161,7 @@ export function ApplyFlow({
     <div
       ref={rootRef}
       // Nothing in the screen after the code needs a token.
-      onFocus={applicant === null ? botCheck.prepare : undefined}
+      onFocus={applicant === null ? humanCheck.prepare : undefined}
     >
       {applicant !== null ? (
         <NextSteps
@@ -192,7 +186,7 @@ export function ApplyFlow({
               key={formKey}
               content={content}
               onCheckEmail={(email) =>
-                withToken((token) => checkEmail(email, token))
+                humanCheck.send((proof) => checkEmail(email, proof))
               }
               onSubmitted={(answers, marketing) => {
                 setPending({ answers, marketing });
@@ -235,7 +229,7 @@ export function ApplyFlow({
       <div
         ref={botRef}
         className={
-          botCheck.shown
+          humanCheck.shown
             ? "mt-3 row:mt-[calc(22*var(--chrome-unit))] cramped:mt-2"
             : undefined
         }

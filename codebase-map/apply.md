@@ -28,6 +28,7 @@ contract is under Apply endpoints in its `apps/api/README.md`.
 | The code's length and rule, and the wait for a new one     | `CODE_LENGTH`, `codeProblem`, `tidyCode`, `NEW_CODE_WAIT_SECONDS` in [src/lib/apply/email-code.ts](../src/lib/apply/email-code.ts) |
 | Every call to the platform, and its address                | `PLATFORM_API_URL` and one function per call in [src/lib/apply/platform.ts](../src/lib/apply/platform.ts)                          |
 | Cloudflare Turnstile: loading it, keeping a token ready    | `TURNSTILE_SITE_KEY`, `loadTurnstile`, `useTurnstile` in [src/lib/apply/turnstile.ts](../src/lib/apply/turnstile.ts)               |
+| Proof of a person per call: the human pass, else a token   | `useHumanCheck` in [src/lib/apply/human-proof.ts](../src/lib/apply/human-proof.ts)                                                 |
 | Which message a failed call shows                          | `describeFailure` in [src/lib/apply/failure.ts](../src/lib/apply/failure.ts)                                                       |
 | Where focus goes, on touch screens and otherwise           | `focusStart`, `focusProblem`, `usePendingFocus` in [src/lib/apply/focus.ts](../src/lib/apply/focus.ts)                             |
 | Every word, including each field's and each call's message | `applyContent` in [src/content/apply.ts](../src/content/apply.ts), typed by `ApplyContent`                                         |
@@ -101,15 +102,22 @@ it.
   actions (`describeFailure`): no connection, the bot check failing, too many requests
   from this connection (with the minutes to wait), an email that could not be sent, or
   anything else as a problem on our side. The step stays where it was.
-- **Bot check.** The email check and every code request carry a fresh Cloudflare
-  Turnstile token; the platform refuses them without one. Cloudflare's script loads the
-  first time the panel opens, not before. Getting a token takes Cloudflare one to two
-  seconds, much longer than the platform takes to answer, so `useTurnstile` gets one
-  ready whenever focus is in the panel (`prepare`, from `ApplyFlow`'s `onFocus`):
-  opening the panel, each field and each new screen. A call takes the ready token, or
-  waits for the one on its way. A token works once and for five minutes; a used or
-  expired one is replaced on the next focus, not on a timer, so a panel left open does
-  not keep running the check. Its widget is invisible almost always; when Cloudflare
+- **Bot check.** The email check and every code request carry proof of a person, once
+  a visit rather than once a call (`useHumanCheck`). The first carries a Cloudflare
+  Turnstile token; the platform answers with a human pass, good for 30 minutes, which
+  later calls send instead, so Cloudflare's box shows at most once in that time (it
+  can ask for a click on every new token, often in Safari). The pass is kept in page
+  memory only, not as a cookie, and is lost on reload; when the platform refuses it
+  (`bot_check_failed`), it is dropped and the call is made once more with a token. The
+  platform's side is under Apply endpoints in the platform repository's
+  `apps/api/README.md`. Cloudflare's script loads the first time the panel opens, not
+  before. Getting a token takes Cloudflare one to two seconds, much longer than the
+  platform takes to answer, so while there is no pass `useTurnstile` gets one ready
+  whenever focus is in the panel (`prepare`, from `ApplyFlow`'s `onFocus`): opening the
+  panel, each field and each new screen. A call takes the ready token, or waits for the
+  one on its way. A token works once and for five minutes; a used or expired one is
+  replaced on the next focus, not on a timer, so a panel left open does not keep
+  running the check. A call made just after the pass runs out waits for Cloudflare. Its widget is invisible almost always; when Cloudflare
   wants an interaction, its box appears at the bottom of the panel, usually just after
   the panel opens, with the form's own gap above it (`shown`, read from the box's
   holder's height). A check that cannot complete is reported as the bot check failing.
