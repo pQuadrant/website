@@ -46,7 +46,6 @@ export const applyContent: ApplyContent = {
     // Any address, not only a company one: freelancers apply too.
     email: {
       label: "EMAIL",
-      placeholder: "you@example.com",
       missing: "Enter your email.",
       invalid: "Enter an email like name@example.com.",
     },
