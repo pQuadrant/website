@@ -258,7 +258,6 @@ export function ApplyForm({
         secondary={
           step > 0 ? (
             <button type="button" onClick={back} className={TEXT_ACTION}>
-              <span aria-hidden="true">← </span>
               {content.actions.back}
             </button>
           ) : (
