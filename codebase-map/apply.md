@@ -110,7 +110,8 @@ it.
   expired one is replaced on the next focus, not on a timer, so a panel left open does
   not keep running the check. Its widget is invisible almost always; when Cloudflare
   wants an interaction, its box appears at the bottom of the panel, usually just after
-  the panel opens. A check that cannot complete is reported as the bot check failing.
+  the panel opens, with the form's own gap above it (`shown`, read from the box's
+  holder's height). A check that cannot complete is reported as the bot check failing.
 - **Consent.** Step two ends with two checkboxes. The first, agreeing to the Privacy
   Policy, is required; its "Privacy Policy" link opens `/privacy` in a new tab, so the
   form is not lost ([privacy policy](content.md#privacy-policy)). The second asks for

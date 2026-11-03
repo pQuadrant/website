@@ -229,9 +229,17 @@ export function ApplyFlow({
         </>
       )}
 
-      {/* Cloudflare's check. Empty unless Cloudflare asks the visitor to
-          interact, when its box appears here. */}
-      <div ref={botRef} />
+      {/* Cloudflare's check. No height unless Cloudflare asks the visitor to
+          interact, when its box appears here, as far below the actions as
+          the form's own parts are apart. */}
+      <div
+        ref={botRef}
+        className={
+          botCheck.shown
+            ? "mt-3 row:mt-[calc(22*var(--chrome-unit))] cramped:mt-2"
+            : undefined
+        }
+      />
     </div>
   );
 }

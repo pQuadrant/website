@@ -1,4 +1,11 @@
-import { type RefObject, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 /**
  * Cloudflare Turnstile, the check that a request to the platform comes from a
@@ -79,6 +86,8 @@ export interface BotCheck {
    * in time).
    */
   token: () => Promise<string | null>;
+  /** Whether Cloudflare's box is showing, asking the visitor to interact. */
+  shown: boolean;
 }
 
 export function useTurnstile(
@@ -90,6 +99,7 @@ export function useTurnstile(
   const settle = useRef<((token: string | null) => void) | null>(null);
   const underway = useRef<Promise<string | null> | null>(null);
   const ready = useRef<{ token: string; at: number } | null>(null);
+  const [shown, setShown] = useState(false);
 
   useEffect(
     () => () => {
@@ -97,6 +107,19 @@ export function useTurnstile(
     },
     [],
   );
+
+  // The widget sits in the container at no height until Cloudflare shows its
+  // box, so whether it shows is read from the container's height rather than
+  // from Cloudflare's callbacks, which do not say when the box goes away.
+  useEffect(() => {
+    const element = container.current;
+    if (element === null) return;
+    const observer = new ResizeObserver(() =>
+      setShown(element.getBoundingClientRect().height > 0),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [container]);
 
   const challenge = useCallback(async (): Promise<string | null> => {
     const turnstile = await loadTurnstile();
@@ -161,5 +184,5 @@ export function useTurnstile(
     }
   }, [prepare]);
 
-  return useMemo(() => ({ prepare, token }), [prepare, token]);
+  return useMemo(() => ({ prepare, token, shown }), [prepare, token, shown]);
 }
