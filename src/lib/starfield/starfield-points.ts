@@ -276,13 +276,21 @@ export function createStarfield(
     (homeCount < count || marketCount < count) && candidate < limit;
     candidate += 1
   ) {
+    // Every candidate takes the same five numbers from the stream, kept or
+    // not. The stream then lines up with the same candidates whatever was
+    // decided before, so type changing size (a label swapped, the web font
+    // arriving) only changes the stars near that type. Were a rejected
+    // candidate to take fewer numbers than a kept one, one changed decision
+    // would shift every candidate after it and rearrange the whole sky.
     const x = random() * width;
     const y = random() * height;
+    const draw = random();
+    const magnitudeSample = random();
+    const colourSample = random();
 
     // Rejected candidates are discarded rather than repositioned; the loop goes
     // back for another one, because `count` is a target of survivors on each
     // route. A route that is already full takes no more.
-    const draw = random();
     const inHome =
       homeCount < count && draw < layoutKeepProbability(x, y, home);
     const inMarket =
@@ -292,9 +300,9 @@ export function createStarfield(
     if (inHome) homeCount += 1;
     if (inMarket) marketCount += 1;
 
-    const magnitude = Math.pow(random(), STARFIELD.magnitudeExponent);
+    const magnitude = Math.pow(magnitudeSample, STARFIELD.magnitudeExponent);
     stars.push({
-      ...describe(x, y, magnitude, pickColour(random())),
+      ...describe(x, y, magnitude, pickColour(colourSample)),
       home: inHome,
       market: inMarket,
     });

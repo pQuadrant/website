@@ -25,8 +25,9 @@ Its single `draw` function:
    response.
 
 It reruns 150ms (`RESIZE_DEBOUNCE_MS`) after the canvas or any `data-star-clear`
-element changes size. The field is regenerated, never scaled, so a resize may show a
-different arrangement.
+element changes size. The field is regenerated, never scaled, so resizing the window may
+show a different arrangement; type changing size alone moves only the stars near it
+([field generation](#field-generation)).
 
 **The starfield runs nothing at rest** (design constraint): no loop, timer or
 per-frame listener, except while the pointer moves and the stars coast home afterwards,
@@ -49,6 +50,11 @@ the same field on every load. All tuning is in `STARFIELD`.
 - **Both routes from one stream:** each candidate is judged against both routes with
   one draw, and carries `home` and `market` flags. Stars on both never move between
   routes.
+- **Local changes stay local:** every candidate takes the same five numbers from the
+  stream whether it is kept or not, so when type changes size (APPLY NOW becoming YOUR
+  APPLICATION, the web font arriving) only the stars near it change, plus at most a
+  star or two where the count is reached. Drawing fewer numbers for a rejected
+  candidate would shift every later candidate and rearrange the whole sky.
 - **Appearance:** magnitude `u ** magnitudeExponent`; most stars are faint bare cores;
   halos only above `haloThreshold`; bloom above `bloomThreshold`; additive compositing;
   sub-pixel cores held at `radiusMin` with the shortfall paid in alpha. The colours are
