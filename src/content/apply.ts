@@ -32,10 +32,7 @@ export const applyContent: ApplyContent = {
     "Tell us who you are and how to reach you.",
     "Tell us about your business and goals.",
   ],
-  progress: {
-    shown: (step, steps) => `STEP ${step} / ${steps}`,
-    spoken: (step, steps) => `Step ${step} of ${steps}`,
-  },
+  progress: (step, steps) => `Step ${step} of ${steps}`,
   optional: "OPTIONAL",
   problems: (count) =>
     count === 1
