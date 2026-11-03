@@ -19,9 +19,13 @@ export const SECONDARY_ACTION =
 /** The height of every action inside the panel, matching the chrome row. */
 export const ACTION_HEIGHT = "h-chrome-touch row:h-chrome-control";
 
-/** A step back, in plain text beside the primary action: BACK. */
-export const TEXT_ACTION =
-  "font-mono text-chrome-label text-fg-1 transition-colors duration-hover hover:text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0";
+/**
+ * A step back, in plain text beside the primary action: BACK. It takes the
+ * buttons' padding and height without their border, so its word sits as far
+ * in from the panel's edge as the primary action's label sits inside its
+ * border, and it is as easy to tap.
+ */
+export const TEXT_ACTION = `flex items-center ${ACTION_HEIGHT} px-chrome-control-pad font-mono text-chrome-label text-fg-1 transition-colors duration-hover hover:text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:text-fg-0`;
 
 /** A link inside a sentence: the Privacy Policy, opening an application,
  * sending a new code. */
