@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { CodeBoxes } from "@/components/apply/CodeBoxes";
 import type { ApplyFieldContent } from "@/content/types";
 import type { AnswerProblem } from "@/lib/apply/application";
 
@@ -51,11 +52,6 @@ const CONTROL =
 
 const TEXT =
   "font-sans text-[calc(15*var(--chrome-unit))] pointer-coarse:text-[16px]";
-
-/** A one-time code, set wide and spaced in the chrome's mono so each digit
- * stands apart. */
-const CODE =
-  "font-mono text-[calc(20*var(--chrome-unit))] tracking-[0.4em] pointer-coarse:text-[20px]";
 
 const HEIGHT = "h-chrome-touch row:h-[calc(36*var(--chrome-unit))]";
 
@@ -134,18 +130,16 @@ export function ApplyField({
       />
     );
   } else if (kind === "code") {
-    // Digits only on a phone's keypad, and offered from the email or message
-    // by the phone itself where it can (`one-time-code`).
+    // One box per digit; its own length limit is the code's.
     control = (
-      <input
-        {...shared}
-        type="text"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        maxLength={maxLength}
-        placeholder={content.placeholder}
-        onChange={(event) => onChange(event.target.value)}
-        className={`${CONTROL} ${CODE} ${HEIGHT} ${border}`}
+      <CodeBoxes
+        id={id}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        invalid={invalid}
+        describedBy={shared["aria-describedby"]}
+        heightClass={HEIGHT}
       />
     );
   } else {

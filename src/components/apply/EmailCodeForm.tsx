@@ -25,11 +25,12 @@ import type { CallFailure } from "@/lib/apply/platform";
  * applying and when opening an application again. See Apply flow in
  * `codebase-map/apply.md`.
  *
- * It is shown once the code has been sent. CONFIRM hands the code to
- * `ApplyFlow`, which sends it with the application or to open one; the
- * platform's answer about the code is shown under the field. "Send a new
- * code" waits as long as the platform says, counting down rather than
- * failing.
+ * It is shown once the code has been sent. The code is confirmed as soon as
+ * its last digit is in, typed, pasted or offered by the phone, and CONFIRM
+ * does the same, for trying again. Either hands the code to `ApplyFlow`,
+ * which sends it with the application or to open one; the platform's answer
+ * about the code is shown under the boxes. "Send a new code" waits as long as
+ * the platform says, counting down rather than failing.
  */
 
 interface EmailCodeFormProps {
@@ -77,9 +78,9 @@ export function EmailCodeForm({
 
   const problem = codeProblem(code);
 
-  const submit = async () => {
+  const submit = async (entered = code) => {
     setError("");
-    if (problem !== null) {
+    if (codeProblem(entered) !== null) {
       setRefusal(undefined);
       setChecking(true);
       setAnnouncement(isTouchScreen() ? content.problems(1) : "");
@@ -87,7 +88,7 @@ export function EmailCodeForm({
       return;
     }
     setBusy(true);
-    const failure = await onConfirm(code);
+    const failure = await onConfirm(entered);
     setBusy(false);
     if (failure === null) return;
 
@@ -158,12 +159,15 @@ export function EmailCodeForm({
             content={content.code.field}
             value={code}
             onChange={(value) => {
-              setCode(tidyCode(value));
+              const next = tidyCode(value);
+              setCode(next);
               setRefusal(undefined);
+              // A whole code just went in, its last digit typed or all of it
+              // pasted over another: confirm without waiting for CONFIRM.
+              if (next.length === CODE_LENGTH && next !== code && !busy)
+                void submit(next);
             }}
-            // Room for a pasted code with spaces or a dash, which tidying
-            // takes out.
-            maxLength={CODE_LENGTH * 2}
+            maxLength={CODE_LENGTH}
             problem={checking ? problem : null}
             notice={refusal}
           />

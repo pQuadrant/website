@@ -17,6 +17,7 @@ contract is under Apply endpoints in its `apps/api/README.md`.
 | The application's steps, checking, messages, consent       | `ApplyForm` in [src/components/apply/ApplyForm.tsx](../src/components/apply/ApplyForm.tsx)                                         |
 | Opening an application again                               | `OpenApplicationForm` in [src/components/apply/OpenApplicationForm.tsx](../src/components/apply/OpenApplicationForm.tsx)           |
 | The email code screen and "Send a new code"                | `EmailCodeForm` in [src/components/apply/EmailCodeForm.tsx](../src/components/apply/EmailCodeForm.tsx)                             |
+| The code's six boxes                                       | `CodeBoxes` in [src/components/apply/CodeBoxes.tsx](../src/components/apply/CodeBoxes.tsx)                                         |
 | The screen after the code, and "Not you?"                  | `NextSteps` in [src/components/apply/NextSteps.tsx](../src/components/apply/NextSteps.tsx)                                         |
 | Every form's frame: title, line, error line, actions row   | `ApplyStep`, `ApplyTitle` in [src/components/apply/](../src/components/apply/)                                                     |
 | One question: label, control, its message                  | `ApplyField` in [src/components/apply/ApplyField.tsx](../src/components/apply/ApplyField.tsx)                                      |
@@ -118,10 +119,17 @@ it.
   marketing emails. It is optional and starts unticked, because consent to marketing
   has to be given rather than assumed; the policy's Marketing section says the same.
   Both go with the application, with the policy's `version`.
-- **The code screen** asks for six digits, on a numeric keypad on phones, and lets the
-  phone offer the code from the email (`autocomplete="one-time-code"`). CONFIRM sends
-  the application with the code, or opens the application. A wrong, expired or used-up
-  code, or five wrong tries, is shown under the field. "Send a new code" is replaced by
+- **The code screen** asks for six digits in six boxes (`CodeBoxes`), with a wider gap
+  after the third, as the email spaces the code. Each digit moves on to the next box
+  and backspace steps back. The boxes are one invisible field laid over them, not six
+  fields, so the phone can offer the code from the email (`autocomplete="one-time-code"`),
+  a pasted code fills every box, and a screen reader hears one field; its caret stays at
+  the end, so a digit is put right by deleting back. A whole code arriving at once,
+  pasted or offered by the phone, replaces what was there. The keypad is numeric on
+  phones. The code is confirmed as soon as its last digit is in, and CONFIRM does the
+  same, for trying again: it sends the application with the code, or opens the
+  application. A wrong, expired or used-up code, or five wrong tries, turns every box
+  red and is shown under them. "Send a new code" is replaced by
   a countdown until the platform allows a new one (60 seconds after the last, or as long
   as the platform says), and says when too many codes have been asked for in the hour.
 - **The screen after the code** offers the marketplace (a link to `/marketplace` that
