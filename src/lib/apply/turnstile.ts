@@ -9,14 +9,14 @@ import {
 
 /**
  * Cloudflare Turnstile, the check that a request to the platform comes from a
- * person. The first email check or code request of a visit carries a token
- * from it, and later ones the human pass the platform returns
+ * person. Its token is traded for the human pass the panel's calls carry
  * (`human-proof.ts`, which is what calls this). See Apply flow in
  * `codebase-map/apply.md`.
  *
  * The widget is invisible almost always. When Cloudflare wants an
  * interaction, a small box appears in the element the panel gives it, and
- * nowhere else.
+ * nowhere else. Once the visitor passes, the box shows Cloudflare's tick for
+ * a moment and is then put away (`dismissed`), until a later check needs it.
  *
  * Getting a token takes Cloudflare one to two seconds, far longer than the
  * platform takes to answer, so one is got ready ahead of time (`prepare`)
@@ -44,6 +44,9 @@ const TOKEN_TIMEOUT_MS = 120_000;
  * checks it with Cloudflare.
  */
 const TOKEN_USABLE_MS = 270_000;
+
+/** How long Cloudflare's tick stays on screen after the visitor passes. */
+const DISMISS_AFTER_MS = 1_000;
 
 interface TurnstileApi {
   render(element: HTMLElement, options: Record<string, unknown>): string;
@@ -90,10 +93,17 @@ export interface BotCheck {
   token: () => Promise<string | null>;
   /** Whether Cloudflare's box is showing, asking the visitor to interact. */
   shown: boolean;
+  /**
+   * Whether the box is put away after the visitor passed; the panel hides its
+   * holder until the next check.
+   */
+  dismissed: boolean;
 }
 
 export function useTurnstile(
   container: RefObject<HTMLElement | null>,
+  /** Called when the box is put away while focus was in it. */
+  onFocusLost?: () => void,
 ): BotCheck {
   const widgetId = useRef<string | null>(null);
   // The challenge under way: its result goes to `settle`. One at a time,
@@ -102,9 +112,18 @@ export function useTurnstile(
   const underway = useRef<Promise<string | null> | null>(null);
   const ready = useRef<{ token: string; at: number } | null>(null);
   const [shown, setShown] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const focusLost = useRef(onFocusLost);
+  useEffect(() => {
+    focusLost.current = onFocusLost;
+  });
 
   useEffect(
     () => () => {
+      clearTimeout(dismissTimer.current);
       if (widgetId.current !== null) window.turnstile?.remove(widgetId.current);
     },
     [],
@@ -128,6 +147,9 @@ export function useTurnstile(
     const element = container.current;
     if (turnstile === null || element === null) return null;
 
+    clearTimeout(dismissTimer.current);
+    setDismissed(false);
+
     return new Promise<string | null>((resolve) => {
       const timer = setTimeout(() => finish(null), TOKEN_TIMEOUT_MS);
       function finish(token: string | null) {
@@ -145,7 +167,20 @@ export function useTurnstile(
           // A token is renewed on `prepare`, not by the widget on its own;
           // its age is judged from `ready.at`.
           "refresh-expired": "never",
-          callback: (token: string) => settle.current?.(token),
+          callback: (token: string) => {
+            // The box showed, so the visitor clicked: put it away once
+            // they have seen the tick, keeping focus in the panel if it
+            // was in the box.
+            if (element.getBoundingClientRect().height > 0) {
+              clearTimeout(dismissTimer.current);
+              dismissTimer.current = setTimeout(() => {
+                const hadFocus = element.contains(document.activeElement);
+                setDismissed(true);
+                if (hadFocus) focusLost.current?.();
+              }, DISMISS_AFTER_MS);
+            }
+            settle.current?.(token);
+          },
           "error-callback": () => {
             settle.current?.(null);
             // Handled here; Cloudflare need not log it to the console.
@@ -186,5 +221,8 @@ export function useTurnstile(
     }
   }, [prepare]);
 
-  return useMemo(() => ({ prepare, token, shown }), [prepare, token, shown]);
+  return useMemo(
+    () => ({ prepare, token, shown, dismissed }),
+    [prepare, token, shown, dismissed],
+  );
 }

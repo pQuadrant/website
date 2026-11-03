@@ -43,13 +43,13 @@ import { useHumanCheck } from "@/lib/apply/human-proof";
  * empty each time a code is asked for. Moving to a screen focuses its start,
  * as opening the panel does.
  *
- * The email check and every code request carry proof of a person
- * (`human-proof.ts`): a Cloudflare Turnstile token the first time, and the
- * human pass the platform returns after that. Turnstile's widget lives at the
- * bottom of the panel and only takes space when Cloudflare asks the visitor to
- * interact. Until there is a pass, a token is got ready whenever focus is in
- * the panel (opening it puts focus there, and so does each field and screen),
- * so a call rarely waits for Cloudflare.
+ * The email check and every code request carry a human pass, which the
+ * platform gives for a Cloudflare Turnstile token (`human-proof.ts`).
+ * Turnstile's widget lives at the bottom of the panel and only takes space
+ * when Cloudflare asks the visitor to interact, until they pass. Until there
+ * is a pass, one is got whenever focus is in the panel (opening it puts focus
+ * there, and so does each field and screen), so a call rarely waits for
+ * Cloudflare.
  */
 
 type Screen = "apply" | "open" | "code";
@@ -77,7 +77,7 @@ export function ApplyFlow({
   const rootRef = useRef<HTMLDivElement>(null);
   const botRef = useRef<HTMLDivElement>(null);
   const requestFocus = usePendingFocus(() => rootRef.current);
-  const humanCheck = useHumanCheck(botRef);
+  const humanCheck = useHumanCheck(botRef, () => requestFocus("start"));
 
   const [screen, setScreen] = useState<Screen>("apply");
   const [codeRequest, setCodeRequest] = useState<CodeRequest | null>(null);
@@ -101,8 +101,8 @@ export function ApplyFlow({
   const requestCode = async (
     request: CodeRequest,
   ): Promise<CallFailure | null> => {
-    const result = await humanCheck.send((proof) =>
-      sendCode(request.email, request.purpose, proof),
+    const result = await humanCheck.send((humanPass) =>
+      sendCode(request.email, request.purpose, humanPass),
     );
     return result.ok ? null : result;
   };
@@ -186,7 +186,7 @@ export function ApplyFlow({
               key={formKey}
               content={content}
               onCheckEmail={(email) =>
-                humanCheck.send((proof) => checkEmail(email, proof))
+                humanCheck.send((humanPass) => checkEmail(email, humanPass))
               }
               onSubmitted={(answers, marketing) => {
                 setPending({ answers, marketing });
@@ -225,13 +225,16 @@ export function ApplyFlow({
 
       {/* Cloudflare's check. No height unless Cloudflare asks the visitor to
           interact, when its box appears here, as far below the actions as
-          the form's own parts are apart. */}
+          the form's own parts are apart, and is hidden again once they
+          pass. */}
       <div
         ref={botRef}
         className={
-          humanCheck.shown
-            ? "mt-3 row:mt-[calc(22*var(--chrome-unit))] cramped:mt-2"
-            : undefined
+          humanCheck.dismissed
+            ? "hidden"
+            : humanCheck.shown
+              ? "mt-3 row:mt-[calc(22*var(--chrome-unit))] cramped:mt-2"
+              : undefined
         }
       />
     </div>

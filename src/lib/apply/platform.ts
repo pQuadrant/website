@@ -74,33 +74,33 @@ export interface OpenApplication {
 export type CodePurpose = "apply" | "open";
 
 /**
- * Proof that a call comes from a person: a Cloudflare Turnstile token, or the
- * human pass an earlier call returned. See `human-proof.ts`.
+ * Trades a Cloudflare Turnstile token for a human pass, which the email check
+ * and code requests carry. See `human-proof.ts`.
  */
-export type HumanProof = { turnstileToken: string } | { humanPass: string };
-
-/** Has this email applied? Needs proof of a person; returns a human pass. */
-export function checkEmail(email: string, proof: HumanProof) {
-  return call<{ applied: boolean; humanPass?: string }>(
-    "/email-checks",
-    "POST",
-    { email, ...proof },
-  );
+export function getHumanPass(turnstileToken: string) {
+  return call<{ humanPass: string }>("/human-passes", "POST", {
+    turnstileToken,
+  });
 }
 
-/**
- * Emails a code, to apply or to open an application. Needs proof of a
- * person; returns a human pass.
- */
+/** Has this email applied? Needs a human pass. */
+export function checkEmail(email: string, humanPass: string) {
+  return call<{ applied: boolean }>("/email-checks", "POST", {
+    email,
+    humanPass,
+  });
+}
+
+/** Emails a code, to apply or to open an application. Needs a human pass. */
 export function sendCode(
   email: string,
   purpose: CodePurpose,
-  proof: HumanProof,
+  humanPass: string,
 ) {
-  return call<{ sentTo: string; humanPass?: string }>("/email-codes", "POST", {
+  return call<{ sentTo: string }>("/email-codes", "POST", {
     email,
     purpose,
-    ...proof,
+    humanPass,
   });
 }
 

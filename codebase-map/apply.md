@@ -27,8 +27,8 @@ contract is under Apply endpoints in its `apps/api/README.md`.
 | Tidying answers                                            | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                                    |
 | The code's length and rule, and the wait for a new one     | `CODE_LENGTH`, `codeProblem`, `tidyCode`, `NEW_CODE_WAIT_SECONDS` in [src/lib/apply/email-code.ts](../src/lib/apply/email-code.ts) |
 | Every call to the platform, and its address                | `PLATFORM_API_URL` and one function per call in [src/lib/apply/platform.ts](../src/lib/apply/platform.ts)                          |
-| Cloudflare Turnstile: loading it, keeping a token ready    | `TURNSTILE_SITE_KEY`, `loadTurnstile`, `useTurnstile` in [src/lib/apply/turnstile.ts](../src/lib/apply/turnstile.ts)               |
-| Proof of a person per call: the human pass, else a token   | `useHumanCheck` in [src/lib/apply/human-proof.ts](../src/lib/apply/human-proof.ts)                                                 |
+| Cloudflare Turnstile: loading it, its token, its box       | `TURNSTILE_SITE_KEY`, `loadTurnstile`, `useTurnstile` in [src/lib/apply/turnstile.ts](../src/lib/apply/turnstile.ts)               |
+| The human pass: got once per visit, sent with each call    | `useHumanCheck` in [src/lib/apply/human-proof.ts](../src/lib/apply/human-proof.ts)                                                 |
 | Which message a failed call shows                          | `describeFailure` in [src/lib/apply/failure.ts](../src/lib/apply/failure.ts)                                                       |
 | Where focus goes, on touch screens and otherwise           | `focusStart`, `focusProblem`, `usePendingFocus` in [src/lib/apply/focus.ts](../src/lib/apply/focus.ts)                             |
 | Every word, including each field's and each call's message | `applyContent` in [src/content/apply.ts](../src/content/apply.ts), typed by `ApplyContent`                                         |
@@ -102,25 +102,31 @@ it.
   actions (`describeFailure`): no connection, the bot check failing, too many requests
   from this connection (with the minutes to wait), an email that could not be sent, or
   anything else as a problem on our side. The step stays where it was.
-- **Bot check.** The email check and every code request carry proof of a person, once
-  a visit rather than once a call (`useHumanCheck`). The first carries a Cloudflare
-  Turnstile token; the platform answers with a human pass, good for 30 minutes, which
-  later calls send instead, so Cloudflare's box shows at most once in that time (it
-  can ask for a click on every new token, often in Safari). The pass is kept in page
-  memory only, not as a cookie, and is lost on reload; when the platform refuses it
-  (`bot_check_failed`), it is dropped and the call is made once more with a token. The
-  platform's side is under Apply endpoints in the platform repository's
-  `apps/api/README.md`. Cloudflare's script loads the first time the panel opens, not
-  before. Getting a token takes Cloudflare one to two seconds, much longer than the
-  platform takes to answer, so while there is no pass `useTurnstile` gets one ready
-  whenever focus is in the panel (`prepare`, from `ApplyFlow`'s `onFocus`): opening the
-  panel, each field and each new screen. A call takes the ready token, or waits for the
-  one on its way. A token works once and for five minutes; a used or expired one is
-  replaced on the next focus, not on a timer, so a panel left open does not keep
-  running the check. A call made just after the pass runs out waits for Cloudflare. Its widget is invisible almost always; when Cloudflare
-  wants an interaction, its box appears at the bottom of the panel, usually just after
-  the panel opens, with the form's own gap above it (`shown`, read from the box's
-  holder's height). A check that cannot complete is reported as the bot check failing.
+- **Bot check.** The email check and every code request carry a human pass, good for
+  30 minutes, which the platform gives for a Cloudflare Turnstile token
+  (`useHumanCheck`), so Cloudflare checks the visitor once a visit rather than once a
+  call (it can ask for a click on every new token, often in Safari). The pass is asked
+  for (`POST /human-passes`) the moment Cloudflare passes the visitor, not when the
+  first call needs it, because a token lasts only five minutes and the visitor may take
+  longer over their email. While a pass is held or on its way, no new check starts, and
+  a call waits for the pass on its way. The pass is kept in page memory only, not as a
+  cookie, and is lost on reload; when the platform refuses it (`bot_check_failed`), a
+  new one is got and the call is made once more. The platform's side is under Apply
+  endpoints in the platform repository's `apps/api/README.md`; a change to it is
+  deployed there before a website relying on it is published.
+
+  Cloudflare's script loads the first time the panel opens, not before. Getting a token
+  takes Cloudflare one to two seconds, so while there is no pass, one is got whenever
+  focus is in the panel (`prepare`, from `ApplyFlow`'s `onFocus`): opening the panel,
+  each field and each new screen. A token is renewed on the next focus, not on a timer,
+  so a panel left open does not keep running the check. Its widget is invisible almost
+  always; when Cloudflare wants an interaction, its box appears at the bottom of the
+  panel, usually just after the panel opens, with the form's own gap above it (`shown`,
+  read from the box's holder's height). Once the visitor passes, the tick stays for a
+  second and the holder is then hidden (`dismissed`), with focus moved to the panel's
+  start if it was in the box, until a later check needs it. A check that cannot
+  complete is reported as the bot check failing.
+
 - **Consent.** Step two ends with two checkboxes. The first, agreeing to the Privacy
   Policy, is required; its "Privacy Policy" link opens `/privacy` in a new tab, so the
   form is not lost ([privacy policy](content.md#privacy-policy)). The second asks for
