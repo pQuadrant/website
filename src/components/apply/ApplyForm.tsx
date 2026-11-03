@@ -44,7 +44,8 @@ import type { CallFailure, CallResult } from "@/lib/apply/platform";
  *
  * Whether the email has already applied is asked of the platform as soon as
  * focus leaves the email field, and again on CONTINUE, which does not go on
- * while it has. Submitting hands the answers to `ApplyFlow`, which sends the
+ * while it has; CONTINUE pressed before the first answer arrives waits for
+ * that answer instead of asking twice. Submitting hands the answers to `ApplyFlow`, which sends the
  * email code. A failed call is shown above the actions, and the step stays
  * where it is.
  *
@@ -111,6 +112,11 @@ export function ApplyForm({
   // to have applied, and the last one known not to have.
   const [appliedEmail, setAppliedEmail] = useState<string | null>(null);
   const [newEmail, setNewEmail] = useState<string | null>(null);
+  // The check still answering, if any.
+  const askingRef = useRef<{
+    email: string;
+    answer: Promise<boolean | CallFailure>;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -134,14 +140,22 @@ export function ApplyForm({
    * Whether the email has applied, asking the platform unless it has already
    * answered for this address, or why it could not be asked.
    */
-  const checkEmail = async (email: string): Promise<boolean | CallFailure> => {
-    if (email === newEmail) return false;
-    if (email === appliedEmail) return true;
-    const result = await onCheckEmail(email);
-    if (!result.ok) return result;
-    if (result.data.applied) setAppliedEmail(email);
-    else setNewEmail(email);
-    return result.data.applied;
+  const checkEmail = (email: string): Promise<boolean | CallFailure> => {
+    if (email === newEmail) return Promise.resolve(false);
+    if (email === appliedEmail) return Promise.resolve(true);
+    // CONTINUE pressed while the check from leaving the field is answering
+    // waits for that answer rather than asking a second time.
+    const asking = askingRef.current;
+    if (asking !== null && asking.email === email) return asking.answer;
+    const answer = onCheckEmail(email).then((result) => {
+      if (askingRef.current?.answer === answer) askingRef.current = null;
+      if (!result.ok) return result;
+      if (result.data.applied) setAppliedEmail(email);
+      else setNewEmail(email);
+      return result.data.applied;
+    });
+    askingRef.current = { email, answer };
+    return answer;
   };
 
   /** Leaving the email field: tidied, then asked about. A failure here is

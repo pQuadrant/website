@@ -45,7 +45,9 @@ import { useTurnstile } from "@/lib/apply/turnstile";
  *
  * The email check and every code request carry a fresh Cloudflare Turnstile
  * token, whose widget lives at the bottom of the panel and only takes space
- * when Cloudflare asks the visitor to interact.
+ * when Cloudflare asks the visitor to interact. A token is got ready whenever
+ * focus is in the panel (opening it puts focus there, and so does each field
+ * and screen), so a call rarely waits for Cloudflare.
  */
 
 type Screen = "apply" | "open" | "code";
@@ -73,7 +75,7 @@ export function ApplyFlow({
   const rootRef = useRef<HTMLDivElement>(null);
   const botRef = useRef<HTMLDivElement>(null);
   const requestFocus = usePendingFocus(() => rootRef.current);
-  const turnstileToken = useTurnstile(botRef);
+  const botCheck = useTurnstile(botRef);
 
   const [screen, setScreen] = useState<Screen>("apply");
   const [codeRequest, setCodeRequest] = useState<CodeRequest | null>(null);
@@ -97,7 +99,7 @@ export function ApplyFlow({
   const withToken = async <T,>(
     send: (token: string) => Promise<CallResult<T>>,
   ): Promise<CallResult<T>> => {
-    const token = await turnstileToken();
+    const token = await botCheck.token();
     if (token === null) return { ok: false, error: "bot_check_failed" };
     return send(token);
   };
@@ -162,7 +164,11 @@ export function ApplyFlow({
   };
 
   return (
-    <div ref={rootRef}>
+    <div
+      ref={rootRef}
+      // Nothing in the screen after the code needs a token.
+      onFocus={applicant === null ? botCheck.prepare : undefined}
+    >
       {applicant !== null ? (
         <NextSteps
           content={content.next}
