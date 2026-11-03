@@ -26,7 +26,7 @@ contract is under Apply endpoints in its `apps/api/README.md`.
 | Tidying answers                                            | `tidyAnswer` in [src/lib/apply/application.ts](../src/lib/apply/application.ts)                                                    |
 | The code's length and rule, and the wait for a new one     | `CODE_LENGTH`, `codeProblem`, `tidyCode`, `NEW_CODE_WAIT_SECONDS` in [src/lib/apply/email-code.ts](../src/lib/apply/email-code.ts) |
 | Every call to the platform, and its address                | `PLATFORM_API_URL` and one function per call in [src/lib/apply/platform.ts](../src/lib/apply/platform.ts)                          |
-| Cloudflare Turnstile: loading it and getting a token       | `TURNSTILE_SITE_KEY`, `loadTurnstile`, `useTurnstile` in [src/lib/apply/turnstile.ts](../src/lib/apply/turnstile.ts)               |
+| Cloudflare Turnstile: loading it, keeping a token ready    | `TURNSTILE_SITE_KEY`, `loadTurnstile`, `useTurnstile` in [src/lib/apply/turnstile.ts](../src/lib/apply/turnstile.ts)               |
 | Which message a failed call shows                          | `describeFailure` in [src/lib/apply/failure.ts](../src/lib/apply/failure.ts)                                                       |
 | Where focus goes, on touch screens and otherwise           | `focusStart`, `focusProblem`, `usePendingFocus` in [src/lib/apply/focus.ts](../src/lib/apply/focus.ts)                             |
 | Every word, including each field's and each call's message | `applyContent` in [src/content/apply.ts](../src/content/apply.ts), typed by `ApplyContent`                                         |
@@ -90,8 +90,10 @@ it.
   platform is asked whether it has applied, and again on CONTINUE, which does not go on
   while it has. An address that has applied gets "This email has already applied. Open
   your application" under the field, from the moment the answer arrives; the link takes
-  the address to the open screen. A failed check on leaving the field is not shown;
-  CONTINUE asks again and shows it. On the open screen, an address that has never
+  the address to the open screen. CONTINUE pressed while that check is still answering
+  waits for its answer rather than asking again (`ApplyForm`'s `checkEmail`). A failed
+  check on leaving the field is not shown; CONTINUE asks again and shows it. On the
+  open screen, an address that has never
   applied is told so under the field, and no code is sent.
 - **Calls to the platform.** While one is answering, the form's main button reads ONE
   MOMENT… and a second press does nothing. A failed call shows one line above the
@@ -100,9 +102,15 @@ it.
   anything else as a problem on our side. The step stays where it was.
 - **Bot check.** The email check and every code request carry a fresh Cloudflare
   Turnstile token; the platform refuses them without one. Cloudflare's script loads the
-  first time the panel opens, not before. Its widget is invisible almost always; when
-  Cloudflare wants an interaction, its box appears at the bottom of the panel. A check
-  that cannot complete is reported as the bot check failing.
+  first time the panel opens, not before. Getting a token takes Cloudflare one to two
+  seconds, much longer than the platform takes to answer, so `useTurnstile` gets one
+  ready whenever focus is in the panel (`prepare`, from `ApplyFlow`'s `onFocus`):
+  opening the panel, each field and each new screen. A call takes the ready token, or
+  waits for the one on its way. A token works once and for five minutes; a used or
+  expired one is replaced on the next focus, not on a timer, so a panel left open does
+  not keep running the check. Its widget is invisible almost always; when Cloudflare
+  wants an interaction, its box appears at the bottom of the panel, usually just after
+  the panel opens. A check that cannot complete is reported as the bot check failing.
 - **Consent.** Step two ends with two checkboxes. The first, agreeing to the Privacy
   Policy, is required; its "Privacy Policy" link opens `/privacy` in a new tab, so the
   form is not lost ([privacy policy](content.md#privacy-policy)). The second asks for
@@ -139,6 +147,9 @@ it.
   only from `https://pquadrant.com`, `https://www.pquadrant.com` and
   `http://localhost:3000` (`config.api.allowedOrigins` in its `infra/lib/config.ts`), so
   the site served from any other address, including the LAN server, cannot apply.
+  The platform lets browsers keep its answer to the check made before each POST or
+  DELETE for 10 minutes (`CORS_PREFLIGHT_SECONDS` in its `apps/api/src/main.ts`), which
+  spares each call a round trip.
 - **Turnstile's hostnames.** The widget's hostnames in the Cloudflare dashboard and the
   platform's `config.api.turnstileHostnames` are both `pquadrant.com`,
   `www.pquadrant.com` and `localhost`; a new hostname for the site needs adding to both.
