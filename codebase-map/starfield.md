@@ -66,13 +66,13 @@ kept with probability 0 within `textClearInner` (24px) of a line, easing to 1 at
 
 The value says which route's sky it clears: `""` for both, `"home"` or `"market"`.
 
-| Marked element                             | Value      |
-| ------------------------------------------ | ---------- |
-| Platform link in `TopRightCluster`         | `""`       |
-| APPLY NOW / APPLICATION in `ApplyLauncher` | `""`       |
-| Wordmark and switch in `TopLeftCluster`    | `""`       |
-| Tagline paragraph, Browse hint             | `"home"`   |
-| Marketplace heading block                  | `"market"` |
+| Marked element                               | Value      |
+| -------------------------------------------- | ---------- |
+| Platform link in `TopRightCluster`           | `""`       |
+| APPLY NOW / APPLICATION in `ApplyLauncher`   | `""`       |
+| Wordmark and MARKETPLACE in `TopLeftCluster` | `""`       |
+| Tagline paragraph, Browse hint               | `"home"`   |
+| Marketplace heading block                    | `"market"` |
 
 **New text must carry the attribute, or stars can land on it.** The marketplace
 catalogue (search field, row titles, cards) is not marked today. It sits over a panel

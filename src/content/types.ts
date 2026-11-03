@@ -14,17 +14,14 @@ export interface ExternalLink {
   href: string;
 }
 
-/** Top-left cluster: the wordmark, and the switch between the two routes. */
+/** Top-left cluster: the wordmark, which leads home, and the marketplace. */
 export interface ChromeTopLeftContent {
   wordmark: {
     label: string;
     /** Read in place of the label: the wordmark is the link home. */
     accessibleLabel: string;
   };
-  switch: {
-    home: string;
-    marketplace: string;
-  };
+  marketplace: string;
 }
 
 /** Top-right cluster: the platform link. APPLY NOW's copy is in `ApplyContent`. */
@@ -51,7 +48,10 @@ export interface TaglineContent {
 /** Everything the home page says, beyond the chrome both routes share. */
 export interface HomeContent {
   tagline: TaglineContent;
-  /** The link into the marketplace where the route switch is not shown. */
+  /**
+   * The link into the marketplace where the top-left MARKETPLACE link is not
+   * shown.
+   */
   browse: string;
 }
 
