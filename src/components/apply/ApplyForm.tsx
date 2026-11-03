@@ -2,7 +2,11 @@
 
 import { useId, useRef, useState } from "react";
 
-import { INLINE_LINK, TEXT_ACTION } from "@/components/apply/action-styles";
+import {
+  INLINE_LINK,
+  LINK_LEAD_SPACE,
+  TEXT_ACTION,
+} from "@/components/apply/action-styles";
 import { ApplyCheckbox } from "@/components/apply/ApplyCheckbox";
 import { ApplyField, type ApplyFieldKind } from "@/components/apply/ApplyField";
 import { ApplyStep } from "@/components/apply/ApplyStep";
@@ -114,7 +118,8 @@ export function ApplyForm({
   const emailNotice =
     appliedEmail !== null && typedEmail === appliedEmail ? (
       <>
-        {content.emailApplied.message}{" "}
+        {content.emailApplied.message}
+        <span className={LINK_LEAD_SPACE}> </span>
         <button
           type="button"
           onClick={() => onOpenApplication(appliedEmail)}
@@ -250,7 +255,8 @@ export function ApplyForm({
           ) : (
             // Beside CONTINUE, where step two has BACK, so it adds no height.
             <p className="text-[calc(13*var(--chrome-unit))] leading-snug text-pretty text-fg-2">
-              {content.alreadyApplied.question}{" "}
+              {content.alreadyApplied.question}
+              <span className={LINK_LEAD_SPACE}> </span>
               <button
                 type="button"
                 onClick={() => onOpenApplication()}

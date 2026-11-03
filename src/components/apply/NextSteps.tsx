@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ACTION_HEIGHT,
   INLINE_LINK,
+  LINK_LEAD_SPACE,
   PRIMARY_ACTION,
   SECONDARY_ACTION,
 } from "@/components/apply/action-styles";
@@ -56,7 +57,8 @@ export function NextSteps({
         </button>
       </div>
       <p className="text-[calc(13*var(--chrome-unit))] leading-snug text-fg-2">
-        {content.notYou.question}{" "}
+        {content.notYou.question}
+        <span className={LINK_LEAD_SPACE}> </span>
         <button type="button" onClick={onNotYou} className={INLINE_LINK}>
           {content.notYou.action}
         </button>

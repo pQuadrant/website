@@ -27,3 +27,13 @@ export const TEXT_ACTION =
  * sending a new code. */
 export const INLINE_LINK =
   "text-fg-0 underline decoration-fg-2 underline-offset-2 transition-[text-decoration-color] duration-hover hover:decoration-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:decoration-fg-0";
+
+/**
+ * The space between a lead-in and the link it introduces, as in "Already
+ * applied? Open your application". A plain space reads tighter than it is
+ * beside a brighter, underlined link, so this one is widened, to about 1.6
+ * spaces. Word spacing on the space itself, rather than a margin on the link,
+ * leaves the lead-in's own words alone and adds nothing at the start of a line
+ * when the link wraps. Not for a link mid-sentence, such as the Privacy Policy.
+ */
+export const LINK_LEAD_SPACE = "[word-spacing:0.15em]";
