@@ -146,7 +146,6 @@ export function EmailCodeForm({
         busyLabel={content.working}
         secondary={
           <button type="button" onClick={onBack} className={TEXT_ACTION}>
-            <span aria-hidden="true">← </span>
             {content.actions.back}
           </button>
         }
