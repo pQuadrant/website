@@ -25,8 +25,9 @@ Its single `draw` function:
    response.
 
 It reruns 150ms (`RESIZE_DEBOUNCE_MS`) after the canvas or any `data-star-clear`
-element changes size. The field is regenerated, never scaled, so a resize may show a
-different arrangement.
+element changes size. The field is regenerated, never scaled, so resizing the window may
+show a different arrangement; type changing size alone moves only the stars near it
+([field generation](#field-generation)).
 
 **The starfield runs nothing at rest** (design constraint): no loop, timer or
 per-frame listener, except while the pointer moves and the stars coast home afterwards,
@@ -41,14 +42,29 @@ only; the globe animates continuously ([entrance and motion](globe.md#entrance-a
 via `mulberry32` in [src/lib/random.ts](../src/lib/random.ts)), so the same size gives
 the same field on every load. All tuning is in `STARFIELD`.
 
+The seed is chosen, not arbitrary: a few bright, haloed stars carry most of the glow,
+and most seeds bunch them on one side. The current one keeps each quarter of the window
+within 1.42× the average glow on home at 13 sizes from 390×844 to 2560×1440. Changing
+the generator or `STARFIELD`'s tuning deals a new sky, so its balance needs checking
+again: run `createStarfield` against the page's real layouts (each size's
+`measureClearRects` rects, globe centre and radius, and `marketGlobe`) and compare the
+glow (core and halo alpha × radius²) per quarter.
+
 - **Count** is `width × height / countDivisor`, clamped to 220–900. It counts
   survivors, not candidates.
 - **Density falloff:** no stars within `falloffInner` × radius of a route's globe,
-  smoothstep to full density at `falloffOuter`. The radius comes from the caller, so it
-  depends on the [motif radius](globe.md#motif-radius) and the small globe's `--mk-r`.
+  smoothstep to full density at `falloffOuter`, measured to the nearest edge of each
+  star's glow (halo, or core), so a bright star's halo never lies over the sphere. The
+  radius comes from the caller, so it depends on the
+  [motif radius](globe.md#motif-radius) and the small globe's `--mk-r`.
 - **Both routes from one stream:** each candidate is judged against both routes with
   one draw, and carries `home` and `market` flags. Stars on both never move between
   routes.
+- **Local changes stay local:** every candidate takes the same five numbers from the
+  stream whether it is kept or not, so when type changes size (APPLY NOW becoming YOUR
+  APPLICATION, the web font arriving) only the stars near it change, plus the star or
+  two where the count is reached. Drawing fewer numbers for a rejected candidate would
+  shift every later candidate and rearrange the whole sky.
 - **Appearance:** magnitude `u ** magnitudeExponent`; most stars are faint bare cores;
   halos only above `haloThreshold`; bloom above `bloomThreshold`; additive compositing;
   sub-pixel cores held at `radiusMin` with the shortfall paid in alpha. The colours are

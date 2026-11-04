@@ -202,8 +202,16 @@ export const STARFIELD = {
    * compare a screenshot against the design, and identical across resizes at
    * the same size so watching a window being dragged does not scatter a
    * completely different sky on every frame.
+   *
+   * This one was chosen for its balance: the few bright, haloed stars carry
+   * most of the sky's glow, and with most seeds they bunch into one side.
+   * With this one, each quarter of the window holds within 1.42× the average
+   * glow on home, at 13 window sizes from 390×844 to 2560×1440, with the
+   * page's real type and globe. Changing the generator or the tuning above
+   * deals a new sky; check its balance again then (Field generation in
+   * `codebase-map/starfield.md`).
    */
-  seed: 0x9e3779b9,
+  seed: 0xb509ea63,
 } as const;
 
 /**
@@ -276,47 +284,67 @@ export function createStarfield(
     (homeCount < count || marketCount < count) && candidate < limit;
     candidate += 1
   ) {
+    // Every candidate takes the same five numbers from the stream, kept or
+    // not. The stream then lines up with the same candidates whatever was
+    // decided before, so type changing size (a label swapped, the web font
+    // arriving) only changes the stars near that type. Were a rejected
+    // candidate to take fewer numbers than a kept one, one changed decision
+    // would shift every candidate after it and rearrange the whole sky.
     const x = random() * width;
     const y = random() * height;
+    const draw = random();
+    const magnitudeSample = random();
+    const colourSample = random();
+
+    // Described before it is judged, so the globe's falloff can be measured
+    // from the edge of its glow rather than its centre.
+    const magnitude = Math.pow(magnitudeSample, STARFIELD.magnitudeExponent);
+    const star = describe(x, y, magnitude, pickColour(colourSample));
+    const reach = star.haloRadius ?? star.coreRadius;
 
     // Rejected candidates are discarded rather than repositioned; the loop goes
     // back for another one, because `count` is a target of survivors on each
     // route. A route that is already full takes no more.
-    const draw = random();
     const inHome =
-      homeCount < count && draw < layoutKeepProbability(x, y, home);
+      homeCount < count &&
+      draw <
+        globeKeepProbability(x, y, reach, home) *
+          textKeepProbability(x, y, home.clear);
     const inMarket =
-      marketCount < count && draw < layoutKeepProbability(x, y, market);
+      marketCount < count &&
+      draw <
+        globeKeepProbability(x, y, reach, market) *
+          textKeepProbability(x, y, market.clear);
     if (!inHome && !inMarket) continue;
 
     if (inHome) homeCount += 1;
     if (inMarket) marketCount += 1;
 
-    const magnitude = Math.pow(random(), STARFIELD.magnitudeExponent);
-    stars.push({
-      ...describe(x, y, magnitude, pickColour(random())),
-      home: inHome,
-      market: inMarket,
-    });
+    stars.push({ ...star, home: inHome, market: inMarket });
   }
 
   return stars;
 }
 
 /**
- * How likely a candidate is to survive one route's globe and type together.
- *
- * Multiplied, against a single draw, so a candidate the type rejects costs the
+ * How likely a candidate is to survive one route's globe. Multiplied with the
+ * type's, against a single draw, so a candidate the type rejects costs the
  * generator exactly what one the globe rejects does.
+ *
+ * The distance is taken to the nearest edge of the star's glow (`reach`, its
+ * halo or else its core), so a bright star just outside the sphere cannot
+ * spill its halo over the sphere's points.
  */
-function layoutKeepProbability(
+function globeKeepProbability(
   x: number,
   y: number,
+  reach: number,
   layout: FieldLayout,
 ): number {
   const distance =
-    Math.hypot(x - layout.centreX, y - layout.centreY) / layout.radius;
-  return keepProbability(distance) * textKeepProbability(x, y, layout.clear);
+    (Math.hypot(x - layout.centreX, y - layout.centreY) - reach) /
+    layout.radius;
+  return keepProbability(distance);
 }
 
 /**
