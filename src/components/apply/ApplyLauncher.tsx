@@ -8,7 +8,10 @@ import type { ApplyContent } from "@/content/types";
 import { focusStart } from "@/lib/apply/focus";
 import { currentApplication, type OpenApplication } from "@/lib/apply/platform";
 import { loadTurnstile } from "@/lib/apply/turnstile";
-import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
+import {
+  STAR_CLEAR_ATTRIBUTE,
+  STAR_CLEAR_BOX_ATTRIBUTE,
+} from "@/lib/starfield/text-clearance";
 
 /**
  * APPLY NOW, and the panel it opens, mapped under Apply flow in
@@ -95,7 +98,7 @@ export function ApplyLauncher({
         aria-controls={PANEL_ID}
         aria-haspopup="dialog"
         onClick={() => onOpenChange(!open)}
-        {...{ [STAR_CLEAR_ATTRIBUTE]: "" }}
+        {...{ [STAR_CLEAR_ATTRIBUTE]: "", [STAR_CLEAR_BOX_ATTRIBUTE]: "" }}
         className={`${PRIMARY_ACTION} pointer-events-auto relative z-20 narrowest:px-2 narrowest:tracking-[0.08em]`}
       >
         {applicant === null ? (

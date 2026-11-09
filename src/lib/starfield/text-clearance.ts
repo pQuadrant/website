@@ -22,14 +22,25 @@ import type { ClearRect } from "@/lib/starfield/starfield-points";
  */
 export const STAR_CLEAR_ATTRIBUTE = "data-star-clear";
 
+/**
+ * Alongside `STAR_CLEAR_ATTRIBUTE`, marks a control whose box is drawn — a
+ * border and a fill — so the stars stay off the box rather than the label
+ * inside it. Cleared from its label, a bordered control's own padding eats the
+ * clearance: at 24px of padding a star can sit on the border with its glow
+ * inside. Measured from the box, the clearance follows the control at any
+ * size. Controls with no visible box (the Browse hint, the wordmark) leave it
+ * off and are cleared from their type.
+ */
+export const STAR_CLEAR_BOX_ATTRIBUTE = "data-star-clear-box";
+
 /** Every marked element on the page, whichever route it belongs to. */
 export function clearElements(): Element[] {
   return Array.from(document.querySelectorAll(`[${STAR_CLEAR_ATTRIBUTE}]`));
 }
 
 /**
- * The lines of type, and any SVG drawings such as the logo, that one route
- * shows, in viewport coordinates — which are the
+ * The lines of type, any SVG drawings such as the logo, and the boxes of
+ * bordered controls that one route shows, in viewport coordinates — which are the
  * starfield canvas's coordinates, since it is `fixed` at the viewport's top
  * left.
  *
@@ -50,6 +61,20 @@ export function measureClearRects(mode: StageMode): ClearRect[] {
   for (const element of clearElements()) {
     const shownOn = element.getAttribute(STAR_CLEAR_ATTRIBUTE);
     if (shownOn !== "" && shownOn !== mode) continue;
+
+    if (element.hasAttribute(STAR_CLEAR_BOX_ATTRIBUTE)) {
+      const box = element.getBoundingClientRect();
+      // Not displayed at this window size.
+      if (box.width >= 2 && box.height >= 2) {
+        rects.push({
+          left: box.left,
+          top: box.top,
+          right: box.right,
+          bottom: box.bottom,
+        });
+      }
+      continue;
+    }
 
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
     for (
