@@ -107,7 +107,7 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   `h-chrome-touch` (44 units) below `row:` and `h-chrome-control` (34 units) at `row:`
   and up; both controls stretch to it. The gap between them is 10px, and 18 units at
   `row:`. Below 380px wide (`narrowest:`) their tracking, padding and gap tighten so
-  they clear the wordmark, which inherits the label tracking and is about 100px wide. The border is `fg-2`; earlier design documents chose it as the first ramp value
+  they clear the wordmark, which is about 100px wide (98 units: the logo is 20 units tall). The border is `fg-2`; earlier design documents chose it as the first ramp value
   clearing 3:1 non-text contrast against the corner ground (not confirmed; measure
   before changing the border, fill or background). The fill `--color-control-fill` is
   kept faint so the control reads as an object rather than a lit panel (its comment in
@@ -117,6 +117,14 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   from `row:` up, a divider and a MARKETPLACE link, lit on the marketplace. There is
   no HOME link: visitors expect the wordmark to lead home. See
   [navigation and gestures](routes.md#navigation-and-gestures).
+- **Wordmark:** [Wordmark.tsx](../src/components/chrome/Wordmark.tsx), `Wordmark`: the
+  pQuadrant logo as inline SVG, drawn in `currentColor` (fg-0) and sized by height
+  (20 units). Used by `TopLeftCluster` and the privacy page; the link around it
+  carries the accessible name (`chromeContent.topLeft.wordmark.accessibleLabel`). Its
+  glow is `--filter-glow-0` in `globals.css`, a `filter` rather than the type's
+  `text-shadow`, with halved radii and slightly lower alphas than `glow-0`; the
+  token's comment explains both. Making the logo wider than about 100px needs the
+  top-right controls rechecked at 320px (`narrowest:`).
 - **Control states:** every control has an `active:` state matching its `hover:` state,
   because Tailwind emits `hover:` only for devices that hover. Focus is
   `focus-visible:shadow-glow-focus` and is deliberately outside the transition, so it

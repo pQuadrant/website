@@ -76,7 +76,9 @@ glow (core and halo alpha × radius²) per quarter.
 [src/lib/starfield/text-clearance.ts](../src/lib/starfield/text-clearance.ts):
 `STAR_CLEAR_ATTRIBUTE` (`data-star-clear`) marks text the stars stay off.
 `measureClearRects(mode)` measures each line of text inside marked elements (not the
-element box), skips `sr-only` text, and skips text not displayed at this size. Stars are
+element box), skips `sr-only` text, and skips text not displayed at this size. An
+`svg` inside a marked element, such as the wordmark logo, has no text to measure and
+is cleared by its own box. Stars are
 kept with probability 0 within `textClearInner` (24px) of a line, easing to 1 at
 `textClearOuter` (48px).
 

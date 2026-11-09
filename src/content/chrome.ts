@@ -9,7 +9,7 @@ import type { ChromeContent } from "@/content/types";
 
 export const chromeContent: ChromeContent = {
   topLeft: {
-    wordmark: { label: "pQuadrant", accessibleLabel: "pQuadrant home" },
+    wordmark: { accessibleLabel: "pQuadrant home" },
     marketplace: "MARKETPLACE",
   },
 
