@@ -53,7 +53,7 @@ it.
 
       apply ──SUBMIT──▶ code ──CONFIRM──▶ next
         │                ▲
-        └─"Already applied?"─▶ open ──EMAIL ME A CODE─┘
+        └─"Already applied?"─▶ open ──SEND CODE───────┘
 
   "Already applied? Open your application" sits beside CONTINUE on step one, where step
   two has BACK, so it adds no height. The open screen asks only for an email. BACK on
@@ -83,7 +83,7 @@ it.
   digits, so a pasted "123 456" fits (`tidyCode`). The platform tidies again with the
   same rules (below).
 - **Checking.** Nothing is marked until a form's button is first pressed (CONTINUE,
-  SUBMIT, EMAIL ME A CODE, CONFIRM). Then each field with a problem gets a red border
+  SUBMIT, SEND CODE, CONFIRM). Then each field with a problem gets a red border
   and its own message under it, tied with `aria-describedby`; focus moves to the first
   such field (see focus, below), and each message goes as soon as its field is put
   right. Changing step starts checking over. Phone is the one optional question and is
@@ -152,7 +152,8 @@ it.
 - **Focus.** [src/lib/apply/focus.ts](../src/lib/apply/focus.ts) decides where it
   goes. With a mouse or keyboard, opening and each new step or screen focus the first
   field, and a failed check, including one the platform reports, focuses the first
-  field with a problem. **Design constraint:** on a touch screen the form never opens
+  field with a problem. A screen with no field, the next steps, starts on its title
+  instead, so no button is lit before it is chosen. **Design constraint:** on a touch screen the form never opens
   the keyboard or a list's picker by itself, because it covers the step before it is
   read; focus goes to the panel's title (`data-step-title`) instead, stays put after a
   failed check, and a `role="status"` line announces how many answers need attention
@@ -228,6 +229,12 @@ it.
   hidden, where nothing could fit: the 320px iPhone SE (320 × 460 visible) and phones
   on their side. The automate box is three lines tall, two under 600px tall, and
   scrolls inside itself.
+- **Laptops.** The panel widens and gains padding where the nav is enlarged, about
+  607px wide with 34px of padding at 1512px; its fields and type do not grow
+  ([nav scale](stage.md#tokens-breakpoints-and-variants)). Both steps fit wherever they
+  did at 500px; the extra padding adds about 20px of height. With every message shown,
+  step 2 still scrolls at 1512 × 700, and step 2 scrolls at 1280 × 600 (600 is not yet
+  `cramped:`), as they did before the change.
 - **Narrowest phones.** Below 380px wide (`narrowest:` in `globals.css`), the two
   top-right controls tighten their tracking, padding and gap so they clear the wordmark
   ([corner chrome](stage.md#corner-chrome)). The APPLICATION label tightens further

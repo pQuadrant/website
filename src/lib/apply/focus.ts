@@ -33,14 +33,21 @@ function firstShown(root: HTMLElement, selector: string): HTMLElement | null {
   return null;
 }
 
-/** The first thing to use in `root`: a field, or a button or link. */
+/**
+ * The first field in `root`, ready to type, or the screen's title where there
+ * is no field to start on or where focusing one would open the keyboard.
+ *
+ * A screen of buttons alone starts on its title rather than the first button:
+ * focused, a button lights up as if chosen before the visitor has read the
+ * screen. Tab still reaches it next.
+ */
 export function focusStart(root: HTMLElement): void {
   const first = firstShown(root, CONTROLS);
-  if (first !== null && first.matches(FIELDS) && isTouchScreen()) {
-    firstShown(root, `[${STEP_TITLE_ATTRIBUTE}]`)?.focus();
+  if (first !== null && first.matches(FIELDS) && !isTouchScreen()) {
+    first.focus();
     return;
   }
-  first?.focus();
+  (firstShown(root, `[${STEP_TITLE_ATTRIBUTE}]`) ?? first)?.focus();
 }
 
 /**

@@ -16,7 +16,12 @@ export const PRIMARY_ACTION =
 export const SECONDARY_ACTION =
   "flex items-center justify-center border border-fg-2 bg-control-fill px-chrome-control-pad font-mono text-chrome-label text-fg-0 text-shadow-glow-0 transition-[border-color] duration-hover ease-[ease] hover:border-accent-bright active:border-accent-bright focus-visible:shadow-glow-focus focus-visible:outline-hidden";
 
-/** The height of every action inside the panel, matching the chrome row. */
+/**
+ * The height of every action inside the panel: the chrome row's height counts,
+ * in the panel's unit. The panel keeps the page's scale while the nav above it
+ * is on its own, so on laptops these are a little shorter than the nav's
+ * controls (Nav scale in `globals.css`).
+ */
 export const ACTION_HEIGHT = "h-chrome-touch row:h-chrome-control";
 
 /**

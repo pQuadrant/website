@@ -83,6 +83,10 @@ export function Stage({
           height at every size, so they share one centre line and a wordmark
           reads level with the bordered control opposite it.
 
+          Both set `--chrome-unit` to `--nav-unit`, so everything in the corners
+          is sized on the nav's scale, a little larger than the page's on
+          laptops (Nav scale in `globals.css`).
+
           The margin tier and the reflow are deliberately on different
           triggers. `row:` is both axes — at least 640px wide and at least
           500px tall — because a cluster runs out of room in either direction.
@@ -132,13 +136,13 @@ export function Stage({
           click at one second in whether or not it has finished appearing, and
           the sequence carries on underneath. */}
       <div
-        className="pointer-events-none fixed top-[56px] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
+        className="pointer-events-none fixed top-[56px] [--chrome-unit:var(--nav-unit)] left-stage-margin-tight pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] stage-narrow:left-stage-margin-narrow stage:left-stage-margin animate-chrome-in [animation-delay:200ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
         {topLeft}
       </div>
       <div
-        className="pointer-events-none fixed top-[56px] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none"
+        className="pointer-events-none fixed top-[56px] [--chrome-unit:var(--nav-unit)] right-stage-margin-tight pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] stage-narrow:right-stage-margin-narrow stage:right-stage-margin animate-chrome-in [animation-delay:260ms] motion-reduce:animate-none"
         {...{ [CHROME_CORNER_ATTRIBUTE]: true }}
       >
         {topRight}

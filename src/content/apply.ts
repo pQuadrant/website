@@ -93,7 +93,7 @@ export const applyContent: ApplyContent = {
   open: {
     title: "Open your application",
     intro: "Enter the email you applied with and we'll send you a code.",
-    submit: "EMAIL ME A CODE",
+    submit: "SEND CODE",
     notApplied: "We don't have an application for this email.",
   },
 

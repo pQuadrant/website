@@ -30,7 +30,7 @@ import { useHumanCheck } from "@/lib/apply/human-proof";
  *
  *   apply ──SUBMIT──▶ code ──CONFIRM──▶ next
  *     │                ▲
- *     └─"Already applied?"─▶ open ──EMAIL ME A CODE─┘
+ *     └─"Already applied?"─▶ open ──SEND CODE───────┘
  *
  * While an application is open on this device (`applicant`), the panel shows
  * only the screen after the code; "Not you?" closes it and returns to the
