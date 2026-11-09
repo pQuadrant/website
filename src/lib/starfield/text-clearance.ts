@@ -28,7 +28,8 @@ export function clearElements(): Element[] {
 }
 
 /**
- * The lines of type one route shows, in viewport coordinates — which are the
+ * The lines of type, and any SVG drawings such as the logo, that one route
+ * shows, in viewport coordinates — which are the
  * starfield canvas's coordinates, since it is `fixed` at the viewport's top
  * left.
  *
@@ -78,6 +79,20 @@ export function measureClearRects(mode: StageMode): ClearRect[] {
           bottom: box.bottom,
         });
       }
+    }
+
+    // A drawing has no text to walk, so a marked one is cleared by its box:
+    // the logo is an SVG the width of the type it replaced. Its box is the
+    // artwork's, so it clears no more sky than a line of type would.
+    for (const graphic of element.querySelectorAll("svg")) {
+      const box = graphic.getBoundingClientRect();
+      if (box.width < 2 || box.height < 2) continue;
+      rects.push({
+        left: box.left,
+        top: box.top,
+        right: box.right,
+        bottom: box.bottom,
+      });
     }
   }
 

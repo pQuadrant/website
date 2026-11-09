@@ -17,8 +17,7 @@ export interface ExternalLink {
 /** Top-left cluster: the wordmark, which leads home, and the marketplace. */
 export interface ChromeTopLeftContent {
   wordmark: {
-    label: string;
-    /** Read in place of the label: the wordmark is the link home. */
+    /** The logo's accessible name. It is drawn, not typed, and is the link home. */
     accessibleLabel: string;
   };
   marketplace: string;

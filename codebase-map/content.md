@@ -7,7 +7,7 @@ stays out of components is in [conventions](../docs/conventions.md#content).
 
 | Copy                                                      | Location                                                                                                                                          | Consumed by                              |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Wordmark, MARKETPLACE                                     | `chromeContent.topLeft` in [src/content/chrome.ts](../src/content/chrome.ts)                                                                      | `TopLeftCluster`                         |
+| Wordmark accessible name, MARKETPLACE                     | `chromeContent.topLeft` in [src/content/chrome.ts](../src/content/chrome.ts)                                                                      | `TopLeftCluster`                         |
 | Platform link label and URL (`https://app.pquadrant.com`) | `chromeContent.topRight` in `chrome.ts`                                                                                                           | `TopRightCluster`                        |
 | Tagline (`lead`, `emphasis`), BROWSE AI SYSTEMS           | `homeContent.tagline`, `homeContent.browse` in [src/content/home.ts](../src/content/home.ts)                                                      | `Tagline`, `BrowseHint`                  |
 | Marketplace heading, line and catalogue                   | `marketplaceContent` in [src/content/marketplace.ts](../src/content/marketplace.ts)                                                               | `MarketplaceHeading`, `MarketplacePanel` |
@@ -82,8 +82,8 @@ authorizes building it.
 ([src/components/privacy/PrivacyPolicy.tsx](../src/components/privacy/PrivacyPolicy.tsx)).
 **Design constraint:** it is linked only from the apply form's consent checkbox and
 appears in no navigation or footer; the reason is the product owner's decision, recorded
-beside `privacyContent`. Its wordmark matches the stage's in position, size and
-tracking, and leads home. The contact address is linked wherever it appears.
+beside `privacyContent`. Its wordmark is the same `Wordmark` logo as the stage's, in the same position
+and size, and leads home. The contact address is linked wherever it appears.
 
 The reading column hangs off the left margin. From 1100px wide (`stage:`), a contents
 list, `PrivacyContents`

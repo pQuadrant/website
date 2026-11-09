@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Wordmark } from "@/components/chrome/Wordmark";
 import { PrivacyContents } from "@/components/privacy/PrivacyContents";
 import type {
   ChromeTopLeftContent,
@@ -87,15 +88,13 @@ export function PrivacyPolicy({ content, wordmark }: PrivacyPolicyProps) {
 
   return (
     <div className="min-h-svh pt-[calc(56px+env(safe-area-inset-top))] pr-[var(--stage-inset-right)] pb-[calc(96px+env(safe-area-inset-bottom))] pl-[var(--stage-inset-left)]">
-      {/* The stage's wordmark inherits the chrome label's tracking, 0.2em of
-          the 10-unit label size, so the same 2 units are written here. */}
       <header className="flex h-chrome-touch items-center row:h-chrome-control">
         <Link
           href="/"
           aria-label={wordmark.accessibleLabel}
-          className="font-sans text-[calc(17*var(--chrome-unit))] tracking-[calc(2*var(--chrome-unit))] text-fg-0 text-shadow-glow-0 transition-[color,text-shadow] duration-hover focus-visible:shadow-glow-focus focus-visible:outline-hidden"
+          className="-m-[calc(3*var(--chrome-unit))] p-[calc(3*var(--chrome-unit))] text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden"
         >
-          {wordmark.label}
+          <Wordmark className="filter-(--filter-glow-0)" />
         </Link>
       </header>
 

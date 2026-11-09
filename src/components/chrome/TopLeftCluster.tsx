@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Wordmark } from "@/components/chrome/Wordmark";
 import type { ChromeTopLeftContent } from "@/content/types";
 import type { StageMode } from "@/lib/stage/mode";
 import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
@@ -30,9 +31,11 @@ export function TopLeftCluster({ content, mode }: TopLeftClusterProps) {
         href="/"
         aria-label={wordmark.accessibleLabel}
         {...{ [STAR_CLEAR_ATTRIBUTE]: "" }}
-        className={`${LINK} font-sans text-[calc(17*var(--chrome-unit))] text-fg-0 text-shadow-glow-0`}
+        // The padding keeps the focus ring off the logo's strokes, and the
+        // matching negative margin keeps the logo where it was.
+        className={`${LINK} -m-[calc(3*var(--chrome-unit))] p-[calc(3*var(--chrome-unit))] text-fg-0`}
       >
-        {wordmark.label}
+        <Wordmark className="filter-(--filter-glow-0)" />
       </Link>
       <span
         aria-hidden="true"

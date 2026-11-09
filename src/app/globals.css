@@ -59,6 +59,25 @@
     0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
     0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
 
+  /* The same fg-0 emission for the logo, which is a drawing rather than type,
+     so `text-shadow` does not reach it. CSS's `drop-shadow()` filter with no
+     offset, in the logo's own colour, is a halo and not the cast shadow ruled
+     out above. The colour is `glow-0`'s and the radii are half its values,
+     because `drop-shadow()` reads its length as the blur's standard deviation
+     where `text-shadow` reads twice that; halved, the falloff matches the text
+     glow's on the same glyph. The alphas are about a fifth lower than
+     `glow-0`'s: the logo's strokes are heavier than the chrome's type, so at
+     equal alphas it emitted more light and its halo read as too strong.
+
+     A whole `filter` value, applied with `filter-(--filter-glow-0)`, rather
+     than a `--drop-shadow-*` token: Tailwind wraps a multi-stop drop-shadow
+     token in a single `drop-shadow()`, which is invalid, and the browser drops
+     the filter without a word. */
+  --filter-glow-0: drop-shadow(
+      0 0 calc(2.5 * var(--chrome-unit)) rgba(234, 237, 244, 0.36)
+    )
+    drop-shadow(0 0 calc(7 * var(--chrome-unit)) rgba(234, 237, 244, 0.22));
+
   /* The body of a quiet control: the platform link and the apply flow's
      secondary actions. A faint white lift that gives the control something to
      be, rather than a floating word. Kept faint: it should read as an object,
