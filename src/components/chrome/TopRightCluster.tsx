@@ -1,6 +1,9 @@
 import { ApplyLauncher } from "@/components/apply/ApplyLauncher";
 import type { ApplyContent, ChromeTopRightContent } from "@/content/types";
-import { STAR_CLEAR_ATTRIBUTE } from "@/lib/starfield/text-clearance";
+import {
+  STAR_CLEAR_ATTRIBUTE,
+  STAR_CLEAR_BOX_ATTRIBUTE,
+} from "@/lib/starfield/text-clearance";
 
 /**
  * The top-right cluster: the platform link, then APPLY NOW and the panel it
@@ -48,7 +51,7 @@ export function TopRightCluster({
           is briefly not there. */}
       <a
         href={content.platformLink.href}
-        {...{ [STAR_CLEAR_ATTRIBUTE]: "" }}
+        {...{ [STAR_CLEAR_ATTRIBUTE]: "", [STAR_CLEAR_BOX_ATTRIBUTE]: "" }}
         className="pointer-events-auto relative z-20 flex items-center border border-fg-2 bg-control-fill px-chrome-control-pad narrowest:px-2 text-fg-0 text-shadow-glow-0 transition-[color,border-color,text-shadow] duration-hover ease-[ease] hover:border-accent-bright hover:text-fg-0 hover:text-shadow-glow-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden active:border-accent-bright active:text-fg-0 active:text-shadow-glow-0"
       >
         {content.platformLink.label}

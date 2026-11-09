@@ -78,19 +78,23 @@ glow (core and halo alpha × radius²) per quarter.
 `measureClearRects(mode)` measures each line of text inside marked elements (not the
 element box), skips `sr-only` text, and skips text not displayed at this size. An
 `svg` inside a marked element, such as the wordmark logo, has no text to measure and
-is cleared by its own box. Stars are
+is cleared by its own box. A bordered control also carries `STAR_CLEAR_BOX_ATTRIBUTE`
+(`data-star-clear-box`) and is cleared from its border box instead of its label:
+measured from the label, the control's own padding used up the clearance once the nav
+grew on laptops, and stars sat against the border. PLATFORM and APPLY NOW carry it;
+the wordmark and the Browse hint, which draw no box, do not. Stars are
 kept with probability 0 within `textClearInner` (24px) of a line, easing to 1 at
 `textClearOuter` (48px).
 
 The value says which route's sky it clears: `""` for both, `"home"` or `"market"`.
 
-| Marked element                               | Value      |
-| -------------------------------------------- | ---------- |
-| Platform link in `TopRightCluster`           | `""`       |
-| APPLY NOW / APPLICATION in `ApplyLauncher`   | `""`       |
-| Wordmark and MARKETPLACE in `TopLeftCluster` | `""`       |
-| Tagline paragraph, Browse hint               | `"home"`   |
-| Marketplace heading block                    | `"market"` |
+| Marked element                                   | Value      |
+| ------------------------------------------------ | ---------- |
+| Platform link in `TopRightCluster` (box)         | `""`       |
+| APPLY NOW / APPLICATION in `ApplyLauncher` (box) | `""`       |
+| Wordmark and MARKETPLACE in `TopLeftCluster`     | `""`       |
+| Tagline paragraph, Browse hint                   | `"home"`   |
+| Marketplace heading block                        | `"market"` |
 
 **New text must carry the attribute, or stars can land on it.** The marketplace
 catalogue (search field, row titles, cards) is not marked today. It sits over a panel
