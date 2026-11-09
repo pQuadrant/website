@@ -155,15 +155,19 @@ reasoning; read it before changing values.
   letter-spacing (in `em`) and the corner margins do not scale (design constraint,
   explained beside the chrome dimensions in `globals.css`).
 - **Nav scale:** the two corner regions in `Stage` and the privacy page's header set
-  `--chrome-unit` to `--nav-unit`, `max(--content-unit, clamp(1px, 1px + (100vw −
-1024px) × 0.00082, 1.4px))`: the same as the content unit at 1024px and below and
-  from about 1900px, and up to about 15% larger between, peaking at 1512px (labels
+  `--chrome-unit` to `--nav-unit`, which is
+  `max(--content-unit, clamp(1px, 1px + (100vw − 1024px) × 0.00082, 1.4px))`: the same
+  as the content unit at 1024px and below and from about 1900px, and up to about 15% larger between, peaking at 1512px (labels
   14px, controls 48px, logo 28px tall). Laptops were where the nav looked smallest,
   once viewing distance and pixel density are allowed for; the reasoning is beside
-  `--nav-unit` in `globals.css`. The apply panel, inside the top-right region, sets
-  the unit back to `--content-unit`, so it and its actions keep the page's scale (its
-  actions are slightly shorter than the nav's controls on laptops). `--chrome-bar` is
-  in nav units, so the marketplace and the panel stack under the larger row.
+  `--nav-unit` in `globals.css`. The apply panel, inside the top-right region, sets the
+  unit back to `--content-unit`: its fields and type keep the page's scale, since taller
+  fields and larger form text read heavier rather than finer. It grows with the nav in
+  width and padding instead, by `--nav-lift` (the nav unit less the content unit):
+  `--apply-panel-width` and `--apply-panel-pad` are 500px and 24px wherever the lift is
+  0, and about 607px and 34px at 1512px. Its actions are slightly shorter than the nav's
+  controls on laptops. `--chrome-bar` is in nav units, so the marketplace and the panel
+  stack under the larger row.
 - **Breakpoints:** `--breakpoint-stage: 1100px` and `--breakpoint-stage-narrow: 640px`
   drive only the margin tiers, by width.
 - **Variants:** `row:` is `(width >= 640px) and (height >= 500px)`, the roomy layout;

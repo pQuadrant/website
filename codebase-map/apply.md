@@ -228,6 +228,12 @@ it.
   hidden, where nothing could fit: the 320px iPhone SE (320 × 460 visible) and phones
   on their side. The automate box is three lines tall, two under 600px tall, and
   scrolls inside itself.
+- **Laptops.** The panel widens and gains padding where the nav is enlarged, about
+  607px wide with 34px of padding at 1512px; its fields and type do not grow
+  ([nav scale](stage.md#tokens-breakpoints-and-variants)). Both steps fit wherever they
+  did at 500px; the extra padding adds about 20px of height. With every message shown,
+  step 2 still scrolls at 1512 × 700, and step 2 scrolls at 1280 × 600 (600 is not yet
+  `cramped:`), as they did before the change.
 - **Narrowest phones.** Below 380px wide (`narrowest:` in `globals.css`), the two
   top-right controls tighten their tracking, padding and gap so they clear the wordmark
   ([corner chrome](stage.md#corner-chrome)). The APPLICATION label tightens further

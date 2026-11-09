@@ -129,7 +129,8 @@ export function ApplyLauncher({
           no room; the scrollbar stays hidden. The type is reset because the
           corner's row is set in the chrome's mono label style, and so is the
           unit: the corner is on the nav's scale, and the panel is page content
-          on the page's. */}
+          on the page's. Its width and padding follow the nav instead
+          (`--apply-panel-width` in `globals.css`). */}
       <div
         ref={panelRef}
         id={PANEL_ID}
@@ -138,7 +139,7 @@ export function ApplyLauncher({
         aria-label={content.title}
         data-open={open ? "" : undefined}
         inert={!open}
-        className="pointer-events-auto invisible fixed top-[calc(var(--chrome-bar-bottom)+14px)] [--chrome-unit:var(--content-unit)] cramped:top-[calc(var(--chrome-bar-bottom)+10px)] right-[var(--stage-inset-right)] z-10 max-h-[calc(100svh-var(--chrome-bar-bottom)-28px)] cramped:max-h-[calc(100svh-var(--chrome-bar-bottom)-20px)] w-[min(500px,calc(100vw-var(--stage-inset-left)-var(--stage-inset-right)))] origin-top-right -translate-y-2.5 scale-[0.98] overflow-y-auto overscroll-contain border border-hairline bg-panel p-4 font-sans tracking-normal opacity-0 [scrollbar-width:none] [transition:opacity_260ms_cubic-bezier(0.4,0,1,1),translate_260ms_cubic-bezier(0.4,0,1,1),scale_260ms_cubic-bezier(0.4,0,1,1),visibility_0s_linear_260ms] stage-narrow:p-6 cramped:py-3 data-open:visible data-open:translate-y-0 data-open:scale-100 data-open:opacity-100 data-open:[transition:opacity_320ms_cubic-bezier(0.2,0.7,0.2,1),translate_320ms_cubic-bezier(0.2,0.7,0.2,1),scale_320ms_cubic-bezier(0.2,0.7,0.2,1),visibility_0s] motion-reduce:transition-none! [&::-webkit-scrollbar]:hidden"
+        className="pointer-events-auto invisible fixed top-[calc(var(--chrome-bar-bottom)+14px)] [--chrome-unit:var(--content-unit)] cramped:top-[calc(var(--chrome-bar-bottom)+10px)] right-[var(--stage-inset-right)] z-10 max-h-[calc(100svh-var(--chrome-bar-bottom)-28px)] cramped:max-h-[calc(100svh-var(--chrome-bar-bottom)-20px)] w-[min(var(--apply-panel-width),calc(100vw-var(--stage-inset-left)-var(--stage-inset-right)))] origin-top-right -translate-y-2.5 scale-[0.98] overflow-y-auto overscroll-contain border border-hairline bg-panel p-4 font-sans tracking-normal opacity-0 [scrollbar-width:none] [transition:opacity_260ms_cubic-bezier(0.4,0,1,1),translate_260ms_cubic-bezier(0.4,0,1,1),scale_260ms_cubic-bezier(0.4,0,1,1),visibility_0s_linear_260ms] stage-narrow:p-(--apply-panel-pad) cramped:py-3 data-open:visible data-open:translate-y-0 data-open:scale-100 data-open:opacity-100 data-open:[transition:opacity_320ms_cubic-bezier(0.2,0.7,0.2,1),translate_320ms_cubic-bezier(0.2,0.7,0.2,1),scale_320ms_cubic-bezier(0.2,0.7,0.2,1),visibility_0s] motion-reduce:transition-none! [&::-webkit-scrollbar]:hidden"
       >
         <ApplyFlow
           content={content}
