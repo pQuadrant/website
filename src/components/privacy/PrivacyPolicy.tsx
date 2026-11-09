@@ -88,13 +88,14 @@ export function PrivacyPolicy({ content, wordmark }: PrivacyPolicyProps) {
 
   return (
     <div className="min-h-svh pt-[calc(56px+env(safe-area-inset-top))] pr-[var(--stage-inset-right)] pb-[calc(96px+env(safe-area-inset-bottom))] pl-[var(--stage-inset-left)]">
-      <header className="flex h-chrome-touch items-center row:h-chrome-control">
+      {/* On the nav's scale, as the stage's corner is, so the logo matches. */}
+      <header className="flex h-chrome-touch items-center [--chrome-unit:var(--nav-unit)] row:h-chrome-control">
         <Link
           href="/"
           aria-label={wordmark.accessibleLabel}
           className="-m-[calc(3*var(--chrome-unit))] p-[calc(3*var(--chrome-unit))] text-fg-0 focus-visible:shadow-glow-focus focus-visible:outline-hidden"
         >
-          <Wordmark className="filter-(--filter-glow-0)" />
+          <Wordmark className="glow-logo" />
         </Link>
       </header>
 

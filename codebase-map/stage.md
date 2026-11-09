@@ -107,7 +107,7 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   `h-chrome-touch` (44 units) below `row:` and `h-chrome-control` (34 units) at `row:`
   and up; both controls stretch to it. The gap between them is 10px, and 18 units at
   `row:`. Below 380px wide (`narrowest:`) their tracking, padding and gap tighten so
-  they clear the wordmark, which is about 100px wide (98 units: the logo is 20 units tall). The border is `fg-2`; earlier design documents chose it as the first ramp value
+  they clear the wordmark, which is 98px wide there (the logo is 20 units tall). The border is `fg-2`; earlier design documents chose it as the first ramp value
   clearing 3:1 non-text contrast against the corner ground (not confirmed; measure
   before changing the border, fill or background). The fill `--color-control-fill` is
   kept faint so the control reads as an object rather than a lit panel (its comment in
@@ -121,10 +121,11 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
   pQuadrant logo as inline SVG, drawn in `currentColor` (fg-0) and sized by height
   (20 units). Used by `TopLeftCluster` and the privacy page; the link around it
   carries the accessible name (`chromeContent.topLeft.wordmark.accessibleLabel`). Its
-  glow is `--filter-glow-0` in `globals.css`, a `filter` rather than the type's
-  `text-shadow`, with halved radii and slightly lower alphas than `glow-0`; the
-  token's comment explains both. Making the logo wider than about 100px needs the
-  top-right controls rechecked at 320px (`narrowest:`).
+  glow is the `glow-logo` utility in `globals.css`, a `filter` rather than the type's
+  `text-shadow`, with halved radii and slightly lower alphas than `glow-0`; its
+  comment explains both. 20 units is 98px on phones, 138px on a 14-inch MacBook (nav
+  scale). Making the logo wider at 1024px and below needs the top-right controls
+  rechecked at 320px (`narrowest:`).
 - **Control states:** every control has an `active:` state matching its `hover:` state,
   because Tailwind emits `hover:` only for devices that hover. Focus is
   `focus-visible:shadow-glow-focus` and is deliberately outside the transition, so it
@@ -137,19 +138,32 @@ carry `data-chrome-corner` (`CHROME_CORNER_ATTRIBUTE`), which the globe measures
 All in [src/app/globals.css](../src/app/globals.css). Each block's comment carries its
 reasoning; read it before changing values.
 
-- `@theme static`: colours (`stage`, `fg-0..2`, `separator`, `accent-bright`, `land`,
-  `ocean`, `highlight`, `vignette`, `control-fill`), the glow text-shadows
+- `@theme static inline`: colours (`stage`, `fg-0..2`, `separator`, `accent-bright`,
+  `land`, `ocean`, `highlight`, `vignette`, `control-fill`), the glow text-shadows
   `--text-shadow-glow-0/1`, `--shadow-glow-focus`, `--text-chrome-label`, chrome
   spacings, stage margins, entrance animations, `--transition-duration-hover`.
   `static` keeps tokens emitted even when no utility uses them, because the globe
   reads `--color-land`, `--color-ocean` and `--color-highlight` at runtime
-  ([lifecycle](globe.md#lifecycle)).
-- **Chrome scale:** `--chrome-unit` on `:root` is
-  `clamp(1px, 1px + (100vw − 1024px) × 0.00045573, 1.7px)`: exactly 1px at 1024px and
-  below, 1.7px from 2560px. Chrome type, control heights, padding, gaps and glow radii
-  are counts of this unit. Borders, the focus ring's 1px ring, letter-spacing (in `em`)
-  and the corner margins do not scale (design constraint, explained beside the chrome
-  dimensions in `globals.css`).
+  ([lifecycle](globe.md#lifecycle)). `inline` writes token values into the utilities,
+  so a size written in `--chrome-unit` reads the unit on the element being styled;
+  read through `var()` it would be fixed at the root's unit and miss the nav scale.
+  For the same reason the logo's glow is a `glow-logo` utility, not a variable.
+- **Chrome scale:** sizes are written in `--chrome-unit`. On `:root` it is
+  `--content-unit`, `clamp(1px, 1px + (100vw − 1024px) × 0.00045573, 1.7px)`: exactly
+  1px at 1024px and below, 1.7px from 2560px. Chrome type, control heights, padding,
+  gaps and glow radii are counts of the unit. Borders, the focus ring's 1px ring,
+  letter-spacing (in `em`) and the corner margins do not scale (design constraint,
+  explained beside the chrome dimensions in `globals.css`).
+- **Nav scale:** the two corner regions in `Stage` and the privacy page's header set
+  `--chrome-unit` to `--nav-unit`, `max(--content-unit, clamp(1px, 1px + (100vw −
+1024px) × 0.00082, 1.4px))`: the same as the content unit at 1024px and below and
+  from about 1900px, and up to about 15% larger between, peaking at 1512px (labels
+  14px, controls 48px, logo 28px tall). Laptops were where the nav looked smallest,
+  once viewing distance and pixel density are allowed for; the reasoning is beside
+  `--nav-unit` in `globals.css`. The apply panel, inside the top-right region, sets
+  the unit back to `--content-unit`, so it and its actions keep the page's scale (its
+  actions are slightly shorter than the nav's controls on laptops). `--chrome-bar` is
+  in nav units, so the marketplace and the panel stack under the larger row.
 - **Breakpoints:** `--breakpoint-stage: 1100px` and `--breakpoint-stage-narrow: 640px`
   drive only the margin tiers, by width.
 - **Variants:** `row:` is `(width >= 640px) and (height >= 500px)`, the roomy layout;

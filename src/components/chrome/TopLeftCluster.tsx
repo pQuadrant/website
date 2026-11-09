@@ -35,7 +35,7 @@ export function TopLeftCluster({ content, mode }: TopLeftClusterProps) {
         // matching negative margin keeps the logo where it was.
         className={`${LINK} -m-[calc(3*var(--chrome-unit))] p-[calc(3*var(--chrome-unit))] text-fg-0`}
       >
-        <Wordmark className="filter-(--filter-glow-0)" />
+        <Wordmark className="glow-logo" />
       </Link>
       <span
         aria-hidden="true"

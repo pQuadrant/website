@@ -6,8 +6,16 @@
 }
 
 /* `static` keeps every token in the output even before anything consumes it.
-   The globe reads its point colours from these variables at runtime. */
-@theme static {
+   The globe reads its point colours from these variables at runtime.
+
+   `inline` writes each token's value into the utilities that use it rather
+   than a `var()` of the token. That matters for every size written in
+   `--chrome-unit`: a custom property's `var()`s are resolved where it is
+   declared, so a token read through `var()` would be fixed at the root's unit,
+   and the corner chrome, which sets its own larger unit (Nav scale, below),
+   would get the page's sizes instead of its own. Inlined, the unit is read on
+   the element being styled. */
+@theme static inline {
   /* Surfaces */
   --color-stage: #020306;
 
@@ -58,25 +66,6 @@
   --text-shadow-glow-1:
     0 0 calc(4 * var(--chrome-unit)) rgba(139, 148, 162, 0.38),
     0 0 calc(12 * var(--chrome-unit)) rgba(139, 148, 162, 0.22);
-
-  /* The same fg-0 emission for the logo, which is a drawing rather than type,
-     so `text-shadow` does not reach it. CSS's `drop-shadow()` filter with no
-     offset, in the logo's own colour, is a halo and not the cast shadow ruled
-     out above. The colour is `glow-0`'s and the radii are half its values,
-     because `drop-shadow()` reads its length as the blur's standard deviation
-     where `text-shadow` reads twice that; halved, the falloff matches the text
-     glow's on the same glyph. The alphas are about a fifth lower than
-     `glow-0`'s: the logo's strokes are heavier than the chrome's type, so at
-     equal alphas it emitted more light and its halo read as too strong.
-
-     A whole `filter` value, applied with `filter-(--filter-glow-0)`, rather
-     than a `--drop-shadow-*` token: Tailwind wraps a multi-stop drop-shadow
-     token in a single `drop-shadow()`, which is invalid, and the browser drops
-     the filter without a word. */
-  --filter-glow-0: drop-shadow(
-      0 0 calc(2.5 * var(--chrome-unit)) rgba(234, 237, 244, 0.36)
-    )
-    drop-shadow(0 0 calc(7 * var(--chrome-unit)) rgba(234, 237, 244, 0.22));
 
   /* The body of a quiet control: the platform link and the apply flow's
      secondary actions. A faint white lift that gives the control something to
@@ -214,6 +203,28 @@
   --transition-duration-hover: 160ms;
 }
 
+/* The same fg-0 emission for the logo, which is a drawing rather than type,
+   so `text-shadow` does not reach it. CSS's `drop-shadow()` filter with no
+   offset, in the logo's own colour, is a halo and not the cast shadow ruled
+   out above. The colour is `glow-0`'s and the radii are half its values,
+   because `drop-shadow()` reads its length as the blur's standard deviation
+   where `text-shadow` reads twice that; halved, the falloff matches the text
+   glow's on the same glyph. The alphas are about a fifth lower than
+   `glow-0`'s: the logo's strokes are heavier than the chrome's type, so at
+   equal alphas it emitted more light and its halo read as too strong.
+
+   A utility rather than a `--drop-shadow-*` token: Tailwind wraps a multi-stop
+   drop-shadow token in a single `drop-shadow()`, which is invalid, and the
+   browser drops the filter without a word. Not a plain variable either: read
+   through `var()` it would resolve at the root's `--chrome-unit` and miss the
+   nav's scale (see `inline` on the theme above). */
+@utility glow-logo {
+  filter: drop-shadow(
+      0 0 calc(2.5 * var(--chrome-unit)) rgba(234, 237, 244, 0.36)
+    )
+    drop-shadow(0 0 calc(7 * var(--chrome-unit)) rgba(234, 237, 244, 0.22));
+}
+
 /* `row:` — the window has room to run the chrome as rows.
 
    Two ways to run out of room, and either one triggers the same reflow: a
@@ -310,8 +321,37 @@
    * which the chrome visibly jumps, and it adds no tier to the two
    * width breakpoints. S_MAX is 1.7 because, as a share of the viewport, the
    * platform control at 2560px is still smaller than it is on a phone.
+   *
+   * `--content-unit` holds this ramp, and `--chrome-unit` is what every size is
+   * written in. They are the same everywhere except the corner nav, which sets
+   * `--chrome-unit` to `--nav-unit` (and the apply panel inside it, which sets
+   * it back to `--content-unit`).
    */
-  --chrome-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
+  --content-unit: clamp(1px, calc(1px + (100vw - 1024px) * 0.00045573), 1.7px);
+  --chrome-unit: var(--content-unit);
+
+  /*
+   * Nav scale: the corner nav's unit, about 15% above the content's on laptops.
+   *
+   * The content ramp leaves laptops the outlier. Allowing for viewing distance
+   * and pixel density, the nav's 10-unit labels look about the same size on a
+   * phone (10px at about 30cm), a 24-inch 1920px monitor (14px at about 65cm)
+   * and a 27-inch 2560px one (17px at about 70cm), but some 15% smaller on a
+   * 14-inch MacBook (12px at about 50cm on a dense panel).
+   *
+   *   N = max(content unit, clamp(1, 1 + (viewport width - 1024px) x k, 1.4))
+   *
+   * The steeper ramp reaches 1.4 at 1512px, the 14-inch MacBook's default
+   * width (labels 14px, controls 48px, logo 28px tall), and holds it until the
+   * content ramp catches up near 1900px; above that the two are the same. So
+   * nothing changes at 1024px and below, where the phones and the narrowest
+   * fits are, or on large monitors, and the climb is continuous: no width at
+   * which the nav jumps.
+   */
+  --nav-unit: max(
+    var(--content-unit),
+    clamp(1px, calc(1px + (100vw - 1024px) * 0.00082), 1.4px)
+  );
 }
 
 /* A phone held upright stacks the tagline and the Browse hint under the
@@ -377,13 +417,14 @@
  * such as `row:` sorts after the breakpoints and silently wins over `stage:`.
  * The tagline, the catalogue and the marketplace geometry below lay out on them.
  *
- * The bar is the top chrome row: its height, and its bottom edge, which the
+ * The bar is the top chrome row: its height, in the nav's unit like the row
+ * itself, and its bottom edge, which the
  * marketplace stacks under. */
 :root {
   --stage-inset-left: calc(24px + env(safe-area-inset-left));
   --stage-inset-right: calc(24px + env(safe-area-inset-right));
   --stage-inset-bottom: calc(24px + env(safe-area-inset-bottom));
-  --chrome-bar: calc(44 * var(--chrome-unit));
+  --chrome-bar: calc(44 * var(--nav-unit));
   --chrome-bar-bottom: calc(
     56px + env(safe-area-inset-top) + var(--chrome-bar)
   );
@@ -404,7 +445,7 @@
 }
 @media (width >= 640px) and (height >= 500px) {
   :root {
-    --chrome-bar: calc(34 * var(--chrome-unit));
+    --chrome-bar: calc(34 * var(--nav-unit));
   }
 }
 
